@@ -11,18 +11,20 @@ The LLM Operator provides a Custom Resource Definition (CRD) called `OllamaDeplo
 - **Ollama Deployment**: Deploy Ollama instances with custom configurations
 - **Model Management**: Automatically pull and manage specified models
 - **OpenWebUI Integration**: Optional web-based UI for interacting with Ollama
+- **Tabby Integration**: Optional code completion server using Ollama models
 - **Resource Management**: Configurable resource limits and requests
 - **Service Configuration**: Flexible service types (ClusterIP, NodePort, LoadBalancer)
-- **Ingress Support**: Optional ingress configuration for OpenWebUI
+- **Ingress Support**: Optional ingress configuration for OpenWebUI and Tabby
 
 ## Architecture
 
 The operator creates the following Kubernetes resources:
 
-- **Deployments**: For both Ollama and OpenWebUI (if enabled)
-- **Services**: To expose Ollama and OpenWebUI
-- **Ingress**: For external access to OpenWebUI (optional)
+- **Deployments**: For Ollama, OpenWebUI (if enabled), and Tabby (if enabled)
+- **Services**: To expose Ollama, OpenWebUI, and Tabby
+- **Ingress**: For external access to OpenWebUI and Tabby (optional)
 - **PostStart Hooks**: To pull specified models after Ollama starts
+- **Automatic Integration**: Tabby automatically connects to Ollama for code completion
 
 ## Installation
 
@@ -100,6 +102,45 @@ spec:
   openwebui:
     enabled: true
     replicas: 2
+    ingressEnabled: true
+    ingressHost: "ollama-webui.local"
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "512Mi"
+      limits:
+        cpu: "1000m"
+        memory: "1Gi"
+  
+  tabby:
+    enabled: true
+    replicas: 2
+    image: "tabbyml/tabby"
+    imageTag: "latest"
+    serviceType: ClusterIP
+    servicePort: 8080
+    ingressEnabled: true
+    ingressHost: "tabby.local"
+    # Tabby will automatically use the first model from Ollama
+    # You can override with: modelName: "codellama:34b"
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "512Mi"
+      limits:
+        cpu: "1000m"
+        memory: "1Gi"
+```
+
+### Tabby Code Completion
+
+Tabby provides AI-powered code completion by connecting to your Ollama models. It automatically:
+
+- Connects to the Ollama service in the same deployment
+- Uses the first specified model (or a custom one you specify)
+- Provides a REST API for code completion
+- Supports multiple programming languages
+- Can be accessed via ingress for external integration
     image: ghcr.io/open-webui/open-webui
     imageTag: main
     serviceType: ClusterIP

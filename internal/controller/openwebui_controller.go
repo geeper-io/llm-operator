@@ -31,8 +31,8 @@ import (
 	llmgeeperiov1alpha1 "github.com/geeper-io/llm-operator/api/v1alpha1"
 )
 
-// ReconcileOpenWebUI reconciles the OpenWebUI deployment
-func (r *OllamaDeploymentReconciler) ReconcileOpenWebUI(ctx context.Context, deployment *llmgeeperiov1alpha1.Deployment) error {
+// reconcileOpenWebUI reconciles the OpenWebUI deployment
+func (r *OllamaDeploymentReconciler) reconcileOpenWebUI(ctx context.Context, deployment *llmgeeperiov1alpha1.Deployment) error {
 	// Create or update OpenWebUI configuration ConfigMap if plugins are defined
 	if len(deployment.Spec.OpenWebUI.Plugins) > 0 {
 		openwebuiConfig := r.buildOpenWebUIConfigMap(deployment)

@@ -29,8 +29,8 @@ import (
 	llmgeeperiov1alpha1 "github.com/geeper-io/llm-operator/api/v1alpha1"
 )
 
-// ReconcilePlugins reconciles all OpenWebUI plugins
-func (r *OllamaDeploymentReconciler) ReconcilePlugins(ctx context.Context, deployment *llmgeeperiov1alpha1.Deployment) error {
+// reconcilePlugins reconciles all OpenWebUI plugins
+func (r *OllamaDeploymentReconciler) reconcilePlugins(ctx context.Context, deployment *llmgeeperiov1alpha1.Deployment) error {
 	for _, plugin := range deployment.Spec.OpenWebUI.Plugins {
 		if !plugin.Enabled {
 			continue

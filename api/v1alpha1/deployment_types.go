@@ -92,6 +92,61 @@ type OpenWebUISpec struct {
 	Plugins []OpenWebUIPlugin `json:"plugins,omitempty"`
 }
 
+// TabbySpec defines the desired state of Tabby deployment
+type TabbySpec struct {
+	// Enabled determines if Tabby should be deployed
+	Enabled bool `json:"enabled,omitempty"`
+
+	// Replicas is the number of Tabby pods to run
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=5
+	Replicas int32 `json:"replicas,omitempty"`
+
+	// Image is the Tabby container image to use
+	Image string `json:"image,omitempty"`
+
+	// ImageTag is the Tabby image tag to use
+	ImageTag string `json:"imageTag,omitempty"`
+
+	// Resources defines the resource requirements for Tabby pods
+	Resources ResourceRequirements `json:"resources,omitempty"`
+
+	// ServiceType is the type of service to expose Tabby
+	// +kubebuilder:validation:Enum=ClusterIP;NodePort;LoadBalancer
+	ServiceType string `json:"serviceType,omitempty"`
+
+	// ServicePort is the port to expose Tabby service
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	ServicePort int32 `json:"servicePort,omitempty"`
+
+	// IngressEnabled determines if an Ingress should be created
+	IngressEnabled bool `json:"ingressEnabled,omitempty"`
+
+	// IngressHost is the hostname for the Ingress
+	IngressHost string `json:"ingressHost,omitempty"`
+
+	// OllamaServiceName is the name of the Ollama service to connect to
+	// If not specified, it will default to the deployment's Ollama service
+	OllamaServiceName string `json:"ollamaServiceName,omitempty"`
+
+	// OllamaServicePort is the port of the Ollama service to connect to
+	// If not specified, it will default to the deployment's Ollama service port
+	OllamaServicePort int32 `json:"ollamaServicePort,omitempty"`
+
+	// ModelName is the name of the Ollama model to use for code completion
+	ModelName string `json:"modelName,omitempty"`
+
+	// EnvVars defines environment variables for Tabby
+	EnvVars []corev1.EnvVar `json:"envVars,omitempty"`
+
+	// VolumeMounts defines volume mounts for Tabby
+	VolumeMounts []corev1.VolumeMount `json:"volumeMounts,omitempty"`
+
+	// Volumes defines volumes for Tabby
+	Volumes []corev1.Volume `json:"volumes,omitempty"`
+}
+
 // OpenWebUIPlugin defines a plugin for OpenWebUI
 type OpenWebUIPlugin struct {
 	// Name is the unique name of the plugin
@@ -171,6 +226,9 @@ type DeploymentSpec struct {
 
 	// OpenWebUI defines the OpenWebUI deployment configuration
 	OpenWebUI OpenWebUISpec `json:"openwebui,omitempty"`
+
+	// Tabby defines the Tabby deployment configuration
+	Tabby TabbySpec `json:"tabby,omitempty"`
 }
 
 // DeploymentStatus defines the observed state of Deployment
@@ -186,6 +244,9 @@ type DeploymentStatus struct {
 
 	// OpenWebUIStatus represents the status of OpenWebUI deployment
 	OpenWebUIStatus DeploymentComponentStatus `json:"openwebuiStatus,omitempty"`
+
+	// TabbyStatus represents the status of Tabby deployment
+	TabbyStatus DeploymentComponentStatus `json:"tabbyStatus,omitempty"`
 
 	// ReadyReplicas is the number of ready replicas
 	ReadyReplicas int32 `json:"readyReplicas,omitempty"`

@@ -100,24 +100,32 @@ func (r *OllamaDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	r.setDefaults(deployment)
 
 	// Reconcile Ollama deployment
-	if err := r.reconcileOllama(ctx, deployment, r); err != nil {
+	if err := r.reconcileOllama(ctx, deployment); err != nil {
 		logger.Error(err, "Failed to reconcile Ollama")
 		return ctrl.Result{RequeueAfter: time.Minute}, err
 	}
 
 	// Reconcile OpenWebUI deployment if enabled
 	if deployment.Spec.OpenWebUI.Enabled {
-		if err := r.openwebuiController.ReconcileOpenWebUI(ctx, deployment, r); err != nil {
+		if err := r.reconcileOpenWebUI(ctx, deployment); err != nil {
 			logger.Error(err, "Failed to reconcile OpenWebUI")
 			return ctrl.Result{RequeueAfter: time.Minute}, err
 		}
 
 		// Reconcile plugins if any are defined
 		if len(deployment.Spec.OpenWebUI.Plugins) > 0 {
-			if err := r.pluginController.ReconcilePlugins(ctx, deployment, r); err != nil {
+			if err := r.reconcilePlugins(ctx, deployment); err != nil {
 				logger.Error(err, "Failed to reconcile plugins")
 				return ctrl.Result{RequeueAfter: time.Minute}, err
 			}
+		}
+	}
+
+	// Reconcile Tabby deployment if enabled
+	if deployment.Spec.Tabby.Enabled {
+		if err := r.reconcileTabby(ctx, deployment); err != nil {
+			logger.Error(err, "Failed to reconcile Tabby")
+			return ctrl.Result{RequeueAfter: time.Minute}, err
 		}
 	}
 
@@ -164,6 +172,23 @@ func (r *OllamaDeploymentReconciler) setDefaults(deployment *llmgeeperiov1alpha1
 	}
 	if deployment.Spec.OpenWebUI.ServicePort == 0 {
 		deployment.Spec.OpenWebUI.ServicePort = 8080
+	}
+
+	// Set Tabby defaults
+	if deployment.Spec.Tabby.Image == "" {
+		deployment.Spec.Tabby.Image = "tabbyml/tabby"
+	}
+	if deployment.Spec.Tabby.ImageTag == "" {
+		deployment.Spec.Tabby.ImageTag = "latest"
+	}
+	if deployment.Spec.Tabby.Replicas == 0 {
+		deployment.Spec.Tabby.Replicas = 1
+	}
+	if deployment.Spec.Tabby.ServiceType == "" {
+		deployment.Spec.Tabby.ServiceType = "ClusterIP"
+	}
+	if deployment.Spec.Tabby.ServicePort == 0 {
+		deployment.Spec.Tabby.ServicePort = 8080
 	}
 }
 
@@ -408,6 +433,32 @@ func (r *OllamaDeploymentReconciler) updateStatus(ctx context.Context, deploymen
 		}
 	}
 
+	// Get Tabby deployment status if enabled
+	if deployment.Spec.Tabby.Enabled {
+		tabbyDeployment := &appsv1.Deployment{}
+		err := r.Get(ctx, types.NamespacedName{
+			Name:      fmt.Sprintf("%s-tabby", deployment.Name),
+			Namespace: deployment.Namespace,
+		}, tabbyDeployment)
+
+		if err == nil {
+			deployment.Status.TabbyStatus.AvailableReplicas = tabbyDeployment.Status.AvailableReplicas
+			deployment.Status.TabbyStatus.ReadyReplicas = tabbyDeployment.Status.ReadyReplicas
+			deployment.Status.TabbyStatus.UpdatedReplicas = tabbyDeployment.Status.UpdatedReplicas
+			// Convert DeploymentCondition to metav1.Condition
+			for _, cond := range tabbyDeployment.Status.Conditions {
+				metaCond := metav1.Condition{
+					Type:               string(cond.Type),
+					Status:             metav1.ConditionStatus(cond.Status),
+					LastTransitionTime: cond.LastTransitionTime,
+					Reason:             cond.Reason,
+					Message:            cond.Message,
+				}
+				deployment.Status.TabbyStatus.Conditions = append(deployment.Status.TabbyStatus.Conditions, metaCond)
+			}
+		}
+	}
+
 	// Calculate overall status
 	deployment.Status.TotalReplicas = deployment.Spec.Ollama.Replicas
 	if deployment.Spec.OpenWebUI.Enabled {
@@ -423,6 +474,11 @@ func (r *OllamaDeploymentReconciler) updateStatus(ctx context.Context, deploymen
 				deployment.Status.TotalReplicas += replicas
 			}
 		}
+	}
+
+	// Add Tabby replicas
+	if deployment.Spec.Tabby.Enabled {
+		deployment.Status.TotalReplicas += deployment.Spec.Tabby.Replicas
 	}
 
 	deployment.Status.ReadyReplicas = deployment.Status.OllamaStatus.ReadyReplicas
@@ -443,6 +499,11 @@ func (r *OllamaDeploymentReconciler) updateStatus(ctx context.Context, deploymen
 				}
 			}
 		}
+	}
+
+	// Add Tabby ready replicas
+	if deployment.Spec.Tabby.Enabled {
+		deployment.Status.ReadyReplicas += deployment.Status.TabbyStatus.ReadyReplicas
 	}
 
 	// Set phase

@@ -29,6 +29,7 @@ kind: OllamaDeployment
 |-------|------|----------|-------------|
 | `ollama` | [OllamaSpec](#ollamaspec) | Yes | Ollama deployment configuration |
 | `openwebui` | [OpenWebUISpec](#openwebuispec) | No | OpenWebUI deployment configuration |
+| `tabby` | [TabbySpec](#tabbyspec) | No | Tabby deployment configuration |
 
 ### OllamaSpec
 
@@ -62,6 +63,26 @@ kind: OllamaDeployment
 | `ingressEnabled` | bool | No | false | Enable ingress |
 | `ingressHost` | string | No | None | Ingress hostname |
 
+### TabbySpec
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `enabled` | bool | No | false | Enable Tabby deployment |
+| `replicas` | int32 | No | 1 | Number of Tabby pods (1-5) |
+| `image` | string | No | `tabbyml/tabby` | Tabby container image |
+| `imageTag` | string | No | `latest` | Tabby image tag |
+| `resources` | [ResourceRequirements](#resourcerequirements) | No | None | Resource limits and requests |
+| `serviceType` | string | No | `ClusterIP` | Service type (ClusterIP, NodePort, LoadBalancer) |
+| `servicePort` | int32 | No | 8080 | Service port (1-65535) |
+| `ingressEnabled` | bool | No | false | Enable ingress |
+| `ingressHost` | string | No | None | Ingress hostname |
+| `ollamaServiceName` | string | No | Auto-generated | Ollama service name to connect to |
+| `ollamaServicePort` | int32 | No | Auto-detected | Ollama service port to connect to |
+| `modelName` | string | No | Auto-detected | Ollama model to use for code completion |
+| `envVars` | [corev1.EnvVar](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#envvar-v1-core)[] | No | None | Custom environment variables |
+| `volumeMounts` | [corev1.VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#volumemount-v1-core)[] | No | None | Custom volume mounts |
+| `volumes` | [corev1.Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#volume-v1-core)[] | No | None | Custom volumes |
+
 ### ResourceRequirements
 
 | Field | Type | Description |
@@ -85,6 +106,7 @@ kind: OllamaDeployment
 | `conditions` | [metav1.Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#condition-v1-meta)[] | Latest observations of deployment state |
 | `ollamaStatus` | [DeploymentComponentStatus](#deploymentcomponentstatus) | Ollama deployment status |
 | `openwebuiStatus` | [DeploymentComponentStatus](#deploymentcomponentstatus) | OpenWebUI deployment status |
+| `tabbyStatus` | [DeploymentComponentStatus](#deploymentcomponentstatus) | Tabby deployment status |
 | `readyReplicas` | int32 | Number of ready replicas |
 | `totalReplicas` | int32 | Total number of replicas |
 
@@ -172,6 +194,84 @@ The operator automatically creates postStart hooks to pull specified models afte
 
 If no resources are specified, the operator uses reasonable defaults for the main Ollama container. Model pulling happens in the postStart hook using the same resources as the main container.
 
+## Examples
+
+### Basic Tabby Deployment
+
+```yaml
+apiVersion: llm.geeper.io/v1alpha1
+kind: Deployment
+metadata:
+  name: tabby-example
+  namespace: default
+spec:
+  ollama:
+    models:
+      - "codellama:7b"
+    replicas: 1
+  
+  tabby:
+    enabled: true
+    replicas: 1
+    ingressEnabled: true
+    ingressHost: "tabby.localhost"
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "512Mi"
+      limits:
+        cpu: "1000m"
+        memory: "1Gi"
+```
+
+### Advanced Tabby Configuration
+
+```yaml
+apiVersion: llm.geeper.io/v1alpha1
+kind: Deployment
+metadata:
+  name: production-tabby
+  namespace: ai-models
+spec:
+  ollama:
+    models:
+      - "codellama:13b"
+      - "llama2:13b"
+    replicas: 2
+    resources:
+      requests:
+        cpu: "1000m"
+        memory: "4Gi"
+      limits:
+        cpu: "4000m"
+        memory: "8Gi"
+  
+  tabby:
+    enabled: true
+    replicas: 2
+    image: "tabbyml/tabby"
+    imageTag: "latest"
+    serviceType: LoadBalancer
+    servicePort: 8080
+    ingressEnabled: true
+    ingressHost: "tabby.example.com"
+    modelName: "codellama:13b"  # Use specific model
+    ollamaServiceName: "custom-ollama"  # Custom Ollama service
+    ollamaServicePort: 11434
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "1Gi"
+      limits:
+        cpu: "2000m"
+        memory: "2Gi"
+    envVars:
+      - name: "TABBY_LOG_LEVEL"
+        value: "debug"
+      - name: "TABBY_HOST"
+        value: "0.0.0.0"
+```
+
 ## Service Configuration
 
 ### Service Types
@@ -184,16 +284,23 @@ If no resources are specified, the operator uses reasonable defaults for the mai
 
 - **Ollama**: Default port 11434 (configurable)
 - **OpenWebUI**: Default port 8080 (configurable)
+- **Tabby**: Default port 8080 (configurable)
 
 ## Ingress Configuration
 
-When `ingressEnabled: true` and `ingressHost` is specified, the operator creates an Ingress resource for OpenWebUI access.
+When `ingressEnabled: true` and `ingressHost` is specified, the operator creates Ingress resources for external access.
 
-### Ingress Rules
+### OpenWebUI Ingress
 
 - Path: `/` (root)
 - PathType: `Prefix`
 - Backend: OpenWebUI service
+
+### Tabby Ingress
+
+- Path: `/` (root)
+- PathType: `Prefix`
+- Backend: Tabby service
 
 ## Status Monitoring
 
@@ -238,7 +345,8 @@ kubectl describe ollamadeployment <name>
 
 1. **Models Not Pulling**: Check init container logs
 2. **OpenWebUI Connection**: Verify Ollama service accessibility
-3. **Resource Constraints**: Ensure sufficient cluster resources
+3. **Tabby Connection**: Verify Ollama service accessibility and model availability
+4. **Resource Constraints**: Ensure sufficient cluster resources
 
 ### Debug Commands
 

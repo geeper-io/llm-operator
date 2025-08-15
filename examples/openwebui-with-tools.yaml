@@ -1,4 +1,4 @@
-apiVersion: llm.geeper.io/v1alpha1
+bvapiVersion: llm.geeper.io/v1alpha1
 kind: Deployment
 metadata:
   name: ollama-with-tools
@@ -105,3 +105,4 @@ spec:
         serviceType: ClusterIP
         configMapName: "github-tool-config"
         secretName: "github-tool-secret"
+

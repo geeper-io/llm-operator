@@ -69,3 +69,4 @@ type: Opaque
 data:
   credentials: <base64-encoded-github-token>
   # echo -n "ghp_your_github_token" | base64
+
