@@ -136,11 +136,13 @@ spec:
 
 Tabby provides AI-powered code completion by connecting to your Ollama models. It automatically:
 
-- Connects to the deployed Ollama service in the same deployment
+- Connects to the deployed Ollama service via configuration file
 - Uses the first specified model (or a custom one you specify)
 - Provides a REST API for code completion
 - Supports multiple programming languages
 - Can be accessed via ingress for external integration
+- Mounts configuration to `~/.tabby/config.toml` for easy customization
+- Includes local embedding model (Nomic-Embed-Text) by default
     image: ghcr.io/open-webui/open-webui
     imageTag: main
     serviceType: ClusterIP
@@ -202,6 +204,7 @@ Tabby provides AI-powered code completion by connecting to your Ollama models. I
 | `spec.tabby.ingress.enabled` | bool | Enable ingress | false |
 | `spec.tabby.ingress.host` | string | Ingress hostname | None |
 | `spec.tabby.modelName` | string | Ollama model to use | Auto-detected |
+| `spec.tabby.configMapName` | string | Custom ConfigMap for configuration | Auto-generated |
 
 ## Monitoring
 

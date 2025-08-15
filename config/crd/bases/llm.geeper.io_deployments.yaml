@@ -2346,6 +2346,10 @@ spec:
               tabby:
                 description: Tabby defines the Tabby deployment configuration
                 properties:
+                  configMapName:
+                    description: ConfigMapName is the name of the ConfigMap containing
+                      Tabby configuration
+                    type: string
                   enabled:
                     description: Enabled determines if Tabby should be deployed
                     type: boolean

@@ -143,6 +143,9 @@ type TabbySpec struct {
 
 	// Volumes defines volumes for Tabby
 	Volumes []corev1.Volume `json:"volumes,omitempty"`
+
+	// ConfigMapName is the name of the ConfigMap containing Tabby configuration
+	ConfigMapName string `json:"configMapName,omitempty"`
 }
 
 // OpenWebUIPlugin defines a plugin for OpenWebUI
@@ -355,6 +358,11 @@ func (d *Deployment) GetOpenWebUIIngressName() string {
 // GetTabbyIngressName returns the name of the Tabby ingress for this deployment
 func (d *Deployment) GetTabbyIngressName() string {
 	return fmt.Sprintf("%s-tabby-ingress", d.Name)
+}
+
+// GetTabbyConfigMapName returns the name of the Tabby ConfigMap for this deployment
+func (d *Deployment) GetTabbyConfigMapName() string {
+	return fmt.Sprintf("%s-tabby-config", d.Name)
 }
 
 func init() {

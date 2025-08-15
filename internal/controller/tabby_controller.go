@@ -12,11 +12,18 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
+	"github.com/BurntSushi/toml"
 	llmgeeperiov1alpha1 "github.com/geeper-io/llm-operator/api/v1alpha1"
 )
 
 // reconcileTabby reconciles the Tabby deployment
 func (r *OllamaDeploymentReconciler) reconcileTabby(ctx context.Context, deployment *llmgeeperiov1alpha1.Deployment) error {
+	// Create or update Tabby ConfigMap
+	tabbyConfigMap := r.buildTabbyConfigMap(deployment)
+	if err := r.createOrUpdateConfigMap(ctx, tabbyConfigMap); err != nil {
+		return err
+	}
+
 	// Create or update Tabby deployment
 	tabbyDeployment := r.buildTabbyDeployment(deployment)
 	if err := r.createOrUpdateDeployment(ctx, tabbyDeployment); err != nil {
@@ -65,40 +72,10 @@ func (r *OllamaDeploymentReconciler) buildTabbyDeployment(deployment *llmgeeperi
 		servicePort = 8080
 	}
 
-	// Determine Ollama service details - always use the deployed Ollama service
-	ollamaServiceName := deployment.GetOllamaServiceName()
-	ollamaServicePort := deployment.GetOllamaServicePort()
+	// Note: Model configuration is now handled via config.toml file
 
-	// Set default model name if not specified
-	modelName := deployment.Spec.Tabby.ModelName
-	if modelName == "" && len(deployment.Spec.Ollama.Models) > 0 {
-		// Use the first model from Ollama spec
-		modelStr := string(deployment.Spec.Ollama.Models[0])
-		if strings.Contains(modelStr, ":") {
-			parts := strings.Split(modelStr, ":")
-			if len(parts) == 2 {
-				modelName = parts[0]
-			} else {
-				modelName = modelStr
-			}
-		} else {
-			modelName = modelStr
-		}
-	}
-
-	// Build environment variables
-	envVars := []corev1.EnvVar{
-		{
-			Name:  "OLLAMA_HOST",
-			Value: fmt.Sprintf("%s.%s.svc.cluster.local:%d", ollamaServiceName, deployment.Namespace, ollamaServicePort),
-		},
-		{
-			Name:  "OLLAMA_MODEL",
-			Value: modelName,
-		},
-	}
-
-	// Add custom environment variables
+	// Build environment variables (only custom ones, no Ollama-specific ones)
+	envVars := []corev1.EnvVar{}
 	if deployment.Spec.Tabby.EnvVars != nil {
 		envVars = append(envVars, deployment.Spec.Tabby.EnvVars...)
 	}
@@ -108,6 +85,10 @@ func (r *OllamaDeploymentReconciler) buildTabbyDeployment(deployment *llmgeeperi
 		{
 			Name:      "tabby-data",
 			MountPath: "/data",
+		},
+		{
+			Name:      "tabby-config",
+			MountPath: "/root/.tabby",
 		},
 	}
 
@@ -122,6 +103,22 @@ func (r *OllamaDeploymentReconciler) buildTabbyDeployment(deployment *llmgeeperi
 			Name: "tabby-data",
 			VolumeSource: corev1.VolumeSource{
 				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
+		},
+		{
+			Name: "tabby-config",
+			VolumeSource: corev1.VolumeSource{
+				ConfigMap: &corev1.ConfigMapVolumeSource{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: deployment.GetTabbyConfigMapName(),
+					},
+					Items: []corev1.KeyToPath{
+						{
+							Key:  "config.toml",
+							Path: "config.toml",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -269,4 +266,89 @@ func (r *OllamaDeploymentReconciler) buildTabbyIngress(deployment *llmgeeperiov1
 	// Set owner reference
 	controllerutil.SetControllerReference(deployment, tabbyIngress, r.Scheme)
 	return tabbyIngress
+}
+
+// buildTabbyConfigMap builds the Tabby configuration ConfigMap
+func (r *OllamaDeploymentReconciler) buildTabbyConfigMap(deployment *llmgeeperiov1alpha1.Deployment) *corev1.ConfigMap {
+	// Generate TOML configuration
+	configTOML, err := r.generateTabbyConfig(deployment)
+	if err != nil {
+		// Log error but continue with empty config
+		configTOML = "# Error generating configuration\n"
+	}
+
+	labels := map[string]string{
+		"app":            "tabby",
+		"llm-deployment": deployment.Name,
+	}
+
+	return &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      deployment.GetTabbyConfigMapName(),
+			Namespace: deployment.Namespace,
+			Labels:    labels,
+		},
+		Data: map[string]string{
+			"config.toml": configTOML,
+		},
+	}
+}
+
+// generateTabbyConfig generates the Tabby TOML configuration
+func (r *OllamaDeploymentReconciler) generateTabbyConfig(deployment *llmgeeperiov1alpha1.Deployment) (string, error) {
+	// Determine Ollama service details
+	ollamaServiceName := deployment.GetOllamaServiceName()
+	ollamaServicePort := deployment.GetOllamaServicePort()
+
+	// Set default model name if not specified
+	modelName := deployment.Spec.Tabby.ModelName
+	if modelName == "" && len(deployment.Spec.Ollama.Models) > 0 {
+		// Use the first model from Ollama spec
+		modelStr := string(deployment.Spec.Ollama.Models[0])
+		if strings.Contains(modelStr, ":") {
+			parts := strings.Split(modelStr, ":")
+			if len(parts) == 2 {
+				modelName = parts[0]
+			} else {
+				modelName = modelStr
+			}
+		} else {
+			modelName = modelStr
+		}
+	}
+
+	// Build TOML configuration
+	config := map[string]interface{}{
+		"chat": map[string]interface{}{
+			"model": map[string]interface{}{
+				"ollama": map[string]interface{}{
+					"host":  fmt.Sprintf("%s.%s.svc.cluster.local:%d", ollamaServiceName, deployment.Namespace, ollamaServicePort),
+					"model": modelName,
+				},
+			},
+		},
+		"completion": map[string]interface{}{
+			"model": map[string]interface{}{
+				"ollama": map[string]interface{}{
+					"host":  fmt.Sprintf("%s.%s.svc.cluster.local:%d", ollamaServiceName, deployment.Namespace, ollamaServicePort),
+					"model": modelName,
+				},
+			},
+		},
+		"model": map[string]interface{}{
+			"embedding": map[string]interface{}{
+				"local": map[string]interface{}{
+					"model_id": "Nomic-Embed-Text",
+				},
+			},
+		},
+	}
+
+	// Convert to TOML
+	var buf strings.Builder
+	if err := toml.NewEncoder(&buf).Encode(config); err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
 }
