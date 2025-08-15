@@ -17,7 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	corev1 "k8s.io/api/core/v1"
+	
 )
 
 // OllamaModel defines a model to be deployed with Ollama
@@ -86,6 +87,60 @@ type OpenWebUISpec struct {
 
 	// IngressHost is the hostname for the Ingress
 	IngressHost string `json:"ingressHost,omitempty"`
+
+	// Plugins defines the list of plugins to deploy and configure
+	Plugins []OpenWebUIPlugin `json:"plugins,omitempty"`
+}
+
+// OpenWebUIPlugin defines a plugin for OpenWebUI
+type OpenWebUIPlugin struct {
+	// Name is the unique name of the plugin
+	Name string `json:"name"`
+
+	// Enabled determines if this plugin should be deployed
+	Enabled bool `json:"enabled,omitempty"`
+
+	// Type is the type of plugin (e.g., "openapi", "custom")
+	// +kubebuilder:validation:Enum=openapi;custom
+	Type string `json:"type"`
+
+	// Image is the container image for the plugin
+	Image string `json:"image"`
+
+	// ImageTag is the image tag for the plugin
+	ImageTag string `json:"imageTag,omitempty"`
+
+	// Replicas is the number of plugin pods to run
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=3
+	Replicas int32 `json:"replicas,omitempty"`
+
+	// Port is the port the plugin service exposes
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	Port int32 `json:"port"`
+
+	// Resources defines the resource requirements for plugin pods
+	Resources ResourceRequirements `json:"resources,omitempty"`
+
+	// ServiceType is the type of service to expose the plugin
+	// +kubebuilder:validation:Enum=ClusterIP;NodePort;LoadBalancer
+	ServiceType string `json:"serviceType,omitempty"`
+
+	// EnvVars defines environment variables for the plugin
+	EnvVars []corev1.EnvVar `json:"envVars,omitempty"`
+
+	// VolumeMounts defines volume mounts for the plugin
+	VolumeMounts []corev1.VolumeMount `json:"volumeMounts,omitempty"`
+
+	// Volumes defines volumes for the plugin
+	Volumes []corev1.Volume `json:"volumes,omitempty"`
+
+	// ConfigMapName is the name of the ConfigMap containing plugin configuration
+	ConfigMapName string `json:"configMapName,omitempty"`
+
+	// SecretName is the name of the Secret containing plugin credentials
+	SecretName string `json:"secretName,omitempty"`
 }
 
 // ResourceRequirements describes the compute resource requirements

@@ -18,9 +18,9 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
-	"strings"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -31,10 +31,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	llmgeeperiov1alpha1 "github.com/geeper-io/llm-operator/api/v1alpha1"
@@ -49,6 +47,11 @@ const (
 type OllamaDeploymentReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+
+	// Specialized controllers
+	ollamaController    *OllamaController
+	openwebuiController *OpenWebUIController
+	pluginController    *PluginController
 }
 
 // +kubebuilder:rbac:groups=llm.geeper.io,resources=deployments,verbs=get;list;watch;create;update;patch;delete
@@ -102,16 +105,24 @@ func (r *OllamaDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	r.setDefaults(deployment)
 
 	// Reconcile Ollama deployment
-	if err := r.reconcileOllama(ctx, deployment); err != nil {
+	if err := r.ollamaController.ReconcileOllama(ctx, deployment, r); err != nil {
 		logger.Error(err, "Failed to reconcile Ollama")
 		return ctrl.Result{RequeueAfter: time.Minute}, err
 	}
 
 	// Reconcile OpenWebUI deployment if enabled
 	if deployment.Spec.OpenWebUI.Enabled {
-		if err := r.reconcileOpenWebUI(ctx, deployment); err != nil {
+		if err := r.openwebuiController.ReconcileOpenWebUI(ctx, deployment, r); err != nil {
 			logger.Error(err, "Failed to reconcile OpenWebUI")
 			return ctrl.Result{RequeueAfter: time.Minute}, err
+		}
+
+		// Reconcile plugins if any are defined
+		if len(deployment.Spec.OpenWebUI.Plugins) > 0 {
+			if err := r.pluginController.ReconcilePlugins(ctx, deployment, r); err != nil {
+				logger.Error(err, "Failed to reconcile plugins")
+				return ctrl.Result{RequeueAfter: time.Minute}, err
+			}
 		}
 	}
 
@@ -148,7 +159,7 @@ func (r *OllamaDeploymentReconciler) setDefaults(deployment *llmgeeperiov1alpha1
 		deployment.Spec.OpenWebUI.Image = "ghcr.io/open-webui/open-webui"
 	}
 	if deployment.Spec.OpenWebUI.ImageTag == "" {
-		deployment.Spec.OpenWebUI.ImageTag = "main"
+		deployment.Spec.OpenWebUI.ImageTag = "latest"
 	}
 	if deployment.Spec.OpenWebUI.Replicas == 0 {
 		deployment.Spec.OpenWebUI.Replicas = 1
@@ -159,48 +170,6 @@ func (r *OllamaDeploymentReconciler) setDefaults(deployment *llmgeeperiov1alpha1
 	if deployment.Spec.OpenWebUI.ServicePort == 0 {
 		deployment.Spec.OpenWebUI.ServicePort = 8080
 	}
-}
-
-// reconcileOllama reconciles the Ollama deployment
-func (r *OllamaDeploymentReconciler) reconcileOllama(ctx context.Context, deployment *llmgeeperiov1alpha1.Deployment) error {
-	// Create or update Ollama deployment
-	ollamaDeployment := r.buildOllamaDeployment(deployment)
-	if err := r.createOrUpdateDeployment(ctx, ollamaDeployment); err != nil {
-		return err
-	}
-
-	// Create or update Ollama service
-	ollamaService := r.buildOllamaService(deployment)
-	if err := r.createOrUpdateService(ctx, ollamaService); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// reconcileOpenWebUI reconciles the OpenWebUI deployment
-func (r *OllamaDeploymentReconciler) reconcileOpenWebUI(ctx context.Context, deployment *llmgeeperiov1alpha1.Deployment) error {
-	// Create or update OpenWebUI deployment
-	openwebuiDeployment := r.buildOpenWebUIDeployment(deployment)
-	if err := r.createOrUpdateDeployment(ctx, openwebuiDeployment); err != nil {
-		return err
-	}
-
-	// Create or update OpenWebUI service
-	openwebuiService := r.buildOpenWebUIService(deployment)
-	if err := r.createOrUpdateService(ctx, openwebuiService); err != nil {
-		return err
-	}
-
-	// Create or update Ingress if enabled
-	if deployment.Spec.OpenWebUI.IngressEnabled && deployment.Spec.OpenWebUI.IngressHost != "" {
-		ingress := r.buildOpenWebUIIngress(deployment)
-		if err := r.createOrUpdateIngress(ctx, ingress); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 // containsFinalizer checks if a slice contains a specific finalizer
@@ -237,267 +206,6 @@ func (r *OllamaDeploymentReconciler) finalizeDeployment(ctx context.Context, dep
 
 	logger.Info("Finalization completed", "name", deployment.Name)
 	return nil
-}
-
-// buildOllamaDeployment builds the Ollama deployment object
-func (r *OllamaDeploymentReconciler) buildOllamaDeployment(deployment *llmgeeperiov1alpha1.Deployment) *appsv1.Deployment {
-	labels := map[string]string{
-		"app":            "ollama",
-		"llm-deployment": deployment.Name,
-	}
-
-	// Build postStart hook for model pulling
-	var postStartCommands []string
-	for _, model := range deployment.Spec.Ollama.Models {
-		// Extract model name and tag from "modelname:tag" format
-		modelStr := string(model)
-		modelName := modelStr
-		modelTag := "latest"
-
-		// Check if tag is specified (format: "modelname:tag")
-		if strings.Contains(modelStr, ":") {
-			parts := strings.Split(modelStr, ":")
-			if len(parts) == 2 {
-				modelName = parts[0]
-				modelTag = parts[1]
-			}
-		}
-
-		// Add model pull command to postStart hook
-		postStartCommands = append(postStartCommands,
-			fmt.Sprintf("ollama pull %s:%s", modelName, modelTag))
-	}
-
-	ollamaDeployment := &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-ollama", deployment.Name),
-			Namespace: deployment.Namespace,
-			Labels:    labels,
-		},
-		Spec: appsv1.DeploymentSpec{
-			Replicas: &deployment.Spec.Ollama.Replicas,
-			Selector: &metav1.LabelSelector{
-				MatchLabels: labels,
-			},
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: labels,
-				},
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{
-						{
-							Name:  "ollama",
-							Image: fmt.Sprintf("%s:%s", deployment.Spec.Ollama.Image, deployment.Spec.Ollama.ImageTag),
-							Ports: []corev1.ContainerPort{
-								{
-									Name:          "http",
-									ContainerPort: deployment.Spec.Ollama.ServicePort,
-									Protocol:      corev1.ProtocolTCP,
-								},
-							},
-							Resources: r.buildResourceRequirements(deployment.Spec.Ollama.Resources),
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "ollama-data",
-									MountPath: "/root/.ollama",
-								},
-							},
-							Lifecycle: &corev1.Lifecycle{
-								PostStart: &corev1.LifecycleHandler{
-									Exec: &corev1.ExecAction{
-										Command: []string{"/bin/sh", "-c", strings.Join(postStartCommands, " && ")},
-									},
-								},
-							},
-						},
-					},
-					Volumes: []corev1.Volume{
-						{
-							Name: "ollama-data",
-							VolumeSource: corev1.VolumeSource{
-								EmptyDir: &corev1.EmptyDirVolumeSource{},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	// Set owner reference
-	controllerutil.SetControllerReference(deployment, ollamaDeployment, r.Scheme)
-	return ollamaDeployment
-}
-
-// buildOpenWebUIDeployment builds the OpenWebUI deployment object
-func (r *OllamaDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperiov1alpha1.Deployment) *appsv1.Deployment {
-	labels := map[string]string{
-		"app":            "openwebui",
-		"llm-deployment": deployment.Name,
-	}
-
-	ollamaServiceName := fmt.Sprintf("%s-ollama", deployment.Name)
-
-	openwebuiDeployment := &appsv1.Deployment{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-openwebui", deployment.Name),
-			Namespace: deployment.Namespace,
-			Labels:    labels,
-		},
-		Spec: appsv1.DeploymentSpec{
-			Replicas: &deployment.Spec.OpenWebUI.Replicas,
-			Selector: &metav1.LabelSelector{
-				MatchLabels: labels,
-			},
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Labels: labels,
-				},
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{
-						{
-							Name:  "openwebui",
-							Image: fmt.Sprintf("%s:%s", deployment.Spec.OpenWebUI.Image, deployment.Spec.OpenWebUI.ImageTag),
-							Ports: []corev1.ContainerPort{
-								{
-									Name:          "http",
-									ContainerPort: deployment.Spec.OpenWebUI.ServicePort,
-									Protocol:      corev1.ProtocolTCP,
-								},
-							},
-							Resources: r.buildResourceRequirements(deployment.Spec.OpenWebUI.Resources),
-							Env: []corev1.EnvVar{
-								{
-									Name:  "OLLAMA_BASE_URL",
-									Value: fmt.Sprintf("http://%s:%d", ollamaServiceName, deployment.Spec.Ollama.ServicePort),
-								},
-								{
-									Name:  "WEBUI_SECRET_KEY",
-									Value: "your-secret-key-here",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	// Set owner reference
-	controllerutil.SetControllerReference(deployment, openwebuiDeployment, r.Scheme)
-	return openwebuiDeployment
-}
-
-// buildOllamaService builds the Ollama service object
-func (r *OllamaDeploymentReconciler) buildOllamaService(deployment *llmgeeperiov1alpha1.Deployment) *corev1.Service {
-	labels := map[string]string{
-		"app":            "ollama",
-		"llm-deployment": deployment.Name,
-	}
-
-	ollamaService := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-ollama", deployment.Name),
-			Namespace: deployment.Namespace,
-			Labels:    labels,
-		},
-		Spec: corev1.ServiceSpec{
-			Type: corev1.ServiceType(deployment.Spec.Ollama.ServiceType),
-			Ports: []corev1.ServicePort{
-				{
-					Name:       "http",
-					Port:       deployment.Spec.Ollama.ServicePort,
-					TargetPort: intstr.FromInt(int(deployment.Spec.Ollama.ServicePort)),
-					Protocol:   corev1.ProtocolTCP,
-				},
-			},
-			Selector: labels,
-		},
-	}
-
-	// Set owner reference
-	controllerutil.SetControllerReference(deployment, ollamaService, r.Scheme)
-	return ollamaService
-}
-
-// buildOpenWebUIService builds the OpenWebUI service object
-func (r *OllamaDeploymentReconciler) buildOpenWebUIService(deployment *llmgeeperiov1alpha1.Deployment) *corev1.Service {
-	labels := map[string]string{
-		"app":            "openwebui",
-		"llm-deployment": deployment.Name,
-	}
-
-	openwebuiService := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-openwebui", deployment.Name),
-			Namespace: deployment.Namespace,
-			Labels:    labels,
-		},
-		Spec: corev1.ServiceSpec{
-			Type: corev1.ServiceType(deployment.Spec.OpenWebUI.ServiceType),
-			Ports: []corev1.ServicePort{
-				{
-					Name:       "http",
-					Port:       deployment.Spec.OpenWebUI.ServicePort,
-					TargetPort: intstr.FromInt(int(deployment.Spec.OpenWebUI.ServicePort)),
-					Protocol:   corev1.ProtocolTCP,
-				},
-			},
-			Selector: labels,
-		},
-	}
-
-	// Set owner reference
-	controllerutil.SetControllerReference(deployment, openwebuiService, r.Scheme)
-	return openwebuiService
-}
-
-// buildOpenWebUIIngress builds the OpenWebUI ingress object
-func (r *OllamaDeploymentReconciler) buildOpenWebUIIngress(deployment *llmgeeperiov1alpha1.Deployment) *networkingv1.Ingress {
-	labels := map[string]string{
-		"app":            "openwebui",
-		"llm-deployment": deployment.Name,
-	}
-
-	serviceName := fmt.Sprintf("%s-openwebui", deployment.Name)
-	pathType := networkingv1.PathTypePrefix
-
-	ingress := &networkingv1.Ingress{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-openwebui", deployment.Name),
-			Namespace: deployment.Namespace,
-			Labels:    labels,
-		},
-		Spec: networkingv1.IngressSpec{
-			Rules: []networkingv1.IngressRule{
-				{
-					Host: deployment.Spec.OpenWebUI.IngressHost,
-					IngressRuleValue: networkingv1.IngressRuleValue{
-						HTTP: &networkingv1.HTTPIngressRuleValue{
-							Paths: []networkingv1.HTTPIngressPath{
-								{
-									Path:     "/",
-									PathType: &pathType,
-									Backend: networkingv1.IngressBackend{
-										Service: &networkingv1.IngressServiceBackend{
-											Name: serviceName,
-											Port: networkingv1.ServiceBackendPort{
-												Number: deployment.Spec.OpenWebUI.ServicePort,
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	// Set owner reference
-	controllerutil.SetControllerReference(deployment, ingress, r.Scheme)
-	return ingress
 }
 
 // buildResourceRequirements builds resource requirements from the spec
@@ -602,6 +310,29 @@ func (r *OllamaDeploymentReconciler) createOrUpdateIngress(ctx context.Context, 
 	return nil
 }
 
+// createOrUpdateConfigMap creates or updates a ConfigMap
+func (r *OllamaDeploymentReconciler) createOrUpdateConfigMap(ctx context.Context, configMap *corev1.ConfigMap) error {
+	existing := &corev1.ConfigMap{}
+	err := r.Get(ctx, types.NamespacedName{Name: configMap.Name, Namespace: configMap.Namespace}, existing)
+	if err != nil && errors.IsNotFound(err) {
+		// Create new ConfigMap
+		if err := r.Create(ctx, configMap); err != nil {
+			return err
+		}
+	} else if err == nil {
+		// Update existing ConfigMap
+		if !reflect.DeepEqual(existing.Data, configMap.Data) {
+			existing.Data = configMap.Data
+			if err := r.Update(ctx, existing); err != nil {
+				return err
+			}
+		}
+	} else {
+		return err
+	}
+	return nil
+}
+
 // updateStatus updates the status of the Deployment
 func (r *OllamaDeploymentReconciler) updateStatus(ctx context.Context, deployment *llmgeeperiov1alpha1.Deployment) error {
 	// Get Ollama deployment status
@@ -652,17 +383,71 @@ func (r *OllamaDeploymentReconciler) updateStatus(ctx context.Context, deploymen
 				deployment.Status.OpenWebUIStatus.Conditions = append(deployment.Status.OpenWebUIStatus.Conditions, metaCond)
 			}
 		}
+
+		// Get plugin deployment statuses
+		pluginStatuses := make(map[string]llmgeeperiov1alpha1.DeploymentComponentStatus)
+		for _, plugin := range deployment.Spec.OpenWebUI.Plugins {
+			if !plugin.Enabled {
+				continue
+			}
+
+			pluginDeployment := &appsv1.Deployment{}
+			err := r.Get(ctx, types.NamespacedName{
+				Name:      fmt.Sprintf("%s-plugin-%s", deployment.Name, plugin.Name),
+				Namespace: deployment.Namespace,
+			}, pluginDeployment)
+
+			if err == nil {
+				pluginStatuses[plugin.Name] = llmgeeperiov1alpha1.DeploymentComponentStatus{
+					AvailableReplicas: pluginDeployment.Status.AvailableReplicas,
+					ReadyReplicas:     pluginDeployment.Status.ReadyReplicas,
+					UpdatedReplicas:   pluginDeployment.Status.UpdatedReplicas,
+				}
+			}
+		}
+
+		// Store plugin statuses in annotations for now (you can extend the status struct if needed)
+		if len(pluginStatuses) > 0 {
+			pluginStatusJSON, _ := json.Marshal(pluginStatuses)
+			deployment.Annotations["llm.geeper.io/plugin-statuses"] = string(pluginStatusJSON)
+		}
 	}
 
 	// Calculate overall status
 	deployment.Status.TotalReplicas = deployment.Spec.Ollama.Replicas
 	if deployment.Spec.OpenWebUI.Enabled {
 		deployment.Status.TotalReplicas += deployment.Spec.OpenWebUI.Replicas
+
+		// Add plugin replicas
+		for _, plugin := range deployment.Spec.OpenWebUI.Plugins {
+			if plugin.Enabled {
+				replicas := plugin.Replicas
+				if replicas == 0 {
+					replicas = 1
+				}
+				deployment.Status.TotalReplicas += replicas
+			}
+		}
 	}
 
 	deployment.Status.ReadyReplicas = deployment.Status.OllamaStatus.ReadyReplicas
 	if deployment.Spec.OpenWebUI.Enabled {
 		deployment.Status.ReadyReplicas += deployment.Status.OpenWebUIStatus.ReadyReplicas
+
+		// Add plugin ready replicas
+		for _, plugin := range deployment.Spec.OpenWebUI.Plugins {
+			if plugin.Enabled {
+				pluginDeployment := &appsv1.Deployment{}
+				err := r.Get(ctx, types.NamespacedName{
+					Name:      fmt.Sprintf("%s-plugin-%s", deployment.Name, plugin.Name),
+					Namespace: deployment.Namespace,
+				}, pluginDeployment)
+
+				if err == nil {
+					deployment.Status.ReadyReplicas += pluginDeployment.Status.ReadyReplicas
+				}
+			}
+		}
 	}
 
 	// Set phase
@@ -680,10 +465,16 @@ func (r *OllamaDeploymentReconciler) updateStatus(ctx context.Context, deploymen
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *OllamaDeploymentReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	// Initialize specialized controllers
+	r.ollamaController = NewOllamaController()
+	r.openwebuiController = NewOpenWebUIController()
+	r.pluginController = NewPluginController()
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&llmgeeperiov1alpha1.Deployment{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&corev1.Service{}).
+		Owns(&corev1.ConfigMap{}).
 		Owns(&networkingv1.Ingress{}).
 		Named("ollamadeployment").
 		Complete(r)

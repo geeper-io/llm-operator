@@ -1,0 +1,139 @@
+apiVersion: llm.geeper.io/v1alpha1
+kind: Deployment
+metadata:
+  name: ollama-with-plugins
+  namespace: default
+spec:
+  ollama:
+    replicas: 1
+    image: ollama/ollama
+    imageTag: latest
+    models:
+      - "llama2:7b"
+      - "mistral:7b"
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "2Gi"
+      limits:
+        cpu: "2"
+        memory: "4Gi"
+    serviceType: ClusterIP
+    servicePort: 11434
+
+  openwebui:
+    enabled: true
+    replicas: 1
+    image: ghcr.io/open-webui/open-webui
+    imageTag: latest
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "512Mi"
+      limits:
+        cpu: "1"
+        memory: "1Gi"
+    serviceType: ClusterIP
+    servicePort: 8080
+    ingressEnabled: true
+    ingressHost: "openwebui.example.com"
+    
+    # Plugin system configuration
+    plugins:
+      # Weather API plugin
+      - name: weather-api
+        enabled: true
+        type: openapi
+        image: openapitools/openapi-generator-cli
+        imageTag: latest
+        replicas: 1
+        port: 8081
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
+        serviceType: ClusterIP
+        configMapName: "weather-api-config"
+        secretName: "weather-api-secret"
+        envVars:
+          - name: "API_BASE_URL"
+            value: "https://api.openweathermap.org/data/2.0"
+
+      # Document processing plugin
+      - name: document-processor
+        enabled: true
+        type: custom
+        image: custom/document-processor
+        imageTag: v1.0.0
+        replicas: 2
+        port: 8082
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+          limits:
+            cpu: "1"
+            memory: "512Mi"
+        serviceType: ClusterIP
+        configMapName: "document-processor-config"
+        envVars:
+          - name: "PROCESSING_MODE"
+            value: "async"
+          - name: "MAX_FILE_SIZE"
+            value: "100MB"
+        volumeMounts:
+          - name: shared-storage
+            mountPath: /data
+        volumes:
+          - name: shared-storage
+            persistentVolumeClaim:
+              claimName: document-storage-pvc
+
+      # Payment gateway plugin
+      - name: payment-gateway
+        enabled: true
+        type: openapi
+        image: stripe/stripe-cli
+        imageTag: latest
+        replicas: 1
+        port: 8083
+        resources:
+          requests:
+            cpu: "150m"
+            memory: "200Mi"
+          limits:
+            cpu: "500m"
+            memory: "400Mi"
+        serviceType: ClusterIP
+        configMapName: "stripe-config"
+        secretName: "stripe-secret"
+        envVars:
+          - name: "STRIPE_API_VERSION"
+            value: "2023-10-16"
+
+      # GitHub API plugin
+      - name: github-api
+        enabled: true
+        type: openapi
+        image: ghcr.io/octokit/octokit.rb
+        imageTag: latest
+        replicas: 1
+        port: 8084
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "150Mi"
+          limits:
+            cpu: "300m"
+            memory: "300Mi"
+        serviceType: ClusterIP
+        configMapName: "github-config"
+        secretName: "github-token-secret"
+        envVars:
+          - name: "GITHUB_API_VERSION"
+            value: "2022-11-28"
+          - name: "GITHUB_USER_AGENT"
+            value: "OpenWebUI-Plugin/1.0"

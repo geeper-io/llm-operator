@@ -1,0 +1,71 @@
+---
+# Weather Tool Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: weather-tool-config
+  namespace: default
+data:
+  config: |
+    {
+      "api_spec_url": "https://api.openweathermap.org/data/2.0/openapi.json",
+      "base_url": "https://api.openweathermap.org/data/2.0",
+      "default_units": "metric",
+      "cache_ttl": 300
+    }
+
+---
+# Weather Tool Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: weather-tool-secret
+  namespace: default
+type: Opaque
+data:
+  credentials: <base64-encoded-api-key>
+  # echo -n "your-actual-api-key" | base64
+
+---
+# Document Tool Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: document-tool-config
+  namespace: default
+data:
+  config: |
+    {
+      "supported_formats": ["pdf", "docx", "txt", "md"],
+      "max_file_size": "100MB",
+      "processing_timeout": 300,
+      "output_format": "json"
+    }
+
+---
+# GitHub Tool Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: github-tool-config
+  namespace: default
+data:
+  config: |
+    {
+      "api_version": "2022-11-28",
+      "base_url": "https://api.github.com",
+      "user_agent": "OpenWebUI-Tool/1.0",
+      "rate_limit_warning": 1000
+    }
+
+---
+# GitHub Tool Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: github-tool-secret
+  namespace: default
+type: Opaque
+data:
+  credentials: <base64-encoded-github-token>
+  # echo -n "ghp_your_github_token" | base64

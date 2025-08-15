@@ -1,0 +1,107 @@
+apiVersion: llm.geeper.io/v1alpha1
+kind: Deployment
+metadata:
+  name: ollama-with-tools
+  namespace: default
+spec:
+  ollama:
+    replicas: 1
+    image: ollama/ollama
+    imageTag: latest
+    models:
+      - "llama2:7b"
+      - "mistral:7b"
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "2Gi"
+      limits:
+        cpu: "2"
+        memory: "4Gi"
+    serviceType: ClusterIP
+    servicePort: 11434
+
+  openwebui:
+    enabled: true
+    replicas: 1
+    image: ghcr.io/open-webui/open-webui
+    imageTag: latest
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "512Mi"
+      limits:
+        cpu: "1"
+        memory: "1Gi"
+    serviceType: ClusterIP
+    servicePort: 8080
+    ingressEnabled: true
+    ingressHost: "openwebui.example.com"
+    
+    # External tools that OpenWebUI will use
+    plugins:
+      # Weather API tool
+      - name: "weather-tool"
+        enabled: true
+        type: "openapi"
+        image: "openapitools/openapi-generator-cli"
+        imageTag: latest
+        replicas: 1
+        port: 8081
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi"
+        serviceType: ClusterIP
+        configMapName: "weather-tool-config"
+        secretName: "weather-tool-secret"
+
+      # Document processing tool
+      - name: "document-tool"
+        enabled: true
+        type: "custom"
+        image: "custom/document-processor"
+        imageTag: v1.0.0
+        replicas: 1
+        port: 8082
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+          limits:
+            cpu: "1"
+            memory: "512Mi"
+        serviceType: ClusterIP
+        configMapName: "document-tool-config"
+        envVars:
+          - name: "PROCESSING_MODE"
+            value: "async"
+        volumeMounts:
+          - name: shared-storage
+            mountPath: /data
+        volumes:
+          - name: shared-storage
+            persistentVolumeClaim:
+              claimName: document-storage-pvc
+
+      # GitHub API tool
+      - name: "github-tool"
+        enabled: true
+        type: "openapi"
+        image: "ghcr.io/octokit/octokit.rb"
+        imageTag: latest
+        replicas: 1
+        port: 8083
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "150Mi"
+          limits:
+            cpu: "300m"
+            memory: "300Mi"
+        serviceType: ClusterIP
+        configMapName: "github-tool-config"
+        secretName: "github-tool-secret"
