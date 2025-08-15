@@ -1,0 +1,185 @@
+/*
+Copyright 2025.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+package v1alpha1
+
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+// OllamaModel defines a model to be deployed with Ollama
+// Format: "modelname:tag" (e.g., "llama2:7b", "mistral:7b", "codellama:13b")
+type OllamaModel string
+
+// OllamaSpec defines the desired state of Ollama deployment
+type OllamaSpec struct {
+	// Replicas is the number of Ollama pods to run
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=10
+	Replicas int32 `json:"replicas,omitempty"`
+
+	// Image is the Ollama container image to use
+	Image string `json:"image,omitempty"`
+
+	// ImageTag is the Ollama image tag to use
+	ImageTag string `json:"imageTag,omitempty"`
+
+	// Resources defines the resource requirements for Ollama pods
+	Resources ResourceRequirements `json:"resources,omitempty"`
+
+	// Models is the list of models to deploy with Ollama
+	Models []OllamaModel `json:"models"`
+
+	// ServiceType is the type of service to expose Ollama
+	// +kubebuilder:validation:Enum=ClusterIP;NodePort;LoadBalancer
+	ServiceType string `json:"serviceType,omitempty"`
+
+	// ServicePort is the port to expose Ollama service
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	ServicePort int32 `json:"servicePort,omitempty"`
+}
+
+// OpenWebUISpec defines the desired state of OpenWebUI deployment
+type OpenWebUISpec struct {
+	// Enabled determines if OpenWebUI should be deployed
+	Enabled bool `json:"enabled,omitempty"`
+
+	// Replicas is the number of OpenWebUI pods to run
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=5
+	Replicas int32 `json:"replicas,omitempty"`
+
+	// Image is the OpenWebUI container image to use
+	Image string `json:"image,omitempty"`
+
+	// ImageTag is the OpenWebUI image tag to use
+	ImageTag string `json:"imageTag,omitempty"`
+
+	// Resources defines the resource requirements for OpenWebUI pods
+	Resources ResourceRequirements `json:"resources,omitempty"`
+
+	// ServiceType is the type of service to expose OpenWebUI
+	// +kubebuilder:validation:Enum=ClusterIP;NodePort;LoadBalancer
+	ServiceType string `json:"serviceType,omitempty"`
+
+	// ServicePort is the port to expose OpenWebUI service
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	ServicePort int32 `json:"servicePort,omitempty"`
+
+	// IngressEnabled determines if an Ingress should be created
+	IngressEnabled bool `json:"ingressEnabled,omitempty"`
+
+	// IngressHost is the hostname for the Ingress
+	IngressHost string `json:"ingressHost,omitempty"`
+}
+
+// ResourceRequirements describes the compute resource requirements
+type ResourceRequirements struct {
+	// Limits describes the maximum amount of compute resources allowed
+	Limits ResourceList `json:"limits,omitempty"`
+
+	// Requests describes the minimum amount of compute resources required
+	Requests ResourceList `json:"requests,omitempty"`
+}
+
+// ResourceList is a set of (resource name, quantity) pairs
+type ResourceList struct {
+	// CPU is the CPU resource (e.g., "100m", "2")
+	CPU string `json:"cpu,omitempty"`
+
+	// Memory is the memory resource (e.g., "128Mi", "2Gi")
+	Memory string `json:"memory,omitempty"`
+
+	// Storage is the storage resource (e.g., "1Gi", "100Gi")
+	Storage string `json:"storage,omitempty"`
+}
+
+// DeploymentSpec defines the desired state of Deployment
+type DeploymentSpec struct {
+	// Ollama defines the Ollama deployment configuration
+	Ollama OllamaSpec `json:"ollama"`
+
+	// OpenWebUI defines the OpenWebUI deployment configuration
+	OpenWebUI OpenWebUISpec `json:"openwebui,omitempty"`
+}
+
+// DeploymentStatus defines the observed state of Deployment
+type DeploymentStatus struct {
+	// Phase represents the current phase of the deployment
+	Phase string `json:"phase,omitempty"`
+
+	// Conditions represent the latest available observations of the deployment's current state
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
+
+	// OllamaStatus represents the status of Ollama deployment
+	OllamaStatus DeploymentComponentStatus `json:"ollamaStatus,omitempty"`
+
+	// OpenWebUIStatus represents the status of OpenWebUI deployment
+	OpenWebUIStatus DeploymentComponentStatus `json:"openwebuiStatus,omitempty"`
+
+	// ReadyReplicas is the number of ready replicas
+	ReadyReplicas int32 `json:"readyReplicas,omitempty"`
+
+	// TotalReplicas is the total number of replicas
+	TotalReplicas int32 `json:"totalReplicas,omitempty"`
+}
+
+// DeploymentComponentStatus represents the status of a deployment component
+type DeploymentComponentStatus struct {
+	// AvailableReplicas is the number of available replicas
+	AvailableReplicas int32 `json:"availableReplicas,omitempty"`
+
+	// ReadyReplicas is the number of ready replicas
+	ReadyReplicas int32 `json:"readyReplicas,omitempty"`
+
+	// UpdatedReplicas is the number of updated replicas
+	UpdatedReplicas int32 `json:"updatedReplicas,omitempty"`
+
+	// Conditions represent the latest available observations of the component's current state
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
+}
+
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase"
+// +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.readyReplicas"
+// +kubebuilder:printcolumn:name="Total",type="string",JSONPath=".status.totalReplicas"
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+// +kubebuilder:resource:scope=Namespaced,shortName=ollamadep
+
+// Deployment is the Schema for the ollamadeployments API
+type Deployment struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	Spec   DeploymentSpec   `json:"spec,omitempty"`
+	Status DeploymentStatus `json:"status,omitempty"`
+}
+
+// +kubebuilder:object:root=true
+
+// DeploymentList contains a list of Deployment
+type DeploymentList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []Deployment `json:"items"`
+}
+
+func init() {
+	SchemeBuilder.Register(&Deployment{}, &DeploymentList{})
+}

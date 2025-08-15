@@ -1,0 +1,5 @@
+## Append samples of your project ##
+resources:
+- v1alpha1_deployment.yaml
+- v1alpha1_ollama_deployment.yaml
+# +kubebuilder:scaffold:manifestskustomizesamples

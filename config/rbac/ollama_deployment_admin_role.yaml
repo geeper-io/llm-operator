@@ -1,0 +1,76 @@
+# An admin role, containing all permissions an admin would need.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ollama-deployment-admin-role
+rules:
+- apiGroups:
+  - llm.geeper.io
+  resources:
+  - ollamadeployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - llm.geeper.io
+  resources:
+  - ollamadeployments/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - llm.geeper.io
+  resources:
+  - ollamadeployments/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - core
+  resources:
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - core
+  resources:
+  - pods
+  verbs:
+  - get
+  - list
+  - watch

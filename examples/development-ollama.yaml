@@ -1,0 +1,37 @@
+apiVersion: llm.geeper.io/v1alpha1
+kind: OllamaDeployment
+metadata:
+  name: dev-ollama
+  namespace: development
+spec:
+  ollama:
+    replicas: 1
+    image: ollama/ollama
+    imageTag: latest
+    serviceType: NodePort
+    servicePort: 11434
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "1Gi"
+      limits:
+        cpu: "2"
+        memory: "4Gi"
+    models:
+      - "llama2:7b"
+  
+  openwebui:
+    enabled: true
+    replicas: 1
+    image: ghcr.io/open-webui/open-webui
+    imageTag: main
+    serviceType: NodePort
+    servicePort: 8080
+    ingressEnabled: false
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"

@@ -1,0 +1,11 @@
+apiVersion: llm.geeper.io/v1alpha1
+kind: Deployment
+metadata:
+  name: minimal-ollama
+  namespace: default
+spec:
+  ollama:
+    models:
+      - "llama3.2:1b"
+  openwebui:
+    enabled: true

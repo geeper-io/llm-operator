@@ -1,0 +1,40 @@
+apiVersion: llm.geeper.io/v1alpha1
+kind: OllamaDeployment
+metadata:
+  name: ollama-example
+  namespace: default
+spec:
+  ollama:
+    replicas: 1
+    image: ollama/ollama
+    imageTag: latest
+    serviceType: ClusterIP
+    servicePort: 11434
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "1Gi"
+      limits:
+        cpu: "2"
+        memory: "4Gi"
+    models:
+      - "llama2:7b"
+      - "mistral:7b"
+      - "codellama:7b"
+  
+  openwebui:
+    enabled: true
+    replicas: 1
+    image: ghcr.io/open-webui/open-webui
+    imageTag: main
+    serviceType: ClusterIP
+    servicePort: 8080
+    ingressEnabled: true
+    ingressHost: "ollama-webui.local"
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "256Mi"
+      limits:
+        cpu: "500m"
+        memory: "512Mi"

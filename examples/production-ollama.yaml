@@ -1,0 +1,41 @@
+apiVersion: llm.geeper.io/v1alpha1
+kind: OllamaDeployment
+metadata:
+  name: production-ollama
+  namespace: ai-production
+spec:
+  ollama:
+    replicas: 3
+    image: ollama/ollama
+    imageTag: latest
+    serviceType: LoadBalancer
+    servicePort: 11434
+    resources:
+      requests:
+        cpu: "2"
+        memory: "4Gi"
+      limits:
+        cpu: "8"
+        memory: "16Gi"
+    models:
+      - "llama2:13b"
+      - "codellama:34b"
+      - "mistral:7b"
+      - "phi:2.7b"
+  
+  openwebui:
+    enabled: true
+    replicas: 2
+    image: ghcr.io/open-webui/open-webui
+    imageTag: main
+    serviceType: ClusterIP
+    servicePort: 8080
+    ingressEnabled: true
+    ingressHost: "ai.company.com"
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "1Gi"
+      limits:
+        cpu: "2"
+        memory: "2Gi"
