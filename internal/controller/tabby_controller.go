@@ -30,7 +30,7 @@ func (r *OllamaDeploymentReconciler) reconcileTabby(ctx context.Context, deploym
 	}
 
 	// Create or update Tabby ingress if enabled
-	if deployment.Spec.Tabby.IngressEnabled && deployment.Spec.Tabby.IngressHost != "" {
+	if deployment.Spec.Tabby.Ingress.Enabled && deployment.Spec.Tabby.Ingress.Host != "" {
 		tabbyIngress := r.buildTabbyIngress(deployment)
 		if err := r.createOrUpdateIngress(ctx, tabbyIngress); err != nil {
 			return err
@@ -60,7 +60,7 @@ func (r *OllamaDeploymentReconciler) buildTabbyDeployment(deployment *llmgeeperi
 	if replicas == 0 {
 		replicas = 1
 	}
-	servicePort := deployment.Spec.Tabby.ServicePort
+	servicePort := deployment.Spec.Tabby.Service.Port
 	if servicePort == 0 {
 		servicePort = 8080
 	}
@@ -72,7 +72,7 @@ func (r *OllamaDeploymentReconciler) buildTabbyDeployment(deployment *llmgeeperi
 	}
 	ollamaServicePort := deployment.Spec.Tabby.OllamaServicePort
 	if ollamaServicePort == 0 {
-		ollamaServicePort = deployment.Spec.Ollama.ServicePort
+		ollamaServicePort = deployment.Spec.Ollama.Service.Port
 		if ollamaServicePort == 0 {
 			ollamaServicePort = 11434
 		}
@@ -190,12 +190,12 @@ func (r *OllamaDeploymentReconciler) buildTabbyService(deployment *llmgeeperiov1
 		"llm-deployment": deployment.Name,
 	}
 
-	servicePort := deployment.Spec.Tabby.ServicePort
+	servicePort := deployment.Spec.Tabby.Service.Port
 	if servicePort == 0 {
 		servicePort = 8080
 	}
 
-	serviceType := deployment.Spec.Tabby.ServiceType
+	serviceType := deployment.Spec.Tabby.Service.Type
 	if serviceType == "" {
 		serviceType = "ClusterIP"
 	}
@@ -232,12 +232,12 @@ func (r *OllamaDeploymentReconciler) buildTabbyIngress(deployment *llmgeeperiov1
 		"llm-deployment": deployment.Name,
 	}
 
-	servicePort := deployment.Spec.Tabby.ServicePort
+	servicePort := deployment.Spec.Tabby.Service.Port
 	if servicePort == 0 {
 		servicePort = 8080
 	}
 
-	ingressHost := deployment.Spec.Tabby.IngressHost
+	ingressHost := deployment.Spec.Tabby.Ingress.Host
 	if ingressHost == "" {
 		ingressHost = fmt.Sprintf("tabby-%s.localhost", deployment.Name)
 	}

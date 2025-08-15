@@ -54,7 +54,7 @@ func (r *OllamaDeploymentReconciler) reconcileOpenWebUI(ctx context.Context, dep
 	}
 
 	// Create or update Ingress if enabled
-	if deployment.Spec.OpenWebUI.IngressEnabled && deployment.Spec.OpenWebUI.IngressHost != "" {
+	if deployment.Spec.OpenWebUI.Ingress.Enabled && deployment.Spec.OpenWebUI.Ingress.Host != "" {
 		ingress := r.buildOpenWebUIIngress(deployment)
 		if err := r.createOrUpdateIngress(ctx, ingress); err != nil {
 			return err
@@ -77,7 +77,7 @@ func (r *OllamaDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgee
 	envVars := []corev1.EnvVar{
 		{
 			Name:  "OLLAMA_BASE_URL",
-			Value: fmt.Sprintf("http://%s:%d", ollamaServiceName, deployment.Spec.Ollama.ServicePort),
+			Value: fmt.Sprintf("http://%s:%d", ollamaServiceName, deployment.Spec.Ollama.Service.Port),
 		},
 		{
 			Name:  "WEBUI_SECRET_KEY",
@@ -134,7 +134,7 @@ func (r *OllamaDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgee
 							Ports: []corev1.ContainerPort{
 								{
 									Name:          "http",
-									ContainerPort: deployment.Spec.OpenWebUI.ServicePort,
+									ContainerPort: deployment.Spec.OpenWebUI.Service.Port,
 									Protocol:      corev1.ProtocolTCP,
 								},
 							},
@@ -168,12 +168,12 @@ func (r *OllamaDeploymentReconciler) buildOpenWebUIService(deployment *llmgeeper
 			Labels:    labels,
 		},
 		Spec: corev1.ServiceSpec{
-			Type: corev1.ServiceType(deployment.Spec.OpenWebUI.ServiceType),
+			Type: corev1.ServiceType(deployment.Spec.OpenWebUI.Service.Type),
 			Ports: []corev1.ServicePort{
 				{
 					Name:       "http",
-					Port:       deployment.Spec.OpenWebUI.ServicePort,
-					TargetPort: intstr.FromInt32(deployment.Spec.OpenWebUI.ServicePort),
+					Port:       deployment.Spec.OpenWebUI.Service.Port,
+					TargetPort: intstr.FromInt32(deployment.Spec.OpenWebUI.Service.Port),
 					Protocol:   corev1.ProtocolTCP,
 				},
 			},
@@ -205,7 +205,7 @@ func (r *OllamaDeploymentReconciler) buildOpenWebUIIngress(deployment *llmgeeper
 		Spec: networkingv1.IngressSpec{
 			Rules: []networkingv1.IngressRule{
 				{
-					Host: deployment.Spec.OpenWebUI.IngressHost,
+					Host: deployment.Spec.OpenWebUI.Ingress.Host,
 					IngressRuleValue: networkingv1.IngressRuleValue{
 						HTTP: &networkingv1.HTTPIngressRuleValue{
 							Paths: []networkingv1.HTTPIngressPath{
@@ -216,7 +216,7 @@ func (r *OllamaDeploymentReconciler) buildOpenWebUIIngress(deployment *llmgeeper
 										Service: &networkingv1.IngressServiceBackend{
 											Name: serviceName,
 											Port: networkingv1.ServiceBackendPort{
-												Number: deployment.Spec.OpenWebUI.ServicePort,
+												Number: deployment.Spec.OpenWebUI.Service.Port,
 											},
 										},
 									},

@@ -165,8 +165,8 @@ Tabby provides AI-powered code completion by connecting to your Ollama models. I
 | `spec.ollama.replicas` | int32 | Number of Ollama pods | 1 |
 | `spec.ollama.image` | string | Ollama container image | `ollama/ollama` |
 | `spec.ollama.imageTag` | string | Ollama image tag | `latest` |
-| `spec.ollama.serviceType` | string | Service type (ClusterIP, NodePort, LoadBalancer) | `ClusterIP` |
-| `spec.ollama.servicePort` | int32 | Service port | `11434` |
+| `spec.ollama.service.type` | string | Service type (ClusterIP, NodePort, LoadBalancer) | `ClusterIP` |
+| `spec.ollama.service.port` | int32 | Service port | `11434` |
 | `spec.ollama.models` | []OllamaModel | List of models to deploy | Required |
 | `spec.ollama.resources` | ResourceRequirements | Resource limits and requests | None |
 
@@ -186,8 +186,22 @@ Tabby provides AI-powered code completion by connecting to your Ollama models. I
 | `spec.openwebui.replicas` | int32 | Number of OpenWebUI pods | 1 |
 | `spec.openwebui.image` | string | OpenWebUI container image | `ghcr.io/open-webui/open-webui` |
 | `spec.openwebui.imageTag` | string | OpenWebUI image tag | `main` |
-| `spec.openwebui.ingressEnabled` | bool | Enable ingress | false |
-| `spec.openwebui.ingressHost` | string | Ingress hostname | None |
+| `spec.openwebui.ingress.enabled` | bool | Enable ingress | false |
+| `spec.openwebui.ingress.host` | string | Ingress hostname | None |
+
+### Tabby Configuration
+
+| Field | Type | Description | Default |
+|-------|------|-------------|---------|
+| `spec.tabby.enabled` | bool | Enable Tabby deployment | false |
+| `spec.tabby.replicas` | int32 | Number of Tabby pods | 1 |
+| `spec.tabby.image` | string | Tabby container image | `tabbyml/tabby` |
+| `spec.tabby.imageTag` | string | Tabby image tag | `latest` |
+| `spec.tabby.service.type` | string | Service type (ClusterIP, NodePort, LoadBalancer) | `ClusterIP` |
+| `spec.tabby.service.port` | int32 | Service port | `8080` |
+| `spec.tabby.ingress.enabled` | bool | Enable ingress | false |
+| `spec.tabby.ingress.host` | string | Ingress hostname | None |
+| `spec.tabby.modelName` | string | Ollama model to use | Auto-detected |
 
 ## Monitoring
 
@@ -201,6 +215,7 @@ Status fields include:
 - `status.phase`: Overall deployment phase (Pending, Progressing, Ready)
 - `status.ollamaStatus`: Ollama deployment status
 - `status.openwebuiStatus`: OpenWebUI deployment status
+- `status.tabbyStatus`: Tabby deployment status
 - `status.readyReplicas`: Number of ready replicas
 - `status.totalReplicas`: Total number of replicas
 
@@ -247,6 +262,7 @@ make docker-push
 
 1. **Models not pulling**: Check Ollama container logs for postStart hook execution
 2. **OpenWebUI not connecting**: Verify Ollama service is accessible
+3. **Tabby not connecting**: Verify Ollama service is accessible and model is available
 3. **Resource constraints**: Ensure sufficient CPU/memory for model loading
 
 ### Debug Commands

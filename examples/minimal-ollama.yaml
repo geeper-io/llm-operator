@@ -11,5 +11,6 @@ spec:
       - "qwen3:0.6b"
   openwebui:
     enabled: true
-    ingressEnabled: true
-    ingressHost: "openwebui.localhost"
+    ingress:
+      enabled: true
+      host: "openwebui.localhost"

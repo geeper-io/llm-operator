@@ -8,8 +8,9 @@ spec:
     replicas: 1
     image: ollama/ollama
     imageTag: latest
-    serviceType: NodePort
-    servicePort: 11434
+    service:
+      type: NodePort
+      port: 11434
     resources:
       requests:
         cpu: "500m"
@@ -25,9 +26,11 @@ spec:
     replicas: 1
     image: ghcr.io/open-webui/open-webui
     imageTag: main
-    serviceType: NodePort
-    servicePort: 8080
-    ingressEnabled: false
+    service:
+      type: NodePort
+      port: 8080
+    ingress:
+      enabled: false
     resources:
       requests:
         cpu: "100m"

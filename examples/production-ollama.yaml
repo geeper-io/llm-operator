@@ -8,8 +8,9 @@ spec:
     replicas: 3
     image: ollama/ollama
     imageTag: latest
-    serviceType: LoadBalancer
-    servicePort: 11434
+    service:
+      type: LoadBalancer
+      port: 11434
     resources:
       requests:
         cpu: "2"
@@ -28,10 +29,12 @@ spec:
     replicas: 2
     image: ghcr.io/open-webui/open-webui
     imageTag: main
-    serviceType: ClusterIP
-    servicePort: 8080
-    ingressEnabled: true
-    ingressHost: "ai.company.com"
+    service:
+      type: ClusterIP
+      port: 8080
+    ingress:
+      enabled: true
+      host: "ai.company.com"
     resources:
       requests:
         cpu: "500m"

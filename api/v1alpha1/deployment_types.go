@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -44,14 +45,35 @@ type OllamaSpec struct {
 	// Models is the list of models to deploy with Ollama
 	Models []OllamaModel `json:"models"`
 
-	// ServiceType is the type of service to expose Ollama
-	// +kubebuilder:validation:Enum=ClusterIP;NodePort;LoadBalancer
-	ServiceType string `json:"serviceType,omitempty"`
+	// Service defines the service configuration for Ollama
+	Service ServiceSpec `json:"service,omitempty"`
+}
 
-	// ServicePort is the port to expose Ollama service
+// ServiceSpec defines service configuration
+type ServiceSpec struct {
+	// Type is the type of service to expose
+	// +kubebuilder:validation:Enum=ClusterIP;NodePort;LoadBalancer
+	Type string `json:"type,omitempty"`
+
+	// Port is the port to expose the service
 	// +kubebuilder:validation:Minimum=1
 	// +kubebuilder:validation:Maximum=65535
-	ServicePort int32 `json:"servicePort,omitempty"`
+	Port int32 `json:"port,omitempty"`
+}
+
+// IngressSpec defines ingress configuration
+type IngressSpec struct {
+	// Enabled determines if an Ingress should be created
+	Enabled bool `json:"enabled,omitempty"`
+
+	// Host is the hostname for the Ingress
+	Host string `json:"host,omitempty"`
+
+	// Annotations are custom annotations for the Ingress
+	Annotations map[string]string `json:"annotations,omitempty"`
+
+	// TLS configuration for the Ingress
+	TLS *networkingv1.IngressTLS `json:"tls,omitempty"`
 }
 
 // OpenWebUISpec defines the desired state of OpenWebUI deployment
@@ -73,20 +95,11 @@ type OpenWebUISpec struct {
 	// Resources defines the resource requirements for OpenWebUI pods
 	Resources ResourceRequirements `json:"resources,omitempty"`
 
-	// ServiceType is the type of service to expose OpenWebUI
-	// +kubebuilder:validation:Enum=ClusterIP;NodePort;LoadBalancer
-	ServiceType string `json:"serviceType,omitempty"`
+	// Service defines the service configuration for OpenWebUI
+	Service ServiceSpec `json:"service,omitempty"`
 
-	// ServicePort is the port to expose OpenWebUI service
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=65535
-	ServicePort int32 `json:"servicePort,omitempty"`
-
-	// IngressEnabled determines if an Ingress should be created
-	IngressEnabled bool `json:"ingressEnabled,omitempty"`
-
-	// IngressHost is the hostname for the Ingress
-	IngressHost string `json:"ingressHost,omitempty"`
+	// Ingress defines the ingress configuration for OpenWebUI
+	Ingress IngressSpec `json:"ingress,omitempty"`
 
 	// Plugins defines the list of plugins to deploy and configure
 	Plugins []OpenWebUIPlugin `json:"plugins,omitempty"`
@@ -111,20 +124,11 @@ type TabbySpec struct {
 	// Resources defines the resource requirements for Tabby pods
 	Resources ResourceRequirements `json:"resources,omitempty"`
 
-	// ServiceType is the type of service to expose Tabby
-	// +kubebuilder:validation:Enum=ClusterIP;NodePort;LoadBalancer
-	ServiceType string `json:"serviceType,omitempty"`
+	// Service defines the service configuration for Tabby
+	Service ServiceSpec `json:"service,omitempty"`
 
-	// ServicePort is the port to expose Tabby service
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=65535
-	ServicePort int32 `json:"servicePort,omitempty"`
-
-	// IngressEnabled determines if an Ingress should be created
-	IngressEnabled bool `json:"ingressEnabled,omitempty"`
-
-	// IngressHost is the hostname for the Ingress
-	IngressHost string `json:"ingressHost,omitempty"`
+	// Ingress defines the ingress configuration for Tabby
+	Ingress IngressSpec `json:"ingress,omitempty"`
 
 	// OllamaServiceName is the name of the Ollama service to connect to
 	// If not specified, it will default to the deployment's Ollama service

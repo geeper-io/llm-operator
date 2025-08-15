@@ -114,19 +114,23 @@ spec:
                             type: string
                         type: object
                     type: object
-                  servicePort:
-                    description: ServicePort is the port to expose Ollama service
-                    format: int32
-                    maximum: 65535
-                    minimum: 1
-                    type: integer
-                  serviceType:
-                    description: ServiceType is the type of service to expose Ollama
-                    enum:
-                    - ClusterIP
-                    - NodePort
-                    - LoadBalancer
-                    type: string
+                  service:
+                    description: Service defines the service configuration for Ollama
+                    properties:
+                      port:
+                        description: Port is the port to expose the service
+                        format: int32
+                        maximum: 65535
+                        minimum: 1
+                        type: integer
+                      type:
+                        description: Type is the type of service to expose
+                        enum:
+                        - ClusterIP
+                        - NodePort
+                        - LoadBalancer
+                        type: string
+                    type: object
                 required:
                 - models
                 type: object
@@ -142,13 +146,43 @@ spec:
                   imageTag:
                     description: ImageTag is the OpenWebUI image tag to use
                     type: string
-                  ingressEnabled:
-                    description: IngressEnabled determines if an Ingress should be
-                      created
-                    type: boolean
-                  ingressHost:
-                    description: IngressHost is the hostname for the Ingress
-                    type: string
+                  ingress:
+                    description: Ingress defines the ingress configuration for OpenWebUI
+                    properties:
+                      annotations:
+                        additionalProperties:
+                          type: string
+                        description: Annotations are custom annotations for the Ingress
+                        type: object
+                      enabled:
+                        description: Enabled determines if an Ingress should be created
+                        type: boolean
+                      host:
+                        description: Host is the hostname for the Ingress
+                        type: string
+                      tls:
+                        description: TLS configuration for the Ingress
+                        properties:
+                          hosts:
+                            description: |-
+                              hosts is a list of hosts included in the TLS certificate. The values in
+                              this list must match the name/s used in the tlsSecret. Defaults to the
+                              wildcard host setting for the loadbalancer controller fulfilling this
+                              Ingress, if left unspecified.
+                            items:
+                              type: string
+                            type: array
+                            x-kubernetes-list-type: atomic
+                          secretName:
+                            description: |-
+                              secretName is the name of the secret used to terminate TLS traffic on
+                              port 443. Field is left optional to allow TLS routing based on SNI
+                              hostname alone. If the SNI host in a listener conflicts with the "Host"
+                              header field used by an IngressRule, the SNI host is used for termination
+                              and value of the "Host" header is used for routing.
+                            type: string
+                        type: object
+                    type: object
                   plugins:
                     description: Plugins defines the list of plugins to deploy and
                       configure
@@ -2291,19 +2325,23 @@ spec:
                             type: string
                         type: object
                     type: object
-                  servicePort:
-                    description: ServicePort is the port to expose OpenWebUI service
-                    format: int32
-                    maximum: 65535
-                    minimum: 1
-                    type: integer
-                  serviceType:
-                    description: ServiceType is the type of service to expose OpenWebUI
-                    enum:
-                    - ClusterIP
-                    - NodePort
-                    - LoadBalancer
-                    type: string
+                  service:
+                    description: Service defines the service configuration for OpenWebUI
+                    properties:
+                      port:
+                        description: Port is the port to expose the service
+                        format: int32
+                        maximum: 65535
+                        minimum: 1
+                        type: integer
+                      type:
+                        description: Type is the type of service to expose
+                        enum:
+                        - ClusterIP
+                        - NodePort
+                        - LoadBalancer
+                        type: string
+                    type: object
                 type: object
               tabby:
                 description: Tabby defines the Tabby deployment configuration
@@ -2437,13 +2475,43 @@ spec:
                   imageTag:
                     description: ImageTag is the Tabby image tag to use
                     type: string
-                  ingressEnabled:
-                    description: IngressEnabled determines if an Ingress should be
-                      created
-                    type: boolean
-                  ingressHost:
-                    description: IngressHost is the hostname for the Ingress
-                    type: string
+                  ingress:
+                    description: Ingress defines the ingress configuration for Tabby
+                    properties:
+                      annotations:
+                        additionalProperties:
+                          type: string
+                        description: Annotations are custom annotations for the Ingress
+                        type: object
+                      enabled:
+                        description: Enabled determines if an Ingress should be created
+                        type: boolean
+                      host:
+                        description: Host is the hostname for the Ingress
+                        type: string
+                      tls:
+                        description: TLS configuration for the Ingress
+                        properties:
+                          hosts:
+                            description: |-
+                              hosts is a list of hosts included in the TLS certificate. The values in
+                              this list must match the name/s used in the tlsSecret. Defaults to the
+                              wildcard host setting for the loadbalancer controller fulfilling this
+                              Ingress, if left unspecified.
+                            items:
+                              type: string
+                            type: array
+                            x-kubernetes-list-type: atomic
+                          secretName:
+                            description: |-
+                              secretName is the name of the secret used to terminate TLS traffic on
+                              port 443. Field is left optional to allow TLS routing based on SNI
+                              hostname alone. If the SNI host in a listener conflicts with the "Host"
+                              header field used by an IngressRule, the SNI host is used for termination
+                              and value of the "Host" header is used for routing.
+                            type: string
+                        type: object
+                    type: object
                   modelName:
                     description: ModelName is the name of the Ollama model to use
                       for code completion
@@ -2502,19 +2570,23 @@ spec:
                             type: string
                         type: object
                     type: object
-                  servicePort:
-                    description: ServicePort is the port to expose Tabby service
-                    format: int32
-                    maximum: 65535
-                    minimum: 1
-                    type: integer
-                  serviceType:
-                    description: ServiceType is the type of service to expose Tabby
-                    enum:
-                    - ClusterIP
-                    - NodePort
-                    - LoadBalancer
-                    type: string
+                  service:
+                    description: Service defines the service configuration for Tabby
+                    properties:
+                      port:
+                        description: Port is the port to expose the service
+                        format: int32
+                        maximum: 65535
+                        minimum: 1
+                        type: integer
+                      type:
+                        description: Type is the type of service to expose
+                        enum:
+                        - ClusterIP
+                        - NodePort
+                        - LoadBalancer
+                        type: string
+                    type: object
                   volumeMounts:
                     description: VolumeMounts defines volume mounts for Tabby
                     items:

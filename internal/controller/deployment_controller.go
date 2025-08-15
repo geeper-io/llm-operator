@@ -150,11 +150,11 @@ func (r *OllamaDeploymentReconciler) setDefaults(deployment *llmgeeperiov1alpha1
 	if deployment.Spec.Ollama.Replicas == 0 {
 		deployment.Spec.Ollama.Replicas = 1
 	}
-	if deployment.Spec.Ollama.ServiceType == "" {
-		deployment.Spec.Ollama.ServiceType = "ClusterIP"
+	if deployment.Spec.Ollama.Service.Type == "" {
+		deployment.Spec.Ollama.Service.Type = "ClusterIP"
 	}
-	if deployment.Spec.Ollama.ServicePort == 0 {
-		deployment.Spec.Ollama.ServicePort = 11434
+	if deployment.Spec.Ollama.Service.Port == 0 {
+		deployment.Spec.Ollama.Service.Port = 11434
 	}
 
 	// Set OpenWebUI defaults
@@ -167,11 +167,11 @@ func (r *OllamaDeploymentReconciler) setDefaults(deployment *llmgeeperiov1alpha1
 	if deployment.Spec.OpenWebUI.Replicas == 0 {
 		deployment.Spec.OpenWebUI.Replicas = 1
 	}
-	if deployment.Spec.OpenWebUI.ServiceType == "" {
-		deployment.Spec.OpenWebUI.ServiceType = "ClusterIP"
+	if deployment.Spec.OpenWebUI.Service.Type == "" {
+		deployment.Spec.OpenWebUI.Service.Type = "ClusterIP"
 	}
-	if deployment.Spec.OpenWebUI.ServicePort == 0 {
-		deployment.Spec.OpenWebUI.ServicePort = 8080
+	if deployment.Spec.OpenWebUI.Service.Port == 0 {
+		deployment.Spec.OpenWebUI.Service.Port = 8080
 	}
 
 	// Set Tabby defaults
@@ -184,11 +184,11 @@ func (r *OllamaDeploymentReconciler) setDefaults(deployment *llmgeeperiov1alpha1
 	if deployment.Spec.Tabby.Replicas == 0 {
 		deployment.Spec.Tabby.Replicas = 1
 	}
-	if deployment.Spec.Tabby.ServiceType == "" {
-		deployment.Spec.Tabby.ServiceType = "ClusterIP"
+	if deployment.Spec.Tabby.Service.Type == "" {
+		deployment.Spec.Tabby.Service.Type = "ClusterIP"
 	}
-	if deployment.Spec.Tabby.ServicePort == 0 {
-		deployment.Spec.Tabby.ServicePort = 8080
+	if deployment.Spec.Tabby.Service.Port == 0 {
+		deployment.Spec.Tabby.Service.Port = 8080
 	}
 }
 

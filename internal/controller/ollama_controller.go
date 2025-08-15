@@ -99,7 +99,7 @@ func (r *OllamaDeploymentReconciler) buildOllamaDeployment(deployment *llmgeeper
 							Ports: []corev1.ContainerPort{
 								{
 									Name:          "http",
-									ContainerPort: deployment.Spec.Ollama.ServicePort,
+									ContainerPort: deployment.Spec.Ollama.Service.Port,
 									Protocol:      corev1.ProtocolTCP,
 								},
 							},
@@ -151,12 +151,12 @@ func (r *OllamaDeploymentReconciler) buildOllamaService(deployment *llmgeeperiov
 			Labels:    labels,
 		},
 		Spec: corev1.ServiceSpec{
-			Type: corev1.ServiceType(deployment.Spec.Ollama.ServiceType),
+			Type: corev1.ServiceType(deployment.Spec.Ollama.Service.Type),
 			Ports: []corev1.ServicePort{
 				{
 					Name:       "http",
-					Port:       deployment.Spec.Ollama.ServicePort,
-					TargetPort: intstr.FromInt32(deployment.Spec.Ollama.ServicePort),
+					Port:       deployment.Spec.Ollama.Service.Port,
+					TargetPort: intstr.FromInt32(deployment.Spec.Ollama.Service.Port),
 					Protocol:   corev1.ProtocolTCP,
 				},
 			},

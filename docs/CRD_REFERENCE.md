@@ -40,14 +40,29 @@ kind: OllamaDeployment
 | `imageTag` | string | No | `latest` | Ollama image tag |
 | `resources` | [ResourceRequirements](#resourcerequirements) | No | None | Resource limits and requests |
 | `models` | [OllamaModel](#ollamamodel)[] | Yes | - | List of models to deploy |
-| `serviceType` | string | No | `ClusterIP` | Service type (ClusterIP, NodePort, LoadBalancer) |
-| `servicePort` | int32 | No | 11434 | Service port (1-65535) |
+| `service` | [ServiceSpec](#servicespec) | No | Default service config | Service configuration |
 
 ### OllamaModel
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `OllamaModel` | string | Yes | Model specification in "modelname:tag" format (e.g., "llama2:7b", "mistral:7b") |
+
+### ServiceSpec
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `type` | string | No | `ClusterIP` | Service type (ClusterIP, NodePort, LoadBalancer) |
+| `port` | int32 | No | Component-specific | Service port (1-65535) |
+
+### IngressSpec
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `enabled` | bool | No | false | Enable ingress for the component |
+| `host` | string | No | None | Hostname for the ingress |
+| `annotations` | map[string]string | No | None | Custom annotations for the ingress |
+| `tls` | [IngressTLS](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#ingresstls-v1-networking) | No | None | TLS configuration for the ingress |
 
 ### OpenWebUISpec
 
@@ -58,10 +73,8 @@ kind: OllamaDeployment
 | `image` | string | No | `ghcr.io/open-webui/open-webui` | OpenWebUI container image |
 | `imageTag` | string | No | `main` | OpenWebUI image tag |
 | `resources` | [ResourceRequirements](#resourcerequirements) | No | None | Resource limits and requests |
-| `serviceType` | string | No | `ClusterIP` | Service type (ClusterIP, NodePort, LoadBalancer) |
-| `servicePort` | int32 | No | 8080 | Service port (1-65535) |
-| `ingressEnabled` | bool | No | false | Enable ingress |
-| `ingressHost` | string | No | None | Ingress hostname |
+| `service` | [ServiceSpec](#servicespec) | No | Default service config | Service configuration |
+| `ingress` | [IngressSpec](#ingressspec) | No | Default ingress config | Ingress configuration |
 
 ### TabbySpec
 
@@ -72,10 +85,8 @@ kind: OllamaDeployment
 | `image` | string | No | `tabbyml/tabby` | Tabby container image |
 | `imageTag` | string | No | `latest` | Tabby image tag |
 | `resources` | [ResourceRequirements](#resourcerequirements) | No | None | Resource limits and requests |
-| `serviceType` | string | No | `ClusterIP` | Service type (ClusterIP, NodePort, LoadBalancer) |
-| `servicePort` | int32 | No | 8080 | Service port (1-65535) |
-| `ingressEnabled` | bool | No | false | Enable ingress |
-| `ingressHost` | string | No | None | Ingress hostname |
+| `service` | [ServiceSpec](#servicespec) | No | Default service config | Service configuration |
+| `ingress` | [IngressSpec](#ingressspec) | No | Default ingress config | Ingress configuration |
 | `ollamaServiceName` | string | No | Auto-generated | Ollama service name to connect to |
 | `ollamaServicePort` | int32 | No | Auto-detected | Ollama service port to connect to |
 | `modelName` | string | No | Auto-detected | Ollama model to use for code completion |
@@ -213,8 +224,9 @@ spec:
   tabby:
     enabled: true
     replicas: 1
-    ingressEnabled: true
-    ingressHost: "tabby.localhost"
+    ingress:
+      enabled: true
+      host: "tabby.localhost"
     resources:
       requests:
         cpu: "250m"
@@ -251,10 +263,12 @@ spec:
     replicas: 2
     image: "tabbyml/tabby"
     imageTag: "latest"
-    serviceType: LoadBalancer
-    servicePort: 8080
-    ingressEnabled: true
-    ingressHost: "tabby.example.com"
+    service:
+      type: LoadBalancer
+      port: 8080
+    ingress:
+      enabled: true
+      host: "tabby.example.com"
     modelName: "codellama:13b"  # Use specific model
     ollamaServiceName: "custom-ollama"  # Custom Ollama service
     ollamaServicePort: 11434
