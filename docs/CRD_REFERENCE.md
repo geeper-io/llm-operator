@@ -87,8 +87,7 @@ kind: OllamaDeployment
 | `resources` | [ResourceRequirements](#resourcerequirements) | No | None | Resource limits and requests |
 | `service` | [ServiceSpec](#servicespec) | No | Default service config | Service configuration |
 | `ingress` | [IngressSpec](#ingressspec) | No | Default ingress config | Ingress configuration |
-| `ollamaServiceName` | string | No | Auto-generated | Ollama service name to connect to |
-| `ollamaServicePort` | int32 | No | Auto-detected | Ollama service port to connect to |
+
 | `modelName` | string | No | Auto-detected | Ollama model to use for code completion |
 | `envVars` | [corev1.EnvVar](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#envvar-v1-core)[] | No | None | Custom environment variables |
 | `volumeMounts` | [corev1.VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#volumemount-v1-core)[] | No | None | Custom volume mounts |
@@ -270,8 +269,6 @@ spec:
       enabled: true
       host: "tabby.example.com"
     modelName: "codellama:13b"  # Use specific model
-    ollamaServiceName: "custom-ollama"  # Custom Ollama service
-    ollamaServicePort: 11434
     resources:
       requests:
         cpu: "500m"

@@ -19,7 +19,6 @@ package controller
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"time"
 
@@ -358,7 +357,7 @@ func (r *OllamaDeploymentReconciler) updateStatus(ctx context.Context, deploymen
 	// Get Ollama deployment status
 	ollamaDeployment := &appsv1.Deployment{}
 	err := r.Get(ctx, types.NamespacedName{
-		Name:      fmt.Sprintf("%s-ollama", deployment.Name),
+		Name:      deployment.GetOllamaDeploymentName(),
 		Namespace: deployment.Namespace,
 	}, ollamaDeployment)
 
@@ -383,7 +382,7 @@ func (r *OllamaDeploymentReconciler) updateStatus(ctx context.Context, deploymen
 	if deployment.Spec.OpenWebUI.Enabled {
 		openwebuiDeployment := &appsv1.Deployment{}
 		err := r.Get(ctx, types.NamespacedName{
-			Name:      fmt.Sprintf("%s-openwebui", deployment.Name),
+			Name:      deployment.GetOpenWebUIDeploymentName(),
 			Namespace: deployment.Namespace,
 		}, openwebuiDeployment)
 
@@ -413,7 +412,7 @@ func (r *OllamaDeploymentReconciler) updateStatus(ctx context.Context, deploymen
 
 			pluginDeployment := &appsv1.Deployment{}
 			err := r.Get(ctx, types.NamespacedName{
-				Name:      fmt.Sprintf("%s-plugin-%s", deployment.Name, plugin.Name),
+				Name:      deployment.GetPluginDeploymentName(plugin.Name),
 				Namespace: deployment.Namespace,
 			}, pluginDeployment)
 
@@ -437,7 +436,7 @@ func (r *OllamaDeploymentReconciler) updateStatus(ctx context.Context, deploymen
 	if deployment.Spec.Tabby.Enabled {
 		tabbyDeployment := &appsv1.Deployment{}
 		err := r.Get(ctx, types.NamespacedName{
-			Name:      fmt.Sprintf("%s-tabby", deployment.Name),
+			Name:      deployment.GetTabbyDeploymentName(),
 			Namespace: deployment.Namespace,
 		}, tabbyDeployment)
 
@@ -490,7 +489,7 @@ func (r *OllamaDeploymentReconciler) updateStatus(ctx context.Context, deploymen
 			if plugin.Enabled {
 				pluginDeployment := &appsv1.Deployment{}
 				err := r.Get(ctx, types.NamespacedName{
-					Name:      fmt.Sprintf("%s-plugin-%s", deployment.Name, plugin.Name),
+					Name:      deployment.GetPluginDeploymentName(plugin.Name),
 					Namespace: deployment.Namespace,
 				}, pluginDeployment)
 

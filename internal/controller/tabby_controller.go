@@ -65,18 +65,9 @@ func (r *OllamaDeploymentReconciler) buildTabbyDeployment(deployment *llmgeeperi
 		servicePort = 8080
 	}
 
-	// Determine Ollama service details
-	ollamaServiceName := deployment.Spec.Tabby.OllamaServiceName
-	if ollamaServiceName == "" {
-		ollamaServiceName = fmt.Sprintf("%s-ollama", deployment.Name)
-	}
-	ollamaServicePort := deployment.Spec.Tabby.OllamaServicePort
-	if ollamaServicePort == 0 {
-		ollamaServicePort = deployment.Spec.Ollama.Service.Port
-		if ollamaServicePort == 0 {
-			ollamaServicePort = 11434
-		}
-	}
+	// Determine Ollama service details - always use the deployed Ollama service
+	ollamaServiceName := deployment.GetOllamaServiceName()
+	ollamaServicePort := deployment.GetOllamaServicePort()
 
 	// Set default model name if not specified
 	modelName := deployment.Spec.Tabby.ModelName
@@ -142,7 +133,7 @@ func (r *OllamaDeploymentReconciler) buildTabbyDeployment(deployment *llmgeeperi
 
 	tabbyDeployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-tabby", deployment.Name),
+			Name:      deployment.GetTabbyDeploymentName(),
 			Namespace: deployment.Namespace,
 			Labels:    labels,
 		},
@@ -202,7 +193,7 @@ func (r *OllamaDeploymentReconciler) buildTabbyService(deployment *llmgeeperiov1
 
 	tabbyService := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-tabby", deployment.Name),
+			Name:      deployment.GetTabbyServiceName(),
 			Namespace: deployment.Namespace,
 			Labels:    labels,
 		},
@@ -244,7 +235,7 @@ func (r *OllamaDeploymentReconciler) buildTabbyIngress(deployment *llmgeeperiov1
 
 	tabbyIngress := &networkingv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-tabby", deployment.Name),
+			Name:      deployment.GetTabbyIngressName(),
 			Namespace: deployment.Namespace,
 			Labels:    labels,
 		},
@@ -260,7 +251,7 @@ func (r *OllamaDeploymentReconciler) buildTabbyIngress(deployment *llmgeeperiov1
 									PathType: &[]networkingv1.PathType{networkingv1.PathTypePrefix}[0],
 									Backend: networkingv1.IngressBackend{
 										Service: &networkingv1.IngressServiceBackend{
-											Name: fmt.Sprintf("%s-tabby", deployment.Name),
+											Name: deployment.GetTabbyServiceName(),
 											Port: networkingv1.ServiceBackendPort{
 												Number: servicePort,
 											},

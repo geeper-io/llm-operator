@@ -136,7 +136,7 @@ spec:
 
 Tabby provides AI-powered code completion by connecting to your Ollama models. It automatically:
 
-- Connects to the Ollama service in the same deployment
+- Connects to the deployed Ollama service in the same deployment
 - Uses the first specified model (or a custom one you specify)
 - Provides a REST API for code completion
 - Supports multiple programming languages

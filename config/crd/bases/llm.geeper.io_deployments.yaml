@@ -2516,17 +2516,6 @@ spec:
                     description: ModelName is the name of the Ollama model to use
                       for code completion
                     type: string
-                  ollamaServiceName:
-                    description: |-
-                      OllamaServiceName is the name of the Ollama service to connect to
-                      If not specified, it will default to the deployment's Ollama service
-                    type: string
-                  ollamaServicePort:
-                    description: |-
-                      OllamaServicePort is the port of the Ollama service to connect to
-                      If not specified, it will default to the deployment's Ollama service port
-                    format: int32
-                    type: integer
                   replicas:
                     description: Replicas is the number of Tabby pods to run
                     format: int32

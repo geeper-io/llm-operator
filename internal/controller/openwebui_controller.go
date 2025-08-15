@@ -71,13 +71,13 @@ func (r *OllamaDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgee
 		"llm-deployment": deployment.Name,
 	}
 
-	ollamaServiceName := fmt.Sprintf("%s-ollama", deployment.Name)
+	ollamaServiceName := deployment.GetOllamaServiceName()
 
 	// Build environment variables
 	envVars := []corev1.EnvVar{
 		{
 			Name:  "OLLAMA_BASE_URL",
-			Value: fmt.Sprintf("http://%s:%d", ollamaServiceName, deployment.Spec.Ollama.Service.Port),
+			Value: fmt.Sprintf("http://%s:%d", ollamaServiceName, deployment.GetOllamaServicePort()),
 		},
 		{
 			Name:  "WEBUI_SECRET_KEY",
@@ -113,7 +113,7 @@ func (r *OllamaDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgee
 
 	openwebuiDeployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-openwebui", deployment.Name),
+			Name:      deployment.GetOpenWebUIDeploymentName(),
 			Namespace: deployment.Namespace,
 			Labels:    labels,
 		},
@@ -163,7 +163,7 @@ func (r *OllamaDeploymentReconciler) buildOpenWebUIService(deployment *llmgeeper
 
 	openwebuiService := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-openwebui", deployment.Name),
+			Name:      deployment.GetOpenWebUIServiceName(),
 			Namespace: deployment.Namespace,
 			Labels:    labels,
 		},
@@ -193,12 +193,12 @@ func (r *OllamaDeploymentReconciler) buildOpenWebUIIngress(deployment *llmgeeper
 		"llm-deployment": deployment.Name,
 	}
 
-	serviceName := fmt.Sprintf("%s-openwebui", deployment.Name)
+	serviceName := deployment.GetOpenWebUIServiceName()
 	pathType := networkingv1.PathTypePrefix
 
 	ingress := &networkingv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-openwebui", deployment.Name),
+			Name:      deployment.GetOpenWebUIIngressName(),
 			Namespace: deployment.Namespace,
 			Labels:    labels,
 		},
@@ -266,7 +266,7 @@ func (r *OllamaDeploymentReconciler) buildOpenWebUIConfigMap(deployment *llmgeep
 
 			// Build connection configuration
 			connection := map[string]interface{}{
-				"url":       fmt.Sprintf("http://%s-plugin-%s:%d", deployment.Name, plugin.Name, plugin.Port),
+				"url":       fmt.Sprintf("http://%s:%d", deployment.GetPluginServiceName(plugin.Name), plugin.Port),
 				"path":      "openapi.json", // Default OpenAPI path
 				"auth_type": "none",         // Default auth type
 				"key":       "",             // Default empty key

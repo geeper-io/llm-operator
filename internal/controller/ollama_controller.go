@@ -78,7 +78,7 @@ func (r *OllamaDeploymentReconciler) buildOllamaDeployment(deployment *llmgeeper
 
 	ollamaDeployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-ollama", deployment.Name),
+			Name:      deployment.GetOllamaDeploymentName(),
 			Namespace: deployment.Namespace,
 			Labels:    labels,
 		},
@@ -146,7 +146,7 @@ func (r *OllamaDeploymentReconciler) buildOllamaService(deployment *llmgeeperiov
 
 	ollamaService := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-ollama", deployment.Name),
+			Name:      deployment.GetOllamaServiceName(),
 			Namespace: deployment.Namespace,
 			Labels:    labels,
 		},

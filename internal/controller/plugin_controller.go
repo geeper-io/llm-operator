@@ -112,7 +112,7 @@ func (r *OllamaDeploymentReconciler) buildPluginDeployment(deployment *llmgeeper
 
 	pluginDeployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-plugin-%s", deployment.Name, plugin.Name),
+			Name:      deployment.GetPluginDeploymentName(plugin.Name),
 			Namespace: deployment.Namespace,
 			Labels:    labels,
 		},
@@ -169,7 +169,7 @@ func (r *OllamaDeploymentReconciler) buildPluginService(deployment *llmgeeperiov
 
 	pluginService := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-plugin-%s", deployment.Name, plugin.Name),
+			Name:      deployment.GetPluginServiceName(plugin.Name),
 			Namespace: deployment.Namespace,
 			Labels:    labels,
 		},

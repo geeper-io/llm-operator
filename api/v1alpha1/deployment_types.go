@@ -17,6 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -129,14 +131,6 @@ type TabbySpec struct {
 
 	// Ingress defines the ingress configuration for Tabby
 	Ingress IngressSpec `json:"ingress,omitempty"`
-
-	// OllamaServiceName is the name of the Ollama service to connect to
-	// If not specified, it will default to the deployment's Ollama service
-	OllamaServiceName string `json:"ollamaServiceName,omitempty"`
-
-	// OllamaServicePort is the port of the Ollama service to connect to
-	// If not specified, it will default to the deployment's Ollama service port
-	OllamaServicePort int32 `json:"ollamaServicePort,omitempty"`
 
 	// ModelName is the name of the Ollama model to use for code completion
 	ModelName string `json:"modelName,omitempty"`
@@ -298,6 +292,69 @@ type DeploymentList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Deployment `json:"items"`
+}
+
+// GetOllamaServiceName returns the name of the Ollama service for this deployment
+func (d *Deployment) GetOllamaServiceName() string {
+	return fmt.Sprintf("%s-ollama", d.Name)
+}
+
+// GetOllamaServicePort returns the port of the Ollama service for this deployment
+func (d *Deployment) GetOllamaServicePort() int32 {
+	if d.Spec.Ollama.Service.Port == 0 {
+		return 11434 // Default Ollama port
+	}
+	return d.Spec.Ollama.Service.Port
+}
+
+// GetOpenWebUIServiceName returns the name of the OpenWebUI service for this deployment
+func (d *Deployment) GetOpenWebUIServiceName() string {
+	return fmt.Sprintf("%s-openwebui", d.Name)
+}
+
+// GetTabbyServiceName returns the name of the Tabby service for this deployment
+func (d *Deployment) GetTabbyServiceName() string {
+	return fmt.Sprintf("%s-tabby", d.Name)
+}
+
+// GetPluginServiceName returns the name of a plugin service for this deployment
+func (d *Deployment) GetPluginServiceName(pluginName string) string {
+	return fmt.Sprintf("%s-plugin-%s", d.Name, pluginName)
+}
+
+// GetOllamaDeploymentName returns the name of the Ollama deployment for this deployment
+func (d *Deployment) GetOllamaDeploymentName() string {
+	return fmt.Sprintf("%s-ollama", d.Name)
+}
+
+// GetOpenWebUIDeploymentName returns the name of the OpenWebUI deployment for this deployment
+func (d *Deployment) GetOpenWebUIDeploymentName() string {
+	return fmt.Sprintf("%s-openwebui", d.Name)
+}
+
+// GetTabbyDeploymentName returns the name of the Tabby deployment for this deployment
+func (d *Deployment) GetTabbyDeploymentName() string {
+	return fmt.Sprintf("%s-tabby", d.Name)
+}
+
+// GetPluginDeploymentName returns the name of a plugin deployment for this deployment
+func (d *Deployment) GetPluginDeploymentName(pluginName string) string {
+	return fmt.Sprintf("%s-plugin-%s", d.Name, pluginName)
+}
+
+// GetOllamaIngressName returns the name of the Ollama ingress for this deployment
+func (d *Deployment) GetOllamaIngressName() string {
+	return fmt.Sprintf("%s-ollama-ingress", d.Name)
+}
+
+// GetOpenWebUIIngressName returns the name of the OpenWebUI ingress for this deployment
+func (d *Deployment) GetOpenWebUIIngressName() string {
+	return fmt.Sprintf("%s-openwebui-ingress", d.Name)
+}
+
+// GetTabbyIngressName returns the name of the Tabby ingress for this deployment
+func (d *Deployment) GetTabbyIngressName() string {
+	return fmt.Sprintf("%s-tabby-ingress", d.Name)
 }
 
 func init() {
