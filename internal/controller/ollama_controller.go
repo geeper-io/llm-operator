@@ -23,33 +23,23 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	llmgeeperiov1alpha1 "github.com/geeper-io/llm-operator/api/v1alpha1"
 )
 
-// OllamaController handles Ollama-specific operations
-type OllamaController struct{}
-
-// NewOllamaController creates a new OllamaController
-func NewOllamaController() *OllamaController {
-	return &OllamaController{}
-}
-
-// ReconcileOllama reconciles the Ollama deployment
-func (c *OllamaController) ReconcileOllama(ctx context.Context, deployment *llmgeeperiov1alpha1.Deployment, r *OllamaDeploymentReconciler) error {
+// reconcileOllama reconciles the Ollama deployment
+func (r *OllamaDeploymentReconciler) reconcileOllama(ctx context.Context, deployment *llmgeeperiov1alpha1.Deployment) error {
 	// Create or update Ollama deployment
-	ollamaDeployment := c.buildOllamaDeployment(deployment, r)
+	ollamaDeployment := r.buildOllamaDeployment(deployment)
 	if err := r.createOrUpdateDeployment(ctx, ollamaDeployment); err != nil {
 		return err
 	}
 
 	// Create or update Ollama service
-	ollamaService := c.buildOllamaService(deployment, r)
+	ollamaService := r.buildOllamaService(deployment)
 	if err := r.createOrUpdateService(ctx, ollamaService); err != nil {
 		return err
 	}
@@ -58,7 +48,7 @@ func (c *OllamaController) ReconcileOllama(ctx context.Context, deployment *llmg
 }
 
 // buildOllamaDeployment builds the Ollama deployment object
-func (c *OllamaController) buildOllamaDeployment(deployment *llmgeeperiov1alpha1.Deployment, r *OllamaDeploymentReconciler) *appsv1.Deployment {
+func (r *OllamaDeploymentReconciler) buildOllamaDeployment(deployment *llmgeeperiov1alpha1.Deployment) *appsv1.Deployment {
 	labels := map[string]string{
 		"app":            "ollama",
 		"llm-deployment": deployment.Name,
@@ -148,7 +138,7 @@ func (c *OllamaController) buildOllamaDeployment(deployment *llmgeeperiov1alpha1
 }
 
 // buildOllamaService builds the Ollama service object
-func (c *OllamaController) buildOllamaService(deployment *llmgeeperiov1alpha1.Deployment, r *OllamaDeploymentReconciler) *corev1.Service {
+func (r *OllamaDeploymentReconciler) buildOllamaService(deployment *llmgeeperiov1alpha1.Deployment) *corev1.Service {
 	labels := map[string]string{
 		"app":            "ollama",
 		"llm-deployment": deployment.Name,
@@ -166,7 +156,7 @@ func (c *OllamaController) buildOllamaService(deployment *llmgeeperiov1alpha1.De
 				{
 					Name:       "http",
 					Port:       deployment.Spec.Ollama.ServicePort,
-					TargetPort: intstr.FromInt(int(deployment.Spec.Ollama.ServicePort)),
+					TargetPort: intstr.FromInt32(deployment.Spec.Ollama.ServicePort),
 					Protocol:   corev1.ProtocolTCP,
 				},
 			},

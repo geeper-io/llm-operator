@@ -47,11 +47,6 @@ const (
 type OllamaDeploymentReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-
-	// Specialized controllers
-	ollamaController    *OllamaController
-	openwebuiController *OpenWebUIController
-	pluginController    *PluginController
 }
 
 // +kubebuilder:rbac:groups=llm.geeper.io,resources=deployments,verbs=get;list;watch;create;update;patch;delete
@@ -105,7 +100,7 @@ func (r *OllamaDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	r.setDefaults(deployment)
 
 	// Reconcile Ollama deployment
-	if err := r.ollamaController.ReconcileOllama(ctx, deployment, r); err != nil {
+	if err := r.reconcileOllama(ctx, deployment, r); err != nil {
 		logger.Error(err, "Failed to reconcile Ollama")
 		return ctrl.Result{RequeueAfter: time.Minute}, err
 	}
@@ -466,10 +461,6 @@ func (r *OllamaDeploymentReconciler) updateStatus(ctx context.Context, deploymen
 // SetupWithManager sets up the controller with the Manager.
 func (r *OllamaDeploymentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	// Initialize specialized controllers
-	r.ollamaController = NewOllamaController()
-	r.openwebuiController = NewOpenWebUIController()
-	r.pluginController = NewPluginController()
-
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&llmgeeperiov1alpha1.Deployment{}).
 		Owns(&appsv1.Deployment{}).

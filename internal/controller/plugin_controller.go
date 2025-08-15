@@ -24,35 +24,26 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	llmgeeperiov1alpha1 "github.com/geeper-io/llm-operator/api/v1alpha1"
 )
 
-// PluginController handles plugin/tool-specific operations
-type PluginController struct{}
-
-// NewPluginController creates a new PluginController
-func NewPluginController() *PluginController {
-	return &PluginController{}
-}
-
 // ReconcilePlugins reconciles all OpenWebUI plugins
-func (c *PluginController) ReconcilePlugins(ctx context.Context, deployment *llmgeeperiov1alpha1.Deployment, r *OllamaDeploymentReconciler) error {
+func (r *OllamaDeploymentReconciler) ReconcilePlugins(ctx context.Context, deployment *llmgeeperiov1alpha1.Deployment) error {
 	for _, plugin := range deployment.Spec.OpenWebUI.Plugins {
 		if !plugin.Enabled {
 			continue
 		}
 
 		// Create or update plugin deployment
-		pluginDeployment := c.buildPluginDeployment(deployment, &plugin, r)
+		pluginDeployment := r.buildPluginDeployment(deployment, &plugin)
 		if err := r.createOrUpdateDeployment(ctx, pluginDeployment); err != nil {
 			return err
 		}
 
 		// Create or update plugin service
-		pluginService := c.buildPluginService(deployment, &plugin, r)
+		pluginService := r.buildPluginService(deployment, &plugin)
 		if err := r.createOrUpdateService(ctx, pluginService); err != nil {
 			return err
 		}
@@ -61,7 +52,7 @@ func (c *PluginController) ReconcilePlugins(ctx context.Context, deployment *llm
 }
 
 // buildPluginDeployment builds a plugin deployment object
-func (c *PluginController) buildPluginDeployment(deployment *llmgeeperiov1alpha1.Deployment, plugin *llmgeeperiov1alpha1.OpenWebUIPlugin, r *OllamaDeploymentReconciler) *appsv1.Deployment {
+func (r *OllamaDeploymentReconciler) buildPluginDeployment(deployment *llmgeeperiov1alpha1.Deployment, plugin *llmgeeperiov1alpha1.OpenWebUIPlugin) *appsv1.Deployment {
 	labels := map[string]string{
 		"app":            "openwebui-plugin",
 		"plugin-name":    plugin.Name,
@@ -163,7 +154,7 @@ func (c *PluginController) buildPluginDeployment(deployment *llmgeeperiov1alpha1
 }
 
 // buildPluginService builds a plugin service object
-func (c *PluginController) buildPluginService(deployment *llmgeeperiov1alpha1.Deployment, plugin *llmgeeperiov1alpha1.OpenWebUIPlugin, r *OllamaDeploymentReconciler) *corev1.Service {
+func (r *OllamaDeploymentReconciler) buildPluginService(deployment *llmgeeperiov1alpha1.Deployment, plugin *llmgeeperiov1alpha1.OpenWebUIPlugin) *corev1.Service {
 	labels := map[string]string{
 		"app":            "openwebui-plugin",
 		"plugin-name":    plugin.Name,
@@ -188,7 +179,7 @@ func (c *PluginController) buildPluginService(deployment *llmgeeperiov1alpha1.De
 				{
 					Name:       "http",
 					Port:       plugin.Port,
-					TargetPort: intstr.FromInt(int(plugin.Port)),
+					TargetPort: intstr.FromInt32(plugin.Port),
 					Protocol:   corev1.ProtocolTCP,
 				},
 			},

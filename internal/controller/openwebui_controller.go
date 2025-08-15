@@ -26,45 +26,36 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	llmgeeperiov1alpha1 "github.com/geeper-io/llm-operator/api/v1alpha1"
 )
 
-// OpenWebUIController handles OpenWebUI-specific operations
-type OpenWebUIController struct{}
-
-// NewOpenWebUIController creates a new OpenWebUIController
-func NewOpenWebUIController() *OpenWebUIController {
-	return &OpenWebUIController{}
-}
-
 // ReconcileOpenWebUI reconciles the OpenWebUI deployment
-func (c *OpenWebUIController) ReconcileOpenWebUI(ctx context.Context, deployment *llmgeeperiov1alpha1.Deployment, r *OllamaDeploymentReconciler) error {
+func (r *OllamaDeploymentReconciler) ReconcileOpenWebUI(ctx context.Context, deployment *llmgeeperiov1alpha1.Deployment) error {
 	// Create or update OpenWebUI configuration ConfigMap if plugins are defined
 	if len(deployment.Spec.OpenWebUI.Plugins) > 0 {
-		openwebuiConfig := c.buildOpenWebUIConfigMap(deployment, r)
+		openwebuiConfig := r.buildOpenWebUIConfigMap(deployment)
 		if err := r.createOrUpdateConfigMap(ctx, openwebuiConfig); err != nil {
 			return err
 		}
 	}
 
 	// Create or update OpenWebUI deployment
-	openwebuiDeployment := c.buildOpenWebUIDeployment(deployment, r)
+	openwebuiDeployment := r.buildOpenWebUIDeployment(deployment)
 	if err := r.createOrUpdateDeployment(ctx, openwebuiDeployment); err != nil {
 		return err
 	}
 
 	// Create or update OpenWebUI service
-	openwebuiService := c.buildOpenWebUIService(deployment, r)
+	openwebuiService := r.buildOpenWebUIService(deployment)
 	if err := r.createOrUpdateService(ctx, openwebuiService); err != nil {
 		return err
 	}
 
 	// Create or update Ingress if enabled
 	if deployment.Spec.OpenWebUI.IngressEnabled && deployment.Spec.OpenWebUI.IngressHost != "" {
-		ingress := c.buildOpenWebUIIngress(deployment, r)
+		ingress := r.buildOpenWebUIIngress(deployment)
 		if err := r.createOrUpdateIngress(ctx, ingress); err != nil {
 			return err
 		}
@@ -74,7 +65,7 @@ func (c *OpenWebUIController) ReconcileOpenWebUI(ctx context.Context, deployment
 }
 
 // buildOpenWebUIDeployment builds the OpenWebUI deployment object
-func (c *OpenWebUIController) buildOpenWebUIDeployment(deployment *llmgeeperiov1alpha1.Deployment, r *OllamaDeploymentReconciler) *appsv1.Deployment {
+func (r *OllamaDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperiov1alpha1.Deployment) *appsv1.Deployment {
 	labels := map[string]string{
 		"app":            "openwebui",
 		"llm-deployment": deployment.Name,
@@ -164,7 +155,7 @@ func (c *OpenWebUIController) buildOpenWebUIDeployment(deployment *llmgeeperiov1
 }
 
 // buildOpenWebUIService builds the OpenWebUI service object
-func (c *OpenWebUIController) buildOpenWebUIService(deployment *llmgeeperiov1alpha1.Deployment, r *OllamaDeploymentReconciler) *corev1.Service {
+func (r *OllamaDeploymentReconciler) buildOpenWebUIService(deployment *llmgeeperiov1alpha1.Deployment) *corev1.Service {
 	labels := map[string]string{
 		"app":            "openwebui",
 		"llm-deployment": deployment.Name,
@@ -182,7 +173,7 @@ func (c *OpenWebUIController) buildOpenWebUIService(deployment *llmgeeperiov1alp
 				{
 					Name:       "http",
 					Port:       deployment.Spec.OpenWebUI.ServicePort,
-					TargetPort: intstr.FromInt(int(deployment.Spec.OpenWebUI.ServicePort)),
+					TargetPort: intstr.FromInt32(deployment.Spec.OpenWebUI.ServicePort),
 					Protocol:   corev1.ProtocolTCP,
 				},
 			},
@@ -196,7 +187,7 @@ func (c *OpenWebUIController) buildOpenWebUIService(deployment *llmgeeperiov1alp
 }
 
 // buildOpenWebUIIngress builds the OpenWebUI ingress object
-func (c *OpenWebUIController) buildOpenWebUIIngress(deployment *llmgeeperiov1alpha1.Deployment, r *OllamaDeploymentReconciler) *networkingv1.Ingress {
+func (r *OllamaDeploymentReconciler) buildOpenWebUIIngress(deployment *llmgeeperiov1alpha1.Deployment) *networkingv1.Ingress {
 	labels := map[string]string{
 		"app":            "openwebui",
 		"llm-deployment": deployment.Name,
@@ -244,7 +235,7 @@ func (c *OpenWebUIController) buildOpenWebUIIngress(deployment *llmgeeperiov1alp
 }
 
 // buildOpenWebUIConfigMap builds the OpenWebUI configuration ConfigMap
-func (c *OpenWebUIController) buildOpenWebUIConfigMap(deployment *llmgeeperiov1alpha1.Deployment, r *OllamaDeploymentReconciler) *corev1.ConfigMap {
+func (r *OllamaDeploymentReconciler) buildOpenWebUIConfigMap(deployment *llmgeeperiov1alpha1.Deployment) *corev1.ConfigMap {
 	// Start with base configuration
 	config := map[string]interface{}{
 		"version": 0,

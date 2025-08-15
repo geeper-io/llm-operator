@@ -6,6 +6,10 @@ metadata:
 spec:
   ollama:
     models:
-      - "llama3.2:1b"
+#      - "llama3.2:1b"
+#      - "gemma3:270m"
+      - "qwen3:0.6b"
   openwebui:
     enabled: true
+    ingressEnabled: true
+    ingressHost: "openwebui.localhost"
