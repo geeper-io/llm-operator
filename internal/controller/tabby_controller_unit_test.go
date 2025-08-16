@@ -54,19 +54,18 @@ func TestTabbyController_UnitTests(t *testing.T) {
 			config, err := reconciler.generateTabbyConfig(deployment)
 			require.NoError(t, err)
 
-			expectedConfig := `[chat]
-  [chat.model]
-    [chat.model.ollama]
-      host = "test-deployment-ollama.default.svc.cluster.local:11434"
-      model = "codellama"
-
-[completion]
-  [completion.model]
-    [completion.model.ollama]
-      host = "test-deployment-ollama.default.svc.cluster.local:11434"
-      model = "codellama"
-
-[model]
+			expectedConfig := `[model]
+  [model.completion]
+    [model.completion.http]
+      kind = "ollama/completion"
+      model_name = "codellama:7b"
+      api_endpoint = "http://test-deployment-ollama.default.svc.cluster.local:11434"
+      prompt_template = "<PRE> {prefix} <SUF>{suffix} <MID>"
+  [model.chat]
+    [model.chat.http]
+      kind = "ollama/chat"
+      model_name = "codellama:7b"
+      api_endpoint = "http://test-deployment-ollama.default.svc.cluster.local:11434"
   [model.embedding]
     [model.embedding.local]
       model_id = "Nomic-Embed-Text"
@@ -100,19 +99,18 @@ func TestTabbyController_UnitTests(t *testing.T) {
 			config, err := reconciler.generateTabbyConfig(deployment)
 			require.NoError(t, err)
 
-			expectedConfig := `[chat]
-  [chat.model]
-    [chat.model.ollama]
-      host = "test-deployment-ollama.default.svc.cluster.local:11434"
-      model = "custom-model:latest"
-
-[completion]
-  [completion.model]
-    [completion.model.ollama]
-      host = "test-deployment-ollama.default.svc.cluster.local:11434"
-      model = "custom-model:latest"
-
-[model]
+			expectedConfig := `[model]
+  [model.completion]
+    [model.completion.http]
+      kind = "ollama/completion"
+      model_name = "custom-model:latest"
+      api_endpoint = "http://test-deployment-ollama.default.svc.cluster.local:11434"
+      prompt_template = "<PRE> {prefix} <SUF>{suffix} <MID>"
+  [model.chat]
+    [model.chat.http]
+      kind = "ollama/chat"
+      model_name = "custom-model:latest"
+      api_endpoint = "http://test-deployment-ollama.default.svc.cluster.local:11434"
   [model.embedding]
     [model.embedding.local]
       model_id = "Nomic-Embed-Text"
@@ -144,19 +142,18 @@ func TestTabbyController_UnitTests(t *testing.T) {
 			config, err := reconciler.generateTabbyConfig(deployment)
 			require.NoError(t, err)
 
-			expectedConfig := `[chat]
-  [chat.model]
-    [chat.model.ollama]
-      host = "my-app-ollama.production.svc.cluster.local:8080"
-      model = "llama2:7b"
-
-[completion]
-  [completion.model]
-    [completion.model.ollama]
-      host = "my-app-ollama.production.svc.cluster.local:8080"
-      model = "llama2:7b"
-
-[model]
+			expectedConfig := `[model]
+  [model.completion]
+    [model.completion.http]
+      kind = "ollama/completion"
+      model_name = "llama2:7b"
+      api_endpoint = "http://my-app-ollama.production.svc.cluster.local:8080"
+      prompt_template = "<PRE> {prefix} <SUF>{suffix} <MID>"
+  [model.chat]
+    [model.chat.http]
+      kind = "ollama/chat"
+      model_name = "llama2:7b"
+      api_endpoint = "http://my-app-ollama.production.svc.cluster.local:8080"
   [model.embedding]
     [model.embedding.local]
       model_id = "Nomic-Embed-Text"
@@ -203,19 +200,18 @@ func TestTabbyController_UnitTests(t *testing.T) {
 			assert.NotEmpty(t, configMap.Data["config.toml"])
 
 			// Check that the TOML content matches expected format
-			expectedConfig := `[chat]
-  [chat.model]
-    [chat.model.ollama]
-      host = "test-deployment-ollama.default.svc.cluster.local:11434"
-      model = "test-model:1.0"
-
-[completion]
-  [completion.model]
-    [completion.model.ollama]
-      host = "test-deployment-ollama.default.svc.cluster.local:11434"
-      model = "test-model:1.0"
-
-[model]
+			expectedConfig := `[model]
+  [model.completion]
+    [model.completion.http]
+      kind = "ollama/completion"
+      model_name = "test-model:1.0"
+      api_endpoint = "http://test-deployment-ollama.default.svc.cluster.local:11434"
+      prompt_template = "<PRE> {prefix} <SUF>{suffix} <MID>"
+  [model.chat]
+    [model.chat.http]
+      kind = "ollama/chat"
+      model_name = "test-model:1.0"
+      api_endpoint = "http://test-deployment-ollama.default.svc.cluster.local:11434"
   [model.embedding]
     [model.embedding.local]
       model_id = "Nomic-Embed-Text"

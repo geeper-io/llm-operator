@@ -1,10 +1,11 @@
 package controller
 
 import (
+	"bytes"
 	"context"
 	"fmt"
-	"strings"
 
+	"github.com/BurntSushi/toml"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -12,7 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	"github.com/BurntSushi/toml"
 	llmgeeperiov1alpha1 "github.com/geeper-io/llm-operator/api/v1alpha1"
 )
 
@@ -296,59 +296,88 @@ func (r *OllamaDeploymentReconciler) buildTabbyConfigMap(deployment *llmgeeperio
 
 // generateTabbyConfig generates the Tabby TOML configuration
 func (r *OllamaDeploymentReconciler) generateTabbyConfig(deployment *llmgeeperiov1alpha1.Deployment) (string, error) {
-	// Determine Ollama service details
-	ollamaServiceName := deployment.GetOllamaServiceName()
-	ollamaServicePort := deployment.GetOllamaServicePort()
-
-	// Set default model name if not specified
-	modelName := deployment.Spec.Tabby.ModelName
-	if modelName == "" && len(deployment.Spec.Ollama.Models) > 0 {
-		// Use the first model from Ollama spec
-		modelStr := string(deployment.Spec.Ollama.Models[0])
-		if strings.Contains(modelStr, ":") {
-			parts := strings.Split(modelStr, ":")
-			if len(parts) == 2 {
-				modelName = parts[0]
-			} else {
-				modelName = modelStr
-			}
-		} else {
-			modelName = modelStr
-		}
+	// Determine the model to use for Tabby
+	var modelName string
+	if deployment.Spec.Tabby.ModelName != "" {
+		modelName = deployment.Spec.Tabby.ModelName
+	} else if len(deployment.Spec.Ollama.Models) > 0 {
+		modelName = string(deployment.Spec.Ollama.Models[0])
+	} else {
+		modelName = "codellama:7b" // fallback
 	}
 
-	// Build TOML configuration
-	config := map[string]interface{}{
-		"chat": map[string]interface{}{
-			"model": map[string]interface{}{
-				"ollama": map[string]interface{}{
-					"host":  fmt.Sprintf("%s.%s.svc.cluster.local:%d", ollamaServiceName, deployment.Namespace, ollamaServicePort),
-					"model": modelName,
+	// Build Ollama service host
+	ollamaHost := fmt.Sprintf("%s.%s.svc.cluster.local:%d",
+		deployment.GetOllamaServiceName(),
+		deployment.Namespace,
+		deployment.Spec.Ollama.Service.Port)
+
+	// Create Tabby configuration
+	config := &TabbyConfig{
+		Model: TabbyModelConfig{
+			Completion: TabbyCompletionConfig{
+				HTTP: TabbyHTTPConfig{
+					Kind:           "ollama/completion",
+					ModelName:      modelName,
+					APIEndpoint:    fmt.Sprintf("http://%s", ollamaHost),
+					PromptTemplate: "<PRE> {prefix} <SUF>{suffix} <MID>",
 				},
 			},
-		},
-		"completion": map[string]interface{}{
-			"model": map[string]interface{}{
-				"ollama": map[string]interface{}{
-					"host":  fmt.Sprintf("%s.%s.svc.cluster.local:%d", ollamaServiceName, deployment.Namespace, ollamaServicePort),
-					"model": modelName,
+			Chat: TabbyChatConfig{
+				HTTP: TabbyHTTPConfig{
+					Kind:        "ollama/chat",
+					ModelName:   modelName,
+					APIEndpoint: fmt.Sprintf("http://%s", ollamaHost),
 				},
 			},
-		},
-		"model": map[string]interface{}{
-			"embedding": map[string]interface{}{
-				"local": map[string]interface{}{
-					"model_id": "Nomic-Embed-Text",
+			Embedding: TabbyEmbeddingConfig{
+				Local: TabbyLocalConfig{
+					ModelID: "Nomic-Embed-Text",
 				},
 			},
 		},
 	}
 
-	// Convert to TOML
-	var buf strings.Builder
-	if err := toml.NewEncoder(&buf).Encode(config); err != nil {
-		return "", err
+	// Encode to TOML
+	var buf bytes.Buffer
+	encoder := toml.NewEncoder(&buf)
+	if err := encoder.Encode(config); err != nil {
+		return "", fmt.Errorf("failed to encode Tabby config: %w", err)
 	}
 
 	return buf.String(), nil
+}
+
+// TabbyConfig represents the Tabby configuration structure
+type TabbyConfig struct {
+	Model TabbyModelConfig `toml:"model"`
+}
+
+type TabbyModelConfig struct {
+	Completion TabbyCompletionConfig `toml:"completion"`
+	Chat       TabbyChatConfig       `toml:"chat"`
+	Embedding  TabbyEmbeddingConfig  `toml:"embedding"`
+}
+
+type TabbyCompletionConfig struct {
+	HTTP TabbyHTTPConfig `toml:"http"`
+}
+
+type TabbyChatConfig struct {
+	HTTP TabbyHTTPConfig `toml:"http"`
+}
+
+type TabbyEmbeddingConfig struct {
+	Local TabbyLocalConfig `toml:"local"`
+}
+
+type TabbyHTTPConfig struct {
+	Kind           string `toml:"kind"`
+	ModelName      string `toml:"model_name"`
+	APIEndpoint    string `toml:"api_endpoint"`
+	PromptTemplate string `toml:"prompt_template,omitempty"`
+}
+
+type TabbyLocalConfig struct {
+	ModelID string `toml:"model_id"`
 }
