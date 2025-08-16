@@ -1,0 +1,167 @@
+---
+id: overview
+title: Overview
+sidebar_label: Overview
+sidebar_position: 1
+description: Learn about Geeper.AI - the LLM Operator for Kubernetes
+---
+
+# Geeper.AI - LLM Operator for Kubernetes
+
+Geeper.AI is a powerful Kubernetes operator that simplifies the deployment and management of Large Language Models (LLMs) in Kubernetes clusters. It provides a declarative way to deploy, configure, and manage various LLM services with enterprise-grade reliability and scalability.
+
+## What is Geeper.AI?
+
+Geeper.AI is an open-source Kubernetes operator that extends Kubernetes with custom resources for managing LLM deployments. It automates the complex process of deploying and managing LLM services, making it easy for developers and DevOps teams to run AI workloads in production environments.
+
+## Key Features
+
+- **🚀 Easy Deployment**: Deploy LLM services with simple YAML configurations
+- **🔧 Multi-Model Support**: Support for various LLM frameworks (Ollama, OpenWebUI, Tabby, etc.)
+- **⚡ Auto-scaling**: Automatic scaling based on demand and resource usage
+- **🔄 Lifecycle Management**: Automated updates, rollbacks, and health monitoring
+- **🔒 Security**: Built-in security features and RBAC integration
+- **📊 Monitoring**: Comprehensive metrics and observability
+- **🌐 Multi-cluster**: Support for multi-cluster deployments
+- **🔌 Plugin System**: Extensible architecture with plugin support
+
+## What You Can Do
+
+### 1. Deploy LLM Services
+Deploy various LLM services with a single command:
+- **Ollama**: Run local LLMs with GPU acceleration
+- **OpenWebUI**: Web-based chat interface for LLMs
+- **Tabby**: Code completion and generation models
+- **Custom Models**: Deploy your own trained models
+
+### 2. Manage Infrastructure
+- Automatically provision and manage resources
+- Handle GPU allocation and scheduling
+- Manage persistent storage and networking
+- Monitor resource usage and costs
+
+### 3. Scale and Optimize
+- Auto-scale based on demand
+- Optimize resource allocation
+- Handle traffic distribution
+- Manage model updates and rollbacks
+
+### 4. Integrate with Existing Systems
+- Kubernetes-native integration
+- CI/CD pipeline integration
+- Monitoring and alerting systems
+- Security and compliance tools
+
+## Quick Installation
+
+### Prerequisites
+- Kubernetes cluster (v1.20+)
+- kubectl configured
+- Helm (optional, for advanced deployments)
+
+### Install with kubectl
+```bash
+# Clone the repository
+git clone https://github.com/your-org/llm-operator.git
+cd llm-operator
+
+# Apply the CRDs
+kubectl apply -f config/crd/bases/
+
+# Deploy the operator
+kubectl apply -f config/default/
+
+# Verify installation
+kubectl get pods -n llm-operator-system
+```
+
+### Install with Helm
+```bash
+# Add the Helm repository
+helm repo add geeper-ai https://your-org.github.io/llm-operator
+
+# Install the operator
+helm install llm-operator geeper-ai/llm-operator \
+  --namespace llm-operator-system \
+  --create-namespace
+```
+
+## Quick Start Example
+
+Deploy your first LLM service:
+
+```yaml
+apiVersion: llm.geeper.io/v1alpha1
+kind: Deployment
+metadata:
+  name: llama2-deployment
+spec:
+  ollama:
+    models:
+      - "llama2:7b"
+    replicas: 2
+    resources:
+      requests:
+        memory: "4Gi"
+        cpu: "2"
+      limits:
+        memory: "8Gi"
+        cpu: "4"
+    gpu:
+      enabled: true
+      count: 1
+```
+
+Apply the configuration:
+```bash
+kubectl apply -f deployment.yaml
+```
+
+## Architecture
+
+Geeper.AI follows the Kubernetes operator pattern:
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Custom        │    │   Geeper.AI      │    │   Kubernetes    │
+│   Resources     │───▶│   Operator       │───▶│   Resources     │
+│   (CRDs)       │    │   (Controller)   │    │   (Pods, SVCs)  │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+```
+
+The operator watches for changes to custom resources and automatically:
+1. Creates the necessary Kubernetes resources
+2. Manages the lifecycle of LLM services
+3. Handles scaling, updates, and health monitoring
+4. Provides status and metrics information
+
+## Next Steps
+
+- [Chat & Interaction](/docs/chat/openwebui) - Chat with LLMs using OpenWebUI
+- [RAG Integration](/docs/chat/rag) - Add Retrieval-Augmented Generation
+- [Plugin System](/docs/chat/plugins) - Extend functionality with plugins
+- [Coding Assistants](/docs/coding-assistants/continue-dev) - AI-powered coding with Continue.dev and Tabby
+- [Installation Guide](/docs/installation) - Detailed installation instructions
+- [User Guide](/docs/usage) - Learn how to use Geeper.AI
+- [API Reference](/docs/api) - Complete API documentation
+- [Examples](/docs/examples) - Real-world deployment examples
+- [Troubleshooting](/docs/troubleshooting) - Common issues and solutions
+
+## Community and Support
+
+- **GitHub**: [github.com/your-org/llm-operator](https://github.com/your-org/llm-operator)
+- **Issues**: [GitHub Issues](https://github.com/your-org/llm-operator/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-org/llm-operator/discussions)
+- **Documentation**: [docs.geeper.ai](https://docs.geeper.ai)
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](/docs/contributing) for details on how to:
+- Report bugs
+- Suggest new features
+- Submit pull requests
+- Join our community
+
+---
+
+*Geeper.AI - Making LLM deployment simple and reliable in Kubernetes*

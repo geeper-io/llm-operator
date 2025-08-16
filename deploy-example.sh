@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Deploy Example Script for LLM Operator
-# This script demonstrates how to deploy and use the OllamaDeployment CRD
+# This script demonstrates how to deploy and use the Deployment CRD
 
 set -e
 
-echo "🚀 Deploying LLM Operator with OllamaDeployment CRD..."
+echo "🚀 Deploying LLM Operator with Deployment CRD..."
 
 # Build and deploy the operator
 echo "📦 Building operator..."
@@ -26,8 +26,8 @@ echo "✅ Operator deployed successfully!"
 echo "🏗️ Creating example namespace..."
 kubectl create namespace ollama-example --dry-run=client -o yaml | kubectl apply -f -
 
-# Deploy the example OllamaDeployment
-echo "📋 Deploying example OllamaDeployment..."
+# Deploy the example Deployment
+echo "📋 Deploying example Deployment..."
 kubectl apply -f config/samples/v1alpha1_ollama_deployment.yaml
 
 echo "⏳ Waiting for OllamaDeployment to be ready..."

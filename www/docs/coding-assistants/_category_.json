@@ -1,0 +1,8 @@
+{
+  "label": "Coding Assistants",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "description": "Learn how to integrate coding assistants like Continue.dev and Tabby with Geeper.AI"
+  }
+}
