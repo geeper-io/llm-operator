@@ -7,10 +7,17 @@ spec:
   ollama:
     models:
 #      - "llama3.2:1b"
-#      - "gemma3:270m"
-      - "qwen3:0.6b"
+      - "gemma3:270m"
+#      - "qwen3:0.6b"
   openwebui:
     enabled: true
     ingress:
       enabled: true
       host: "openwebui.localhost"
+
+  tabby:
+    enabled: true
+    image: registry.tabbyml.com/tabbyml/tabby
+    ingress:
+      enabled: true
+      host: "tabby.localhost"

@@ -57,7 +57,7 @@ func (r *OllamaDeploymentReconciler) buildTabbyDeployment(deployment *llmgeeperi
 	// Set default values
 	image := deployment.Spec.Tabby.Image
 	if image == "" {
-		image = "tabbyml/tabby"
+		image = "registry.tabbyml.com/tabbyml/tabby"
 	}
 	imageTag := deployment.Spec.Tabby.ImageTag
 	if imageTag == "" {
