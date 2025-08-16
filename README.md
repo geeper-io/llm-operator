@@ -4,7 +4,7 @@ A Kubernetes operator for deploying and managing Ollama with OpenWebUI.
 
 ## Overview
 
-The LLM Operator provides a Custom Resource Definition (CRD) called `OllamaDeployment` that allows you to declaratively deploy Ollama instances with specified models and optionally connect them to OpenWebUI for a web-based interface.
+The LLM Operator provides a Custom Resource Definition (CRD) called `Deployment` that allows you to declaratively deploy Ollama instances with specified models and optionally connect them to OpenWebUI for a web-based interface.
 
 ## Features
 
@@ -51,11 +51,11 @@ kubectl get crd | grep ollama
 
 ### Basic Example
 
-Create an `OllamaDeployment` resource:
+Create a `Deployment` resource:
 
 ```yaml
 apiVersion: llm.geeper.io/v1alpha1
-kind: OllamaDeployment
+kind: Deployment
 metadata:
   name: ollama-example
   namespace: default
@@ -76,7 +76,7 @@ spec:
 
 ```yaml
 apiVersion: llm.geeper.io/v1alpha1
-kind: OllamaDeployment
+kind: Deployment
 metadata:
   name: production-ollama
   namespace: ai-models
@@ -160,7 +160,7 @@ Tabby provides AI-powered code completion by connecting to your Ollama models. I
 
 ## API Reference
 
-### OllamaDeployment
+### Deployment
 
 | Field | Type | Description | Default |
 |-------|------|-------------|---------|
@@ -211,7 +211,7 @@ Tabby provides AI-powered code completion by connecting to your Ollama models. I
 The operator provides status information through the CRD status field:
 
 ```bash
-kubectl get ollamadeployment ollama-example -o yaml
+kubectl get deployment ollama-example -o yaml
 ```
 
 Status fields include:
@@ -275,7 +275,7 @@ make docker-push
 kubectl logs -n llm-operator-system deployment/llm-operator-controller-manager
 
 # Check CRD status
-kubectl describe ollamadeployment ollama-example
+kubectl describe deployment ollama-example
 
 # Check created resources
 kubectl get all -l ollama-deployment=ollama-example

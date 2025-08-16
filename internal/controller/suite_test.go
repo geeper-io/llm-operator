@@ -22,7 +22,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -31,9 +33,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	llmgeeperiov1alpha1 "github.com/geeper-io/llm-operator/api/v1alpha1"
+	// +kubebuilder:scaffold:imports
 )
 
-// These tests use standard Go testing with Testify for assertions.
+// These tests use Ginkgo (BDD-style Go testing framework). Refer to
+// http://onsi.github.io/ginkgo/ to learn more about Ginkgo.
 
 var (
 	ctx       context.Context
@@ -43,29 +47,24 @@ var (
 	k8sClient client.Client
 )
 
-func TestMain(m *testing.M) {
-	// Set up test environment
-	setupTestEnv()
+func TestControllers(t *testing.T) {
+	RegisterFailHandler(Fail)
 
-	// Run tests
-	code := m.Run()
-
-	// Clean up test environment
-	teardownTestEnv()
-
-	os.Exit(code)
+	RunSpecs(t, "Controller Suite")
 }
 
-func setupTestEnv() {
-	logf.SetLogger(zap.New(zap.WriteTo(os.Stdout), zap.UseDevMode(true)))
+var _ = BeforeSuite(func() {
+	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
 
 	ctx, cancel = context.WithCancel(context.TODO())
 
 	var err error
 	err = llmgeeperiov1alpha1.AddToScheme(scheme.Scheme)
-	require.NoError(nil, err)
+	Expect(err).NotTo(HaveOccurred())
 
-	// Bootstrap test environment
+	// +kubebuilder:scaffold:scheme
+
+	By("bootstrapping test environment")
 	testEnv = &envtest.Environment{
 		CRDDirectoryPaths:     []string{filepath.Join("..", "..", "config", "crd", "bases")},
 		ErrorIfCRDPathMissing: true,
@@ -78,23 +77,20 @@ func setupTestEnv() {
 
 	// cfg is defined in this file globally.
 	cfg, err = testEnv.Start()
-	require.NoError(nil, err)
-	require.NotNil(nil, cfg)
+	Expect(err).NotTo(HaveOccurred())
+	Expect(cfg).NotTo(BeNil())
 
 	k8sClient, err = client.New(cfg, client.Options{Scheme: scheme.Scheme})
-	require.NoError(nil, err)
-	require.NotNil(nil, k8sClient)
-}
+	Expect(err).NotTo(HaveOccurred())
+	Expect(k8sClient).NotTo(BeNil())
+})
 
-func teardownTestEnv() {
-	if cancel != nil {
-		cancel()
-	}
-	if testEnv != nil {
-		err := testEnv.Stop()
-		require.NoError(nil, err)
-	}
-}
+var _ = AfterSuite(func() {
+	By("tearing down the test environment")
+	cancel()
+	err := testEnv.Stop()
+	Expect(err).NotTo(HaveOccurred())
+})
 
 // getFirstFoundEnvTestBinaryDir locates the first binary in the specified path.
 // ENVTEST-based tests depend on specific binaries, usually located in paths set by
@@ -102,23 +98,19 @@ func teardownTestEnv() {
 // Makefile targets, the 'BinaryAssetsDirectory' must be explicitly configured.
 //
 // This function streamlines the process by finding the required binaries, similar to
-// how the Makefile target works.
+// setting the 'KUBEBUILDER_ASSETS' environment variable. To ensure the binaries are
+// properly set up, run 'make setup-envtest' beforehand.
 func getFirstFoundEnvTestBinaryDir() string {
-	// Define the paths where the binaries might be located
-	possiblePaths := []string{
-		filepath.Join("..", "..", "hack", "tools"),
-		filepath.Join("..", "..", "bin"),
-		filepath.Join("..", "..", "..", "bin"),
+	basePath := filepath.Join("..", "..", "bin", "k8s")
+	entries, err := os.ReadDir(basePath)
+	if err != nil {
+		logf.Log.Error(err, "Failed to read directory", "path", basePath)
+		return ""
 	}
-
-	// Check each path for the required binaries
-	for _, path := range possiblePaths {
-		if _, err := os.Stat(filepath.Join(path, "etcd")); err == nil {
-			if _, err := os.Stat(filepath.Join(path, "kube-apiserver")); err == nil {
-				return path
-			}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			return filepath.Join(basePath, entry.Name())
 		}
 	}
-
 	return ""
 }

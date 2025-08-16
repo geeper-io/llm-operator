@@ -1,5 +1,5 @@
 apiVersion: llm.geeper.io/v1alpha1
-kind: OllamaDeployment
+kind: Deployment
 metadata:
   name: production-ollama
   namespace: ai-production

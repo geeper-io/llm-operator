@@ -15,9 +15,9 @@ spec:
       enabled: true
       host: "openwebui.localhost"
 
-  tabby:
-    enabled: true
-    image: registry.tabbyml.com/tabbyml/tabby
-    ingress:
-      enabled: true
-      host: "tabby.localhost"
+#  tabby:
+#    enabled: true
+#    image: registry.tabbyml.com/tabbyml/tabby
+#    ingress:
+#      enabled: true
+#      host: "tabby.localhost"

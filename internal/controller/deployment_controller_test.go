@@ -18,9 +18,9 @@ package controller
 
 import (
 	"context"
-	"testing"
 
-	"github.com/stretchr/testify/require"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -30,59 +30,61 @@ import (
 	llmgeeperiov1alpha1 "github.com/geeper-io/llm-operator/api/v1alpha1"
 )
 
-func TestDeploymentController_Reconciliation(t *testing.T) {
-	const resourceName = "test-resource"
+var _ = Describe("Deployment Controller", func() {
+	Context("When reconciling a resource", func() {
+		const resourceName = "test-resource"
 
-	ctx := context.Background()
+		ctx := context.Background()
 
-	typeNamespacedName := types.NamespacedName{
-		Name:      resourceName,
-		Namespace: "default",
-	}
-
-	t.Run("should successfully reconcile the resource", func(t *testing.T) {
+		typeNamespacedName := types.NamespacedName{
+			Name:      resourceName,
+			Namespace: "default", // TODO(user):Modify as needed
+		}
 		deployment := &llmgeeperiov1alpha1.Deployment{}
 
-		// Create the custom resource for the Kind Deployment
-		err := k8sClient.Get(ctx, typeNamespacedName, deployment)
-		if err != nil && errors.IsNotFound(err) {
-			resource := &llmgeeperiov1alpha1.Deployment{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      resourceName,
-					Namespace: "default",
-				},
-				Spec: llmgeeperiov1alpha1.DeploymentSpec{
-					Ollama: llmgeeperiov1alpha1.OllamaSpec{
-						Models: []llmgeeperiov1alpha1.OllamaModel{
-							"llama2:7b",
+		BeforeEach(func() {
+			By("creating the custom resource for the Kind Deployment")
+			err := k8sClient.Get(ctx, typeNamespacedName, deployment)
+			if err != nil && errors.IsNotFound(err) {
+				resource := &llmgeeperiov1alpha1.Deployment{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      resourceName,
+						Namespace: "default",
+					},
+					Spec: llmgeeperiov1alpha1.DeploymentSpec{
+						Ollama: llmgeeperiov1alpha1.OllamaSpec{
+							Models: []llmgeeperiov1alpha1.OllamaModel{
+								"llama2:7b",
+							},
 						},
 					},
-				},
+				}
+				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 			}
-			require.NoError(t, k8sClient.Create(ctx, resource))
-		}
+		})
 
-		// Cleanup after test
-		t.Cleanup(func() {
+		AfterEach(func() {
+			// TODO(user): Cleanup logic after each test, like removing the resource instance.
 			resource := &llmgeeperiov1alpha1.Deployment{}
-			err2 := k8sClient.Get(ctx, typeNamespacedName, resource)
-			require.NoError(t, err2)
+			err := k8sClient.Get(ctx, typeNamespacedName, resource)
+			Expect(err).NotTo(HaveOccurred())
 
-			// Cleanup the specific resource instance Deployment
-			require.NoError(t, k8sClient.Delete(ctx, resource))
+			By("Cleanup the specific resource instance Deployment")
+			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
 		})
+		It("should successfully reconcile the resource", func() {
+			By("Reconciling the created resource")
+			controllerReconciler := &OllamaDeploymentReconciler{
+				Client: k8sClient,
+				Scheme: k8sClient.Scheme(),
+			}
 
-		// Reconcile the created resource
-		controllerReconciler := &OllamaDeploymentReconciler{
-			Client: k8sClient,
-			Scheme: k8sClient.Scheme(),
-		}
-
-		_, reconcileErr := controllerReconciler.Reconcile(ctx, reconcile.Request{
-			NamespacedName: typeNamespacedName,
+			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
+				NamespacedName: typeNamespacedName,
+			})
+			Expect(err).NotTo(HaveOccurred())
+			// TODO(user): Add more specific assertions depending on your controller's reconciliation logic.
+			// Example: If you expect a certain status condition after reconciliation, verify it here.
 		})
-		require.NoError(t, reconcileErr)
-		// TODO(user): Add more specific assertions depending on your controller's reconciliation logic.
-		// Example: If you expect a certain status condition after reconciliation, verify it here.
 	})
-}
+})
