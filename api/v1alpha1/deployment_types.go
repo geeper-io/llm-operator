@@ -35,11 +35,8 @@ type OllamaSpec struct {
 	// +kubebuilder:validation:Maximum=10
 	Replicas int32 `json:"replicas,omitempty"`
 
-	// Image is the Ollama container image to use
+	// Image is the Ollama container image to use (including tag)
 	Image string `json:"image,omitempty"`
-
-	// ImageTag is the Ollama image tag to use
-	ImageTag string `json:"imageTag,omitempty"`
 
 	// Resources defines the resource requirements for Ollama pods
 	Resources ResourceRequirements `json:"resources,omitempty"`
@@ -88,11 +85,8 @@ type OpenWebUISpec struct {
 	// +kubebuilder:validation:Maximum=5
 	Replicas int32 `json:"replicas,omitempty"`
 
-	// Image is the OpenWebUI container image to use
+	// Image is the OpenWebUI container image to use (including tag)
 	Image string `json:"image,omitempty"`
-
-	// ImageTag is the OpenWebUI image tag to use
-	ImageTag string `json:"imageTag,omitempty"`
 
 	// Resources defines the resource requirements for OpenWebUI pods
 	Resources ResourceRequirements `json:"resources,omitempty"`
@@ -120,11 +114,8 @@ type TabbySpec struct {
 	// +kubebuilder:validation:Maximum=5
 	Replicas int32 `json:"replicas,omitempty"`
 
-	// Image is the Tabby container image to use
+	// Image is the Tabby container image to use (including tag)
 	Image string `json:"image,omitempty"`
-
-	// ImageTag is the Tabby image tag to use
-	ImageTag string `json:"imageTag,omitempty"`
 
 	// Resources defines the resource requirements for Tabby pods
 	Resources ResourceRequirements `json:"resources,omitempty"`
@@ -162,11 +153,8 @@ type RedisSpec struct {
 	// Format: redis://host:port/db or rediss://host:port/db for TLS
 	RedisURL string `json:"redisUrl,omitempty"`
 
-	// Image is the Redis container image to use
+	// Image is the Redis container image to use (including tag)
 	Image string `json:"image,omitempty"`
-
-	// ImageTag is the Redis image tag to use
-	ImageTag string `json:"imageTag,omitempty"`
 
 	// Resources defines the resource requirements for Redis pods
 	Resources ResourceRequirements `json:"resources,omitempty"`
@@ -205,11 +193,8 @@ type OpenWebUIPlugin struct {
 	// +kubebuilder:validation:Enum=openapi;custom
 	Type string `json:"type"`
 
-	// Image is the container image for the plugin
+	// Image is the container image for the plugin (including tag)
 	Image string `json:"image"`
-
-	// ImageTag is the image tag for the plugin
-	ImageTag string `json:"imageTag,omitempty"`
 
 	// Replicas is the number of plugin pods to run
 	// +kubebuilder:validation:Minimum=1

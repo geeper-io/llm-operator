@@ -142,10 +142,7 @@ func (r *LMDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request
 func (r *LMDeploymentReconciler) setDefaults(deployment *llmgeeperiov1alpha1.LMDeployment) {
 	// Set Ollama defaults
 	if deployment.Spec.Ollama.Image == "" {
-		deployment.Spec.Ollama.Image = "ollama/ollama"
-	}
-	if deployment.Spec.Ollama.ImageTag == "" {
-		deployment.Spec.Ollama.ImageTag = "latest"
+		deployment.Spec.Ollama.Image = "ollama/ollama:latest"
 	}
 	if deployment.Spec.Ollama.Replicas == 0 {
 		deployment.Spec.Ollama.Replicas = 1
@@ -159,10 +156,7 @@ func (r *LMDeploymentReconciler) setDefaults(deployment *llmgeeperiov1alpha1.LMD
 
 	// Set OpenWebUI defaults
 	if deployment.Spec.OpenWebUI.Image == "" {
-		deployment.Spec.OpenWebUI.Image = "ghcr.io/open-webui/open-webui"
-	}
-	if deployment.Spec.OpenWebUI.ImageTag == "" {
-		deployment.Spec.OpenWebUI.ImageTag = "latest"
+		deployment.Spec.OpenWebUI.Image = "ghcr.io/open-webui/open-webui:main"
 	}
 	if deployment.Spec.OpenWebUI.Replicas == 0 {
 		deployment.Spec.OpenWebUI.Replicas = 1
@@ -176,10 +170,7 @@ func (r *LMDeploymentReconciler) setDefaults(deployment *llmgeeperiov1alpha1.LMD
 
 	// Set OpenWebUI Redis defaults
 	if deployment.Spec.OpenWebUI.Redis.Image == "" {
-		deployment.Spec.OpenWebUI.Redis.Image = "redis"
-	}
-	if deployment.Spec.OpenWebUI.Redis.ImageTag == "" {
-		deployment.Spec.OpenWebUI.Redis.ImageTag = "7-alpine"
+		deployment.Spec.OpenWebUI.Redis.Image = "redis:7-alpine"
 	}
 	if deployment.Spec.OpenWebUI.Redis.Service.Port == 0 {
 		deployment.Spec.OpenWebUI.Redis.Service.Port = 6379
@@ -209,10 +200,7 @@ func (r *LMDeploymentReconciler) setDefaults(deployment *llmgeeperiov1alpha1.LMD
 
 	// Set Tabby defaults
 	if deployment.Spec.Tabby.Image == "" {
-		deployment.Spec.Tabby.Image = "tabbyml/tabby"
-	}
-	if deployment.Spec.Tabby.ImageTag == "" {
-		deployment.Spec.Tabby.ImageTag = "latest"
+		deployment.Spec.Tabby.Image = "tabbyml/tabby:latest"
 	}
 	if deployment.Spec.Tabby.Replicas == 0 {
 		deployment.Spec.Tabby.Replicas = 1

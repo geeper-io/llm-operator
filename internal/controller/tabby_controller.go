@@ -55,13 +55,10 @@ func (r *LMDeploymentReconciler) buildTabbyDeployment(deployment *llmgeeperiov1a
 	}
 
 	// Set default values
+	// Build Tabby deployment
 	image := deployment.Spec.Tabby.Image
 	if image == "" {
-		image = "registry.tabbyml.com/tabbyml/tabby"
-	}
-	imageTag := deployment.Spec.Tabby.ImageTag
-	if imageTag == "" {
-		imageTag = "latest"
+		image = "tabbyml/tabby:latest"
 	}
 	replicas := deployment.Spec.Tabby.Replicas
 	if replicas == 0 {
@@ -147,7 +144,7 @@ func (r *LMDeploymentReconciler) buildTabbyDeployment(deployment *llmgeeperiov1a
 					Containers: []corev1.Container{
 						{
 							Name:  "tabby",
-							Image: fmt.Sprintf("%s:%s", image, imageTag),
+							Image: image,
 							Ports: []corev1.ContainerPort{
 								{
 									Name:          "http",

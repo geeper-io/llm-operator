@@ -131,7 +131,7 @@ func (r *LMDeploymentReconciler) buildRedisDeployment(deployment *llmgeeperiov1a
 					Containers: []corev1.Container{
 						{
 							Name:  "redis",
-							Image: fmt.Sprintf("%s:%s", deployment.Spec.OpenWebUI.Redis.Image, deployment.Spec.OpenWebUI.Redis.ImageTag),
+							Image: deployment.Spec.OpenWebUI.Redis.Image,
 							Ports: []corev1.ContainerPort{
 								{
 									Name:          "redis",

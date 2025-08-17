@@ -180,7 +180,7 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 					Containers: []corev1.Container{
 						{
 							Name:  "openwebui",
-							Image: fmt.Sprintf("%s:%s", deployment.Spec.OpenWebUI.Image, deployment.Spec.OpenWebUI.ImageTag),
+							Image: deployment.Spec.OpenWebUI.Image,
 							Ports: []corev1.ContainerPort{
 								{
 									Name:          "http",

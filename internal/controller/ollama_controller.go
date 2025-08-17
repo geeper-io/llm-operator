@@ -95,7 +95,7 @@ func (r *LMDeploymentReconciler) buildOllamaDeployment(deployment *llmgeeperiov1
 					Containers: []corev1.Container{
 						{
 							Name:  "ollama",
-							Image: fmt.Sprintf("%s:%s", deployment.Spec.Ollama.Image, deployment.Spec.Ollama.ImageTag),
+							Image: deployment.Spec.Ollama.Image,
 							Ports: []corev1.ContainerPort{
 								{
 									Name:          "http",
