@@ -14,7 +14,7 @@ resources:
     namespaced: true
   controller: true
   domain: llm.geeper.io
-  kind: Deployment
+  kind: LMDeployment
   path: github.com/geeper-io/llm-operator/api/v1alpha1
   version: v1alpha1
 version: "3"

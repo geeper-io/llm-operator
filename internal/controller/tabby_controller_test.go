@@ -29,7 +29,7 @@ import (
 
 func TestTabbyController_ConfigurationGeneration(t *testing.T) {
 	t.Run("generateTabbyConfig", func(t *testing.T) {
-		reconciler := &OllamaDeploymentReconciler{}
+		reconciler := &DeploymentReconciler{}
 
 		t.Run("should generate correct TOML configuration with default model", func(t *testing.T) {
 			deployment := &llmgeeperiov1alpha1.Deployment{
@@ -37,7 +37,7 @@ func TestTabbyController_ConfigurationGeneration(t *testing.T) {
 					Name:      "test-deployment",
 					Namespace: "default",
 				},
-				Spec: llmgeeperiov1alpha1.DeploymentSpec{
+				Spec: llmgeeperiov1alpha1.LMDeploymentSpec{
 					Ollama: llmgeeperiov1alpha1.OllamaSpec{
 						Models: []llmgeeperiov1alpha1.OllamaModel{
 							"codellama:7b",
@@ -75,7 +75,7 @@ func TestTabbyController_ConfigurationGeneration(t *testing.T) {
 					Name:      "test-deployment",
 					Namespace: "default",
 				},
-				Spec: llmgeeperiov1alpha1.DeploymentSpec{
+				Spec: llmgeeperiov1alpha1.LMDeploymentSpec{
 					Ollama: llmgeeperiov1alpha1.OllamaSpec{
 						Models: []llmgeeperiov1alpha1.OllamaModel{
 							"llama2:7b",
@@ -107,7 +107,7 @@ func TestTabbyController_ConfigurationGeneration(t *testing.T) {
 					Name:      "test-deployment",
 					Namespace: "default",
 				},
-				Spec: llmgeeperiov1alpha1.DeploymentSpec{
+				Spec: llmgeeperiov1alpha1.LMDeploymentSpec{
 					Ollama: llmgeeperiov1alpha1.OllamaSpec{
 						Models: []llmgeeperiov1alpha1.OllamaModel{
 							"codellama:7b:latest",
@@ -136,7 +136,7 @@ func TestTabbyController_ConfigurationGeneration(t *testing.T) {
 					Name:      "test-deployment",
 					Namespace: "default",
 				},
-				Spec: llmgeeperiov1alpha1.DeploymentSpec{
+				Spec: llmgeeperiov1alpha1.LMDeploymentSpec{
 					Ollama: llmgeeperiov1alpha1.OllamaSpec{
 						Models: []llmgeeperiov1alpha1.OllamaModel{
 							"simple-model",
@@ -165,7 +165,7 @@ func TestTabbyController_ConfigurationGeneration(t *testing.T) {
 					Name:      "test-deployment",
 					Namespace: "default",
 				},
-				Spec: llmgeeperiov1alpha1.DeploymentSpec{
+				Spec: llmgeeperiov1alpha1.LMDeploymentSpec{
 					Ollama: llmgeeperiov1alpha1.OllamaSpec{
 						Models: []llmgeeperiov1alpha1.OllamaModel{
 							"test-model:1.0",
@@ -205,7 +205,7 @@ func TestTabbyController_ConfigurationGeneration(t *testing.T) {
 					Name:      "my-app",
 					Namespace: "production",
 				},
-				Spec: llmgeeperiov1alpha1.DeploymentSpec{
+				Spec: llmgeeperiov1alpha1.LMDeploymentSpec{
 					Ollama: llmgeeperiov1alpha1.OllamaSpec{
 						Models: []llmgeeperiov1alpha1.OllamaModel{
 							"llama2:7b",
@@ -231,7 +231,7 @@ func TestTabbyController_ConfigurationGeneration(t *testing.T) {
 	})
 
 	t.Run("buildTabbyConfigMap", func(t *testing.T) {
-		reconciler := &OllamaDeploymentReconciler{}
+		reconciler := &DeploymentReconciler{}
 
 		t.Run("should create ConfigMap with correct metadata and data", func(t *testing.T) {
 			deployment := &llmgeeperiov1alpha1.Deployment{
@@ -239,7 +239,7 @@ func TestTabbyController_ConfigurationGeneration(t *testing.T) {
 					Name:      "test-deployment",
 					Namespace: "default",
 				},
-				Spec: llmgeeperiov1alpha1.DeploymentSpec{
+				Spec: llmgeeperiov1alpha1.LMDeploymentSpec{
 					Ollama: llmgeeperiov1alpha1.OllamaSpec{
 						Models: []llmgeeperiov1alpha1.OllamaModel{
 							"test-model:1.0",
@@ -282,7 +282,7 @@ func TestTabbyController_ConfigurationGeneration(t *testing.T) {
 					Name:      "test-deployment",
 					Namespace: "default",
 				},
-				Spec: llmgeeperiov1alpha1.DeploymentSpec{
+				Spec: llmgeeperiov1alpha1.LMDeploymentSpec{
 					Ollama: llmgeeperiov1alpha1.OllamaSpec{
 						Models: []llmgeeperiov1alpha1.OllamaModel{
 							"test-model:1.0",

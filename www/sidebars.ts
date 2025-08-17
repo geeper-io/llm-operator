@@ -34,6 +34,11 @@ const sidebars: SidebarsConfig = {
     'usage',
     {
       type: 'category',
+      label: 'API Reference',
+      items: ['crd-reference'],
+    },
+    {
+      type: 'category',
       label: 'Guides',
       items: ['guides/deployment', 'guides/configuration'],
     },

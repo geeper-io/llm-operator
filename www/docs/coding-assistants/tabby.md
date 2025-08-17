@@ -239,7 +239,7 @@ spec:
 
 ```yaml
 apiVersion: llm.geeper.io/v1alpha1
-kind: Deployment
+kind: LMDeployment
 metadata:
   name: tabby-with-ollama
   namespace: default

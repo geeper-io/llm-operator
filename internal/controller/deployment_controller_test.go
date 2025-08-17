@@ -51,7 +51,7 @@ var _ = Describe("Deployment Controller", func() {
 						Name:      resourceName,
 						Namespace: "default",
 					},
-					Spec: llmgeeperiov1alpha1.DeploymentSpec{
+					Spec: llmgeeperiov1alpha1.LMDeploymentSpec{
 						Ollama: llmgeeperiov1alpha1.OllamaSpec{
 							Models: []llmgeeperiov1alpha1.OllamaModel{
 								"llama2:7b",
@@ -74,7 +74,7 @@ var _ = Describe("Deployment Controller", func() {
 		})
 		It("should successfully reconcile the resource", func() {
 			By("Reconciling the created resource")
-			controllerReconciler := &OllamaDeploymentReconciler{
+			controllerReconciler := &LMDeploymentReconciler{
 				Client: k8sClient,
 				Scheme: k8sClient.Scheme(),
 			}

@@ -7,7 +7,7 @@ rules:
 - apiGroups:
   - llm.geeper.io
   resources:
-  - ollamadeployments
+  - deployments
   verbs:
   - get
   - list
@@ -15,7 +15,7 @@ rules:
 - apiGroups:
   - llm.geeper.io
   resources:
-  - ollamadeployments/status
+  - deployments/status
   verbs:
   - get
 - apiGroups:

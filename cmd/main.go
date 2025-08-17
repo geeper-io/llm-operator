@@ -202,7 +202,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := (&controller.OllamaDeploymentReconciler{
+	if err := (&controller.LMDeploymentReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {

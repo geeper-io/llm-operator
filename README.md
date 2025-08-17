@@ -55,7 +55,7 @@ Create a `Deployment` resource:
 
 ```yaml
 apiVersion: llm.geeper.io/v1alpha1
-kind: Deployment
+kind: LMDeployment
 metadata:
   name: ollama-example
   namespace: default
@@ -76,7 +76,7 @@ spec:
 
 ```yaml
 apiVersion: llm.geeper.io/v1alpha1
-kind: Deployment
+kind: LMDeployment
 metadata:
   name: production-ollama
   namespace: ai-models

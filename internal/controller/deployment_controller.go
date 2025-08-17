@@ -42,8 +42,8 @@ const (
 	FinalizerName = "llm.geeper.io/finalizer"
 )
 
-// OllamaDeploymentReconciler reconciles a Deployment object
-type OllamaDeploymentReconciler struct {
+// LMDeploymentReconciler reconciles a LMDeployment object
+type LMDeploymentReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
@@ -59,12 +59,12 @@ type OllamaDeploymentReconciler struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-func (r *OllamaDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *LMDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 	logger.Info("Reconciling Deployment")
 
 	// Fetch the Deployment instance
-	deployment := &llmgeeperiov1alpha1.Deployment{}
+	deployment := &llmgeeperiov1alpha1.LMDeployment{}
 	err := r.Get(ctx, req.NamespacedName, deployment)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -139,7 +139,7 @@ func (r *OllamaDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Req
 }
 
 // setDefaults sets default values for the Deployment
-func (r *OllamaDeploymentReconciler) setDefaults(deployment *llmgeeperiov1alpha1.Deployment) {
+func (r *LMDeploymentReconciler) setDefaults(deployment *llmgeeperiov1alpha1.LMDeployment) {
 	// Set Ollama defaults
 	if deployment.Spec.Ollama.Image == "" {
 		deployment.Spec.Ollama.Image = "ollama/ollama"
@@ -172,6 +172,39 @@ func (r *OllamaDeploymentReconciler) setDefaults(deployment *llmgeeperiov1alpha1
 	}
 	if deployment.Spec.OpenWebUI.Service.Port == 0 {
 		deployment.Spec.OpenWebUI.Service.Port = 8080
+	}
+
+	// Set OpenWebUI Redis defaults
+	if deployment.Spec.OpenWebUI.Redis.Image == "" {
+		deployment.Spec.OpenWebUI.Redis.Image = "redis"
+	}
+	if deployment.Spec.OpenWebUI.Redis.ImageTag == "" {
+		deployment.Spec.OpenWebUI.Redis.ImageTag = "7-alpine"
+	}
+	if deployment.Spec.OpenWebUI.Redis.Service.Port == 0 {
+		deployment.Spec.OpenWebUI.Redis.Service.Port = 6379
+	}
+	if deployment.Spec.OpenWebUI.Redis.Service.Type == "" {
+		deployment.Spec.OpenWebUI.Redis.Service.Type = "ClusterIP"
+	}
+	if deployment.Spec.OpenWebUI.Redis.Persistence.Size == "" {
+		deployment.Spec.OpenWebUI.Redis.Persistence.Size = "1Gi"
+	}
+	if deployment.Spec.OpenWebUI.Redis.Resources.Requests.CPU == "" {
+		deployment.Spec.OpenWebUI.Redis.Resources.Requests.CPU = "100m"
+	}
+	if deployment.Spec.OpenWebUI.Redis.Resources.Requests.Memory == "" {
+		deployment.Spec.OpenWebUI.Redis.Resources.Requests.Memory = "128Mi"
+	}
+	if deployment.Spec.OpenWebUI.Redis.Resources.Limits.CPU == "" {
+		deployment.Spec.OpenWebUI.Redis.Resources.Limits.CPU = "500m"
+	}
+	if deployment.Spec.OpenWebUI.Redis.Resources.Limits.Memory == "" {
+		deployment.Spec.OpenWebUI.Redis.Resources.Limits.Memory = "256Mi"
+	}
+	if deployment.Spec.OpenWebUI.Redis.Password == "" {
+		// Generate a default Redis password if not provided
+		deployment.Spec.OpenWebUI.Redis.Password = "redis-password-123"
 	}
 
 	// Set Tabby defaults
@@ -214,7 +247,7 @@ func removeFinalizer(finalizers []string, finalizer string) []string {
 }
 
 // finalizeDeployment handles the finalization of a deployment
-func (r *OllamaDeploymentReconciler) finalizeDeployment(ctx context.Context, deployment *llmgeeperiov1alpha1.Deployment) error {
+func (r *LMDeploymentReconciler) finalizeDeployment(ctx context.Context, deployment *llmgeeperiov1alpha1.LMDeployment) error {
 	logger := log.FromContext(ctx)
 	logger.Info("Finalizing deployment", "name", deployment.Name)
 
@@ -229,7 +262,7 @@ func (r *OllamaDeploymentReconciler) finalizeDeployment(ctx context.Context, dep
 }
 
 // buildResourceRequirements builds resource requirements from the spec
-func (r *OllamaDeploymentReconciler) buildResourceRequirements(resources llmgeeperiov1alpha1.ResourceRequirements) corev1.ResourceRequirements {
+func (r *LMDeploymentReconciler) buildResourceRequirements(resources llmgeeperiov1alpha1.ResourceRequirements) corev1.ResourceRequirements {
 	req := corev1.ResourceRequirements{}
 
 	if resources.Requests.CPU != "" {
@@ -262,7 +295,7 @@ func (r *OllamaDeploymentReconciler) buildResourceRequirements(resources llmgeep
 }
 
 // createOrUpdateDeployment creates or updates a deployment
-func (r *OllamaDeploymentReconciler) createOrUpdateDeployment(ctx context.Context, deployment *appsv1.Deployment) error {
+func (r *LMDeploymentReconciler) createOrUpdateDeployment(ctx context.Context, deployment *appsv1.Deployment) error {
 	existing := &appsv1.Deployment{}
 	err := r.Get(ctx, types.NamespacedName{Name: deployment.Name, Namespace: deployment.Namespace}, existing)
 	if err != nil && errors.IsNotFound(err) {
@@ -285,7 +318,7 @@ func (r *OllamaDeploymentReconciler) createOrUpdateDeployment(ctx context.Contex
 }
 
 // createOrUpdateService creates or updates a service
-func (r *OllamaDeploymentReconciler) createOrUpdateService(ctx context.Context, service *corev1.Service) error {
+func (r *LMDeploymentReconciler) createOrUpdateService(ctx context.Context, service *corev1.Service) error {
 	existing := &corev1.Service{}
 	err := r.Get(ctx, types.NamespacedName{Name: service.Name, Namespace: service.Namespace}, existing)
 	if err != nil && errors.IsNotFound(err) {
@@ -308,7 +341,7 @@ func (r *OllamaDeploymentReconciler) createOrUpdateService(ctx context.Context, 
 }
 
 // createOrUpdateIngress creates or updates an ingress
-func (r *OllamaDeploymentReconciler) createOrUpdateIngress(ctx context.Context, ingress *networkingv1.Ingress) error {
+func (r *LMDeploymentReconciler) createOrUpdateIngress(ctx context.Context, ingress *networkingv1.Ingress) error {
 	existing := &networkingv1.Ingress{}
 	err := r.Get(ctx, types.NamespacedName{Name: ingress.Name, Namespace: ingress.Namespace}, existing)
 	if err != nil && errors.IsNotFound(err) {
@@ -331,7 +364,7 @@ func (r *OllamaDeploymentReconciler) createOrUpdateIngress(ctx context.Context, 
 }
 
 // createOrUpdateConfigMap creates or updates a ConfigMap
-func (r *OllamaDeploymentReconciler) createOrUpdateConfigMap(ctx context.Context, configMap *corev1.ConfigMap) error {
+func (r *LMDeploymentReconciler) createOrUpdateConfigMap(ctx context.Context, configMap *corev1.ConfigMap) error {
 	existing := &corev1.ConfigMap{}
 	err := r.Get(ctx, types.NamespacedName{Name: configMap.Name, Namespace: configMap.Namespace}, existing)
 	if err != nil && errors.IsNotFound(err) {
@@ -354,7 +387,7 @@ func (r *OllamaDeploymentReconciler) createOrUpdateConfigMap(ctx context.Context
 }
 
 // updateStatus updates the status of the Deployment
-func (r *OllamaDeploymentReconciler) updateStatus(ctx context.Context, deployment *llmgeeperiov1alpha1.Deployment) error {
+func (r *LMDeploymentReconciler) updateStatus(ctx context.Context, deployment *llmgeeperiov1alpha1.LMDeployment) error {
 	// Get Ollama deployment status
 	ollamaDeployment := &appsv1.Deployment{}
 	err := r.Get(ctx, types.NamespacedName{
@@ -405,7 +438,7 @@ func (r *OllamaDeploymentReconciler) updateStatus(ctx context.Context, deploymen
 		}
 
 		// Get plugin deployment statuses
-		pluginStatuses := make(map[string]llmgeeperiov1alpha1.DeploymentComponentStatus)
+		pluginStatuses := make(map[string]llmgeeperiov1alpha1.LMDeploymentComponentStatus)
 		for _, plugin := range deployment.Spec.OpenWebUI.Plugins {
 			if !plugin.Enabled {
 				continue
@@ -418,7 +451,7 @@ func (r *OllamaDeploymentReconciler) updateStatus(ctx context.Context, deploymen
 			}, pluginDeployment)
 
 			if err == nil {
-				pluginStatuses[plugin.Name] = llmgeeperiov1alpha1.DeploymentComponentStatus{
+				pluginStatuses[plugin.Name] = llmgeeperiov1alpha1.LMDeploymentComponentStatus{
 					AvailableReplicas: pluginDeployment.Status.AvailableReplicas,
 					ReadyReplicas:     pluginDeployment.Status.ReadyReplicas,
 					UpdatedReplicas:   pluginDeployment.Status.UpdatedReplicas,
@@ -520,14 +553,38 @@ func (r *OllamaDeploymentReconciler) updateStatus(ctx context.Context, deploymen
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *OllamaDeploymentReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *LMDeploymentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	// Initialize specialized controllers
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&llmgeeperiov1alpha1.Deployment{}).
+		For(&llmgeeperiov1alpha1.LMDeployment{}).
 		Owns(&appsv1.Deployment{}).
 		Owns(&corev1.Service{}).
 		Owns(&corev1.ConfigMap{}).
 		Owns(&networkingv1.Ingress{}).
-		Named("ollamadeployment").
+		Owns(&corev1.PersistentVolumeClaim{}).
+		Named("lmdeployment").
 		Complete(r)
+}
+
+// createOrUpdatePVC creates or updates a PersistentVolumeClaim
+func (r *LMDeploymentReconciler) createOrUpdatePVC(ctx context.Context, pvc *corev1.PersistentVolumeClaim) error {
+	existing := &corev1.PersistentVolumeClaim{}
+	err := r.Get(ctx, types.NamespacedName{Name: pvc.Name, Namespace: pvc.Namespace}, existing)
+	if err != nil && errors.IsNotFound(err) {
+		// Create new PVC
+		if err := r.Create(ctx, pvc); err != nil {
+			return err
+		}
+	} else if err == nil {
+		// Update existing PVC
+		if !reflect.DeepEqual(existing.Spec, pvc.Spec) {
+			existing.Spec = pvc.Spec
+			if err := r.Update(ctx, existing); err != nil {
+				return err
+			}
+		}
+	} else {
+		return err
+	}
+	return nil
 }

@@ -92,7 +92,7 @@ Deploy your first LLM service:
 
 ```yaml
 apiVersion: llm.geeper.io/v1alpha1
-kind: Deployment
+kind: LMDeployment
 metadata:
   name: llama2-deployment
 spec:
@@ -143,7 +143,7 @@ The operator watches for changes to custom resources and automatically:
 - [Coding Assistants](/docs/coding-assistants/continue-dev) - AI-powered coding with Continue.dev and Tabby
 - [Installation Guide](/docs/installation) - Detailed installation instructions
 - [User Guide](/docs/usage) - Learn how to use Geeper.AI
-- [API Reference](/docs/api) - Complete API documentation
+- [CRD Reference](/docs/crd-reference) - Complete API documentation
 - [Examples](/docs/examples) - Real-world deployment examples
 - [Troubleshooting](/docs/troubleshooting) - Common issues and solutions
 

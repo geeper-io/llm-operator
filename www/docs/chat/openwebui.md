@@ -26,7 +26,7 @@ OpenWebUI is an open-source web interface for LLMs that offers:
 #### Minimal Setup
 ```yaml
 apiVersion: llm.geeper.io/v1alpha1
-kind: Deployment
+kind: LMDeployment
 metadata:
   name: minimal-ollama
   namespace: default
@@ -44,7 +44,7 @@ spec:
 #### Production Setup
 ```yaml
 apiVersion: llm.geeper.io/v1alpha1
-kind: OllamaDeployment
+kind: LMDeployment
 metadata:
   name: production-ollama
   namespace: ai-production
@@ -152,7 +152,7 @@ spec:
 1. **Deploy Ollama Service**:
 ```yaml
 apiVersion: llm.geeper.io/v1alpha1
-kind: Deployment
+kind: LMDeployment
 metadata:
   name: production-ollama
   namespace: ai-production

@@ -32,7 +32,12 @@ import (
 )
 
 // reconcileOpenWebUI reconciles the OpenWebUI deployment
-func (r *OllamaDeploymentReconciler) reconcileOpenWebUI(ctx context.Context, deployment *llmgeeperiov1alpha1.Deployment) error {
+func (r *LMDeploymentReconciler) reconcileOpenWebUI(ctx context.Context, deployment *llmgeeperiov1alpha1.LMDeployment) error {
+	// Reconcile Redis if needed for OpenWebUI
+	if err := r.reconcileRedis(ctx, deployment); err != nil {
+		return err
+	}
+
 	// Create or update OpenWebUI configuration ConfigMap if plugins are defined
 	if len(deployment.Spec.OpenWebUI.Plugins) > 0 {
 		openwebuiConfig := r.buildOpenWebUIConfigMap(deployment)
@@ -65,7 +70,7 @@ func (r *OllamaDeploymentReconciler) reconcileOpenWebUI(ctx context.Context, dep
 }
 
 // buildOpenWebUIDeployment builds the OpenWebUI deployment object
-func (r *OllamaDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperiov1alpha1.Deployment) *appsv1.Deployment {
+func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperiov1alpha1.LMDeployment) *appsv1.Deployment {
 	labels := map[string]string{
 		"app":            "openwebui",
 		"llm-deployment": deployment.Name,
@@ -83,6 +88,51 @@ func (r *OllamaDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgee
 			Name:  "WEBUI_SECRET_KEY",
 			Value: "your-secret-key-here",
 		},
+	}
+
+	// Add Redis environment variables if Redis is enabled
+	if deployment.Spec.OpenWebUI.Redis.Enabled {
+		var redisURL string
+		if deployment.Spec.OpenWebUI.Redis.RedisURL != "" {
+			// Use external Redis URL
+			redisURL = deployment.Spec.OpenWebUI.Redis.RedisURL
+		} else {
+			// Use internal Redis service
+			redisURL = fmt.Sprintf("redis://:%s@%s:%d/0",
+				deployment.Spec.OpenWebUI.Redis.Password,
+				deployment.GetRedisServiceName(),
+				deployment.Spec.OpenWebUI.Redis.Service.Port)
+		}
+
+		// Add Redis environment variables for OpenWebUI
+		envVars = append(envVars, []corev1.EnvVar{
+			{
+				Name:  "REDIS_URL",
+				Value: redisURL,
+			},
+			{
+				Name:  "WEBSOCKET_MANAGER",
+				Value: "redis",
+			},
+			{
+				Name:  "ENABLE_WEBSOCKET_SUPPORT",
+				Value: "true",
+			},
+		}...)
+
+		// Add Redis environment variables for multi-instance support
+		if deployment.Spec.OpenWebUI.Replicas > 1 {
+			envVars = append(envVars, []corev1.EnvVar{
+				{
+					Name:  "REDIS_SENTINEL_HOSTS",
+					Value: "", // Not using sentinel for now
+				},
+				{
+					Name:  "REDIS_KEY_PREFIX",
+					Value: fmt.Sprintf("open-webui-%s", deployment.Name),
+				},
+			}...)
+		}
 	}
 
 	// Build volumes and volume mounts
@@ -155,7 +205,7 @@ func (r *OllamaDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgee
 }
 
 // buildOpenWebUIService builds the OpenWebUI service object
-func (r *OllamaDeploymentReconciler) buildOpenWebUIService(deployment *llmgeeperiov1alpha1.Deployment) *corev1.Service {
+func (r *LMDeploymentReconciler) buildOpenWebUIService(deployment *llmgeeperiov1alpha1.LMDeployment) *corev1.Service {
 	labels := map[string]string{
 		"app":            "openwebui",
 		"llm-deployment": deployment.Name,
@@ -187,7 +237,7 @@ func (r *OllamaDeploymentReconciler) buildOpenWebUIService(deployment *llmgeeper
 }
 
 // buildOpenWebUIIngress builds the OpenWebUI ingress object
-func (r *OllamaDeploymentReconciler) buildOpenWebUIIngress(deployment *llmgeeperiov1alpha1.Deployment) *networkingv1.Ingress {
+func (r *LMDeploymentReconciler) buildOpenWebUIIngress(deployment *llmgeeperiov1alpha1.LMDeployment) *networkingv1.Ingress {
 	labels := map[string]string{
 		"app":            "openwebui",
 		"llm-deployment": deployment.Name,
@@ -235,7 +285,7 @@ func (r *OllamaDeploymentReconciler) buildOpenWebUIIngress(deployment *llmgeeper
 }
 
 // buildOpenWebUIConfigMap builds the OpenWebUI configuration ConfigMap
-func (r *OllamaDeploymentReconciler) buildOpenWebUIConfigMap(deployment *llmgeeperiov1alpha1.Deployment) *corev1.ConfigMap {
+func (r *LMDeploymentReconciler) buildOpenWebUIConfigMap(deployment *llmgeeperiov1alpha1.LMDeployment) *corev1.ConfigMap {
 	// Start with base configuration
 	config := map[string]interface{}{
 		"version": 0,

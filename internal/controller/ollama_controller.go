@@ -31,7 +31,7 @@ import (
 )
 
 // reconcileOllama reconciles the Ollama deployment
-func (r *OllamaDeploymentReconciler) reconcileOllama(ctx context.Context, deployment *llmgeeperiov1alpha1.Deployment) error {
+func (r *LMDeploymentReconciler) reconcileOllama(ctx context.Context, deployment *llmgeeperiov1alpha1.LMDeployment) error {
 	// Create or update Ollama deployment
 	ollamaDeployment := r.buildOllamaDeployment(deployment)
 	if err := r.createOrUpdateDeployment(ctx, ollamaDeployment); err != nil {
@@ -48,7 +48,7 @@ func (r *OllamaDeploymentReconciler) reconcileOllama(ctx context.Context, deploy
 }
 
 // buildOllamaDeployment builds the Ollama deployment object
-func (r *OllamaDeploymentReconciler) buildOllamaDeployment(deployment *llmgeeperiov1alpha1.Deployment) *appsv1.Deployment {
+func (r *LMDeploymentReconciler) buildOllamaDeployment(deployment *llmgeeperiov1alpha1.LMDeployment) *appsv1.Deployment {
 	labels := map[string]string{
 		"app":            "ollama",
 		"llm-deployment": deployment.Name,
@@ -138,7 +138,7 @@ func (r *OllamaDeploymentReconciler) buildOllamaDeployment(deployment *llmgeeper
 }
 
 // buildOllamaService builds the Ollama service object
-func (r *OllamaDeploymentReconciler) buildOllamaService(deployment *llmgeeperiov1alpha1.Deployment) *corev1.Service {
+func (r *LMDeploymentReconciler) buildOllamaService(deployment *llmgeeperiov1alpha1.LMDeployment) *corev1.Service {
 	labels := map[string]string{
 		"app":            "ollama",
 		"llm-deployment": deployment.Name,

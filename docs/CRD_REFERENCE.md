@@ -1,16 +1,23 @@
-# OllamaDeployment CRD Reference
+---
+id: crd-reference
+title: CRD Reference
+sidebar_label: CRD Reference
+description: Complete reference for Geeper.AI Custom Resource Definitions
+---
 
-This document provides a comprehensive reference for the `OllamaDeployment` Custom Resource Definition (CRD) used by the LLM Operator.
+# CRD Reference
+
+This document provides a comprehensive reference for the Custom Resource Definitions (CRDs) used by Geeper.AI LLM Operator.
 
 ## Overview
 
-The `OllamaDeployment` CRD allows you to declaratively deploy Ollama instances with specified models and optionally connect them to OpenWebUI for a web-based interface. The operator automatically manages the underlying Kubernetes resources including Deployments, Services, and Ingresses.
+The Geeper.AI operator provides a unified `Deployment` CRD that allows you to declaratively deploy Ollama instances with specified models and optionally connect them to OpenWebUI, Tabby, and custom plugins. The operator automatically manages the underlying Kubernetes resources including Deployments, Services, and Ingresses.
 
 ## API Version
 
 ```yaml
 apiVersion: llm.geeper.io/v1alpha1
-kind: OllamaDeployment
+kind: LMDeployment
 ```
 
 ## Schema
@@ -20,10 +27,10 @@ kind: OllamaDeployment
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `metadata` | [ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#objectmeta-v1-meta) | Yes | Standard Kubernetes metadata |
-| `spec` | [OllamaDeploymentSpec](#ollamadeploymentspec) | Yes | Desired state of the deployment |
-| `status` | [OllamaDeploymentStatus](#ollamadeploymentstatus) | No | Observed state of the deployment (read-only) |
+| `spec` | [LMDeploymentSpec](#lmdeploymentspec) | Yes | Desired state of the deployment |
+| `status` | [LMDeploymentStatus](#lmdeploymentstatus) | No | Observed state of the deployment (read-only) |
 
-### OllamaDeploymentSpec
+### LMDeploymentSpec
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -108,7 +115,7 @@ kind: OllamaDeployment
 | `memory` | string | Memory resource (e.g., "128Mi", "2Gi") |
 | `storage` | string | Storage resource (e.g., "1Gi", "100Gi") |
 
-### OllamaDeploymentStatus
+### LMDeploymentStatus
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -135,7 +142,7 @@ kind: OllamaDeployment
 
 ```yaml
 apiVersion: llm.geeper.io/v1alpha1
-kind: OllamaDeployment
+kind: LMDeployment
 metadata:
   name: minimal-ollama
 spec:
@@ -148,7 +155,7 @@ spec:
 
 ```yaml
 apiVersion: llm.geeper.io/v1alpha1
-kind: OllamaDeployment
+kind: LMDeployment
 metadata:
   name: full-ollama
   namespace: ai-models
@@ -210,7 +217,7 @@ If no resources are specified, the operator uses reasonable defaults for the mai
 
 ```yaml
 apiVersion: llm.geeper.io/v1alpha1
-kind: Deployment
+kind: LMDeployment
 metadata:
   name: tabby-example
   namespace: default
@@ -239,7 +246,7 @@ spec:
 
 ```yaml
 apiVersion: llm.geeper.io/v1alpha1
-kind: Deployment
+kind: LMDeployment
 metadata:
   name: production-tabby
   namespace: ai-models
@@ -326,8 +333,8 @@ When `ingressEnabled: true` and `ingressHost` is specified, the operator creates
 Monitor deployment progress using:
 
 ```bash
-kubectl get ollamadeployment <name> -o yaml
-kubectl describe ollamadeployment <name>
+kubectl get deployment <name> -o yaml
+kubectl describe deployment <name>
 ```
 
 ## Best Practices
@@ -366,7 +373,7 @@ kubectl describe ollamadeployment <name>
 kubectl logs -n llm-operator-system deployment/llm-operator-controller-manager
 
 # Check CRD status
-kubectl describe ollamadeployment <name>
+kubectl describe deployment <name>
 
 # Check created resources
 kubectl get all -l ollama-deployment=<name>

@@ -30,13 +30,13 @@ kubectl create namespace ollama-example --dry-run=client -o yaml | kubectl apply
 echo "📋 Deploying example Deployment..."
 kubectl apply -f config/samples/v1alpha1_ollama_deployment.yaml
 
-echo "⏳ Waiting for OllamaDeployment to be ready..."
-kubectl wait --for=condition=ready --timeout=600s ollamadeployment/ollama-example -n default
+echo "⏳ Waiting for LMDeployment to be ready..."
+kubectl wait --for=condition=ready --timeout=600s lmdeployment/ollama-example -n default
 
 echo "🎉 Deployment complete!"
 echo ""
 echo "📊 Check the status:"
-echo "kubectl get ollamadeployment ollama-example -o yaml"
+echo "kubectl get lmdeployment ollama-example -o yaml"
 echo ""
 echo "🔍 View created resources:"
 echo "kubectl get all -l ollama-deployment=ollama-example"

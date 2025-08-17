@@ -121,7 +121,7 @@ def create_plugin(config: Dict[str, Any]):
 
 ```yaml
 apiVersion: llm.geeper.io/v1alpha1
-kind: Deployment
+kind: LMDeployment
 metadata:
   name: ollama-with-plugins
   namespace: default

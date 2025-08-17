@@ -35,12 +35,12 @@ kubectl wait --for=condition=available --timeout=300s deployment/llm-operator-co
 
 ## Step 3: Deploy Your First Ollama Instance
 
-Create a simple OllamaDeployment:
+Create a simple LMDeployment:
 
 ```bash
 cat <<EOF | kubectl apply -f -
 apiVersion: llm.geeper.io/v1alpha1
-kind: OllamaDeployment
+kind: LMDeployment
 metadata:
   name: my-first-ollama
   namespace: default
@@ -56,10 +56,10 @@ EOF
 
 ```bash
 # Check the status
-kubectl get ollamadeployment my-first-ollama
+kubectl get lmdeployment my-first-ollama
 
 # Watch the deployment progress
-kubectl get ollamadeployment my-first-ollama -w
+kubectl get lmdeployment my-first-ollama -w
 
 # Check created resources
 kubectl get all -l ollama-deployment=my-first-ollama
@@ -88,7 +88,7 @@ curl -X POST http://localhost:11434/api/generate \
 To add a web interface, update your deployment:
 
 ```bash
-kubectl patch ollamadeployment my-first-ollama --type='merge' -p='{
+kubectl patch lmdeployment my-first-ollama --type='merge' -p='{
   "spec": {
     "openwebui": {
       "enabled": true,
@@ -124,7 +124,7 @@ The operator automatically creates:
 
 ```bash
 # Scale to 3 replicas
-kubectl patch ollamadeployment my-first-ollama --type='merge' -p='{
+kubectl patch lmdeployment my-first-ollama --type='merge' -p='{
   "spec": {
     "ollama": {
       "replicas": 3
@@ -137,7 +137,7 @@ kubectl patch ollamadeployment my-first-ollama --type='merge' -p='{
 
 ```bash
 # Add a new model
-kubectl patch ollamadeployment my-first-ollama --type='merge' -p='{
+kubectl patch lmdeployment my-first-ollama --type='merge' -p='{
   "spec": {
     "ollama": {
               "models": [
@@ -154,7 +154,7 @@ kubectl patch ollamadeployment my-first-ollama --type='merge' -p='{
 
 ```bash
 # Set resource limits
-kubectl patch ollamadeployment my-first-ollama --type='merge' -p='{
+kubectl patch lmdeployment my-first-ollama --type='merge' -p='{
   "spec": {
     "ollama": {
       "resources": {
@@ -191,8 +191,8 @@ kubectl logs <pod-name> -c ollama
 ## Cleanup
 
 ```bash
-# Delete the OllamaDeployment
-kubectl delete ollamadeployment my-first-ollama
+# Delete the LMDeployment
+kubectl delete lmdeployment my-first-ollama
 
 # Undeploy the operator
 make undeploy

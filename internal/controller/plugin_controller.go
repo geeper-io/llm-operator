@@ -30,7 +30,7 @@ import (
 )
 
 // reconcilePlugins reconciles all OpenWebUI plugins
-func (r *OllamaDeploymentReconciler) reconcilePlugins(ctx context.Context, deployment *llmgeeperiov1alpha1.Deployment) error {
+func (r *LMDeploymentReconciler) reconcilePlugins(ctx context.Context, deployment *llmgeeperiov1alpha1.LMDeployment) error {
 	for _, plugin := range deployment.Spec.OpenWebUI.Plugins {
 		if !plugin.Enabled {
 			continue
@@ -52,7 +52,7 @@ func (r *OllamaDeploymentReconciler) reconcilePlugins(ctx context.Context, deplo
 }
 
 // buildPluginDeployment builds a plugin deployment object
-func (r *OllamaDeploymentReconciler) buildPluginDeployment(deployment *llmgeeperiov1alpha1.Deployment, plugin *llmgeeperiov1alpha1.OpenWebUIPlugin) *appsv1.Deployment {
+func (r *LMDeploymentReconciler) buildPluginDeployment(deployment *llmgeeperiov1alpha1.LMDeployment, plugin *llmgeeperiov1alpha1.OpenWebUIPlugin) *appsv1.Deployment {
 	labels := map[string]string{
 		"app":            "openwebui-plugin",
 		"plugin-name":    plugin.Name,
@@ -154,7 +154,7 @@ func (r *OllamaDeploymentReconciler) buildPluginDeployment(deployment *llmgeeper
 }
 
 // buildPluginService builds a plugin service object
-func (r *OllamaDeploymentReconciler) buildPluginService(deployment *llmgeeperiov1alpha1.Deployment, plugin *llmgeeperiov1alpha1.OpenWebUIPlugin) *corev1.Service {
+func (r *LMDeploymentReconciler) buildPluginService(deployment *llmgeeperiov1alpha1.LMDeployment, plugin *llmgeeperiov1alpha1.OpenWebUIPlugin) *corev1.Service {
 	labels := map[string]string{
 		"app":            "openwebui-plugin",
 		"plugin-name":    plugin.Name,

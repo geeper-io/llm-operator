@@ -17,7 +17,7 @@ import (
 )
 
 // reconcileTabby reconciles the Tabby deployment
-func (r *OllamaDeploymentReconciler) reconcileTabby(ctx context.Context, deployment *llmgeeperiov1alpha1.Deployment) error {
+func (r *LMDeploymentReconciler) reconcileTabby(ctx context.Context, deployment *llmgeeperiov1alpha1.LMDeployment) error {
 	// Create or update Tabby ConfigMap
 	tabbyConfigMap := r.buildTabbyConfigMap(deployment)
 	if err := r.createOrUpdateConfigMap(ctx, tabbyConfigMap); err != nil {
@@ -48,7 +48,7 @@ func (r *OllamaDeploymentReconciler) reconcileTabby(ctx context.Context, deploym
 }
 
 // buildTabbyDeployment builds the Tabby deployment object
-func (r *OllamaDeploymentReconciler) buildTabbyDeployment(deployment *llmgeeperiov1alpha1.Deployment) *appsv1.Deployment {
+func (r *LMDeploymentReconciler) buildTabbyDeployment(deployment *llmgeeperiov1alpha1.LMDeployment) *appsv1.Deployment {
 	labels := map[string]string{
 		"app":            "tabby",
 		"llm-deployment": deployment.Name,
@@ -172,7 +172,7 @@ func (r *OllamaDeploymentReconciler) buildTabbyDeployment(deployment *llmgeeperi
 }
 
 // buildTabbyService builds the Tabby service object
-func (r *OllamaDeploymentReconciler) buildTabbyService(deployment *llmgeeperiov1alpha1.Deployment) *corev1.Service {
+func (r *LMDeploymentReconciler) buildTabbyService(deployment *llmgeeperiov1alpha1.LMDeployment) *corev1.Service {
 	labels := map[string]string{
 		"app":            "tabby",
 		"llm-deployment": deployment.Name,
@@ -214,7 +214,7 @@ func (r *OllamaDeploymentReconciler) buildTabbyService(deployment *llmgeeperiov1
 }
 
 // buildTabbyIngress builds the Tabby ingress object
-func (r *OllamaDeploymentReconciler) buildTabbyIngress(deployment *llmgeeperiov1alpha1.Deployment) *networkingv1.Ingress {
+func (r *LMDeploymentReconciler) buildTabbyIngress(deployment *llmgeeperiov1alpha1.LMDeployment) *networkingv1.Ingress {
 	labels := map[string]string{
 		"app":            "tabby",
 		"llm-deployment": deployment.Name,
@@ -269,7 +269,7 @@ func (r *OllamaDeploymentReconciler) buildTabbyIngress(deployment *llmgeeperiov1
 }
 
 // buildTabbyConfigMap builds the Tabby configuration ConfigMap
-func (r *OllamaDeploymentReconciler) buildTabbyConfigMap(deployment *llmgeeperiov1alpha1.Deployment) *corev1.ConfigMap {
+func (r *LMDeploymentReconciler) buildTabbyConfigMap(deployment *llmgeeperiov1alpha1.LMDeployment) *corev1.ConfigMap {
 	// Generate TOML configuration
 	configTOML, err := r.generateTabbyConfig(deployment)
 	if err != nil {
@@ -295,7 +295,7 @@ func (r *OllamaDeploymentReconciler) buildTabbyConfigMap(deployment *llmgeeperio
 }
 
 // generateTabbyConfig generates the Tabby TOML configuration
-func (r *OllamaDeploymentReconciler) generateTabbyConfig(deployment *llmgeeperiov1alpha1.Deployment) (string, error) {
+func (r *LMDeploymentReconciler) generateTabbyConfig(deployment *llmgeeperiov1alpha1.LMDeployment) (string, error) {
 	// Determine the model to use for Tabby
 	var modelName string
 	if deployment.Spec.Tabby.ModelName != "" {

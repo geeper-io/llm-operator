@@ -7,7 +7,7 @@ rules:
 - apiGroups:
   - llm.geeper.io
   resources:
-  - ollamadeployments
+  - deployments
   verbs:
   - create
   - delete
@@ -19,7 +19,7 @@ rules:
 - apiGroups:
   - llm.geeper.io
   resources:
-  - ollamadeployments/status
+  - deployments/status
   verbs:
   - get
   - patch
@@ -27,7 +27,7 @@ rules:
 - apiGroups:
   - llm.geeper.io
   resources:
-  - ollamadeployments/finalizers
+  - deployments/finalizers
   verbs:
   - update
 - apiGroups:

@@ -105,6 +105,9 @@ type OpenWebUISpec struct {
 
 	// Plugins defines the list of plugins to deploy and configure
 	Plugins []OpenWebUIPlugin `json:"plugins,omitempty"`
+
+	// Redis defines the Redis configuration for OpenWebUI
+	Redis RedisSpec `json:"redis,omitempty"`
 }
 
 // TabbySpec defines the desired state of Tabby deployment
@@ -146,6 +149,48 @@ type TabbySpec struct {
 
 	// ConfigMapName is the name of the ConfigMap containing Tabby configuration
 	ConfigMapName string `json:"configMapName,omitempty"`
+}
+
+// RedisSpec defines the Redis configuration for OpenWebUI
+type RedisSpec struct {
+	// Enabled determines if Redis should be deployed automatically
+	// If false and RedisURL is not provided, Redis will not be deployed
+	Enabled bool `json:"enabled,omitempty"`
+
+	// RedisURL is the Redis connection URL
+	// If not provided and Enabled is true, Redis will be deployed automatically
+	// Format: redis://host:port/db or rediss://host:port/db for TLS
+	RedisURL string `json:"redisUrl,omitempty"`
+
+	// Image is the Redis container image to use
+	Image string `json:"image,omitempty"`
+
+	// ImageTag is the Redis image tag to use
+	ImageTag string `json:"imageTag,omitempty"`
+
+	// Resources defines the resource requirements for Redis pods
+	Resources ResourceRequirements `json:"resources,omitempty"`
+
+	// Service defines the service configuration for Redis
+	Service ServiceSpec `json:"service,omitempty"`
+
+	// Password is the Redis password (optional)
+	Password string `json:"password,omitempty"`
+
+	// Persistence defines Redis persistence configuration
+	Persistence RedisPersistenceSpec `json:"persistence,omitempty"`
+}
+
+// RedisPersistenceSpec defines Redis persistence configuration
+type RedisPersistenceSpec struct {
+	// Enabled determines if Redis data should be persisted
+	Enabled bool `json:"enabled,omitempty"`
+
+	// StorageClass is the storage class to use for persistent volumes
+	StorageClass string `json:"storageClass,omitempty"`
+
+	// Size is the size of the persistent volume
+	Size string `json:"size,omitempty"`
 }
 
 // OpenWebUIPlugin defines a plugin for OpenWebUI
@@ -220,8 +265,8 @@ type ResourceList struct {
 	Storage string `json:"storage,omitempty"`
 }
 
-// DeploymentSpec defines the desired state of Deployment
-type DeploymentSpec struct {
+// LMDeploymentSpec defines the desired state of Deployment
+type LMDeploymentSpec struct {
 	// Ollama defines the Ollama deployment configuration
 	Ollama OllamaSpec `json:"ollama"`
 
@@ -232,8 +277,8 @@ type DeploymentSpec struct {
 	Tabby TabbySpec `json:"tabby,omitempty"`
 }
 
-// DeploymentStatus defines the observed state of Deployment
-type DeploymentStatus struct {
+// LMDeploymentStatus defines the observed state of Deployment
+type LMDeploymentStatus struct {
 	// Phase represents the current phase of the deployment
 	Phase string `json:"phase,omitempty"`
 
@@ -241,13 +286,13 @@ type DeploymentStatus struct {
 	Conditions []metav1.Condition `json:"conditions,omitempty"`
 
 	// OllamaStatus represents the status of Ollama deployment
-	OllamaStatus DeploymentComponentStatus `json:"ollamaStatus,omitempty"`
+	OllamaStatus LMDeploymentComponentStatus `json:"ollamaStatus,omitempty"`
 
 	// OpenWebUIStatus represents the status of OpenWebUI deployment
-	OpenWebUIStatus DeploymentComponentStatus `json:"openwebuiStatus,omitempty"`
+	OpenWebUIStatus LMDeploymentComponentStatus `json:"openwebuiStatus,omitempty"`
 
 	// TabbyStatus represents the status of Tabby deployment
-	TabbyStatus DeploymentComponentStatus `json:"tabbyStatus,omitempty"`
+	TabbyStatus LMDeploymentComponentStatus `json:"tabbyStatus,omitempty"`
 
 	// ReadyReplicas is the number of ready replicas
 	ReadyReplicas int32 `json:"readyReplicas,omitempty"`
@@ -256,8 +301,8 @@ type DeploymentStatus struct {
 	TotalReplicas int32 `json:"totalReplicas,omitempty"`
 }
 
-// DeploymentComponentStatus represents the status of a deployment component
-type DeploymentComponentStatus struct {
+// LMDeploymentComponentStatus represents the status of a deployment component
+type LMDeploymentComponentStatus struct {
 	// AvailableReplicas is the number of available replicas
 	AvailableReplicas int32 `json:"availableReplicas,omitempty"`
 
@@ -279,31 +324,31 @@ type DeploymentComponentStatus struct {
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 // +kubebuilder:resource:scope=Namespaced,shortName=ollamadep
 
-// Deployment is the Schema for the ollamadeployments API
-type Deployment struct {
+// LMDeployment is the Schema for the lmdeployments API
+type LMDeployment struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   DeploymentSpec   `json:"spec,omitempty"`
-	Status DeploymentStatus `json:"status,omitempty"`
+	Spec   LMDeploymentSpec   `json:"spec,omitempty"`
+	Status LMDeploymentStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// DeploymentList contains a list of Deployment
-type DeploymentList struct {
+// LMDeploymentList contains a list of LMDeployment
+type LMDeploymentList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Deployment `json:"items"`
+	Items           []LMDeployment `json:"items"`
 }
 
 // GetOllamaServiceName returns the name of the Ollama service for this deployment
-func (d *Deployment) GetOllamaServiceName() string {
+func (d *LMDeployment) GetOllamaServiceName() string {
 	return fmt.Sprintf("%s-ollama", d.Name)
 }
 
 // GetOllamaServicePort returns the port of the Ollama service for this deployment
-func (d *Deployment) GetOllamaServicePort() int32 {
+func (d *LMDeployment) GetOllamaServicePort() int32 {
 	if d.Spec.Ollama.Service.Port == 0 {
 		return 11434 // Default Ollama port
 	}
@@ -311,60 +356,75 @@ func (d *Deployment) GetOllamaServicePort() int32 {
 }
 
 // GetOpenWebUIServiceName returns the name of the OpenWebUI service for this deployment
-func (d *Deployment) GetOpenWebUIServiceName() string {
+func (d *LMDeployment) GetOpenWebUIServiceName() string {
 	return fmt.Sprintf("%s-openwebui", d.Name)
 }
 
 // GetTabbyServiceName returns the name of the Tabby service for this deployment
-func (d *Deployment) GetTabbyServiceName() string {
+func (d *LMDeployment) GetTabbyServiceName() string {
 	return fmt.Sprintf("%s-tabby", d.Name)
 }
 
 // GetPluginServiceName returns the name of a plugin service for this deployment
-func (d *Deployment) GetPluginServiceName(pluginName string) string {
+func (d *LMDeployment) GetPluginServiceName(pluginName string) string {
 	return fmt.Sprintf("%s-plugin-%s", d.Name, pluginName)
 }
 
+// GetRedisServiceName returns the name of the Redis service for this deployment
+func (d *LMDeployment) GetRedisServiceName() string {
+	return fmt.Sprintf("%s-redis", d.Name)
+}
+
+// GetRedisDeploymentName returns the name of the Redis deployment for this deployment
+func (d *LMDeployment) GetRedisDeploymentName() string {
+	return fmt.Sprintf("%s-redis", d.Name)
+}
+
+// GetRedisPVCName returns the name of the Redis PVC for this deployment
+func (d *LMDeployment) GetRedisPVCName() string {
+	return fmt.Sprintf("%s-redis", d.Name)
+}
+
 // GetOllamaDeploymentName returns the name of the Ollama deployment for this deployment
-func (d *Deployment) GetOllamaDeploymentName() string {
+func (d *LMDeployment) GetOllamaDeploymentName() string {
 	return fmt.Sprintf("%s-ollama", d.Name)
 }
 
 // GetOpenWebUIDeploymentName returns the name of the OpenWebUI deployment for this deployment
-func (d *Deployment) GetOpenWebUIDeploymentName() string {
+func (d *LMDeployment) GetOpenWebUIDeploymentName() string {
 	return fmt.Sprintf("%s-openwebui", d.Name)
 }
 
 // GetTabbyDeploymentName returns the name of the Tabby deployment for this deployment
-func (d *Deployment) GetTabbyDeploymentName() string {
+func (d *LMDeployment) GetTabbyDeploymentName() string {
 	return fmt.Sprintf("%s-tabby", d.Name)
 }
 
 // GetPluginDeploymentName returns the name of a plugin deployment for this deployment
-func (d *Deployment) GetPluginDeploymentName(pluginName string) string {
+func (d *LMDeployment) GetPluginDeploymentName(pluginName string) string {
 	return fmt.Sprintf("%s-plugin-%s", d.Name, pluginName)
 }
 
 // GetOllamaIngressName returns the name of the Ollama ingress for this deployment
-func (d *Deployment) GetOllamaIngressName() string {
+func (d *LMDeployment) GetOllamaIngressName() string {
 	return fmt.Sprintf("%s-ollama-ingress", d.Name)
 }
 
 // GetOpenWebUIIngressName returns the name of the OpenWebUI ingress for this deployment
-func (d *Deployment) GetOpenWebUIIngressName() string {
+func (d *LMDeployment) GetOpenWebUIIngressName() string {
 	return fmt.Sprintf("%s-openwebui-ingress", d.Name)
 }
 
 // GetTabbyIngressName returns the name of the Tabby ingress for this deployment
-func (d *Deployment) GetTabbyIngressName() string {
+func (d *LMDeployment) GetTabbyIngressName() string {
 	return fmt.Sprintf("%s-tabby-ingress", d.Name)
 }
 
 // GetTabbyConfigMapName returns the name of the Tabby ConfigMap for this deployment
-func (d *Deployment) GetTabbyConfigMapName() string {
+func (d *LMDeployment) GetTabbyConfigMapName() string {
 	return fmt.Sprintf("%s-tabby-config", d.Name)
 }
 
 func init() {
-	SchemeBuilder.Register(&Deployment{}, &DeploymentList{})
+	SchemeBuilder.Register(&LMDeployment{}, &LMDeploymentList{})
 }
