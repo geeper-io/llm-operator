@@ -98,121 +98,73 @@ kubectl apply -f openwebui-deployment.yaml
 ### 3. Access OpenWebUI
 
 ```bash
-# Get the external IP
-kubectl get svc openwebui-chat
+# Check deployment status
+kubectl get lmdeployment openwebui-example
 
-# Open in browser
-open http://<EXTERNAL-IP>:8080
+# Access via ingress (if configured)
+# http://your-ingress-host
+
+# Or port-forward for local access
+kubectl port-forward svc/openwebui-example-openwebui 8080:8080
+# Then open http://localhost:8080
 ```
 
-## Configuration Options
+## Advanced Features
 
-### Environment Variables
+### Pipelines Integration
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `WEBUI_SECRET_KEY` | Secret key for session management | Required |
-| `DEFAULT_MODELS` | Comma-separated list of default models | `ollama/llama2` |
-| `OLLAMA_BASE_URL` | Ollama API endpoint | `http://ollama:11434` |
-| `WEBUI_AUTH` | Enable authentication | `false` |
-| `WEBUI_AUTH_SECRET_KEY` | Authentication secret | Required if auth enabled |
+OpenWebUI Pipelines provide powerful extensibility for custom workflows, filters, and integrations. You can enable pipelines to add:
 
-### Resource Configuration
+- **Content Filtering**: Toxic message detection and filtering
+- **Rate Limiting**: Request throttling and abuse prevention
+- **Custom RAG**: Sophisticated retrieval-augmented generation
+- **Function Calling**: Custom logic for handling function calls
+- **External Integrations**: Connect with APIs, databases, and services
 
-```yaml
-spec:
-  resources:
-    requests:
-      memory: "1Gi"
-      cpu: "500m"
-      nvidia.com/gpu: "1"  # If GPU acceleration needed
-    limits:
-      memory: "2Gi"
-      cpu: "1000m"
-      nvidia.com/gpu: "1"
-```
+#### Enable Pipelines
 
-### Service Configuration
-
-```yaml
-spec:
-  service:
-    type: ClusterIP  # or NodePort, LoadBalancer
-    port: 8080
-    targetPort: 8080
-    annotations:
-      # Custom annotations for your cloud provider
-      service.beta.kubernetes.io/aws-load-balancer-type: nlb
-```
-
-## Connecting to LLM Backends
-
-### Ollama Backend
-
-1. **Deploy Ollama Service**:
 ```yaml
 apiVersion: llm.geeper.io/v1alpha1
 kind: LMDeployment
 metadata:
-  name: production-ollama
-  namespace: ai-production
-spec:
-  ollama:
-    replicas: 3
-    image: ollama/ollama
-    imageTag: latest
-    service:
-      type: LoadBalancer
-      port: 11434
-    resources:
-      requests:
-        cpu: "2"
-        memory: "4Gi"
-      limits:
-        cpu: "8"
-        memory: "16Gi"
-    models:
-      - "llama2:13b"
-      - "codellama:34b"
-      - "mistral:7b"
-      - "phi:2.7b"
-```
-
-2. **Configure OpenWebUI**:
-```yaml
+  name: openwebui-with-pipelines
 spec:
   openwebui:
     enabled: true
-    replicas: 2
-    image: ghcr.io/open-webui/open-webui
-    imageTag: main
-    service:
-      type: ClusterIP
-      port: 8080
-    ingress:
+    pipelines:
       enabled: true
-      host: "ai.company.com"
-    resources:
-      requests:
-        cpu: "500m"
-        memory: "1Gi"
-      limits:
-        cpu: "2"
-        memory: "2Gi"
+      image: ghcr.io/open-webui/pipelines:main
+      replicas: 1
+      port: 9099
+      resources:
+        requests:
+          cpu: "500m"
+          memory: "1Gi"
+        limits:
+          cpu: "1"
+          memory: "2Gi"
+      
+      # Add pipeline definitions
+      pipelineUrls:
+        - "https://github.com/open-webui/pipelines/blob/main/examples/filters/detoxify_filter_pipeline.py"
+        - "https://github.com/open-webui/pipelines/blob/main/examples/filters/rate_limit_filter_pipeline.py"
+      
+      # Enable persistence
+      persistence:
+        enabled: true
+        size: "20Gi"
 ```
 
-### External API Backend
+#### Pipeline Use Cases
 
-```yaml
-spec:
-  env:
-    - name: OPENAI_API_KEY
-      value: "your-openai-api-key"
-    - name: OPENAI_API_BASE_URL
-      value: "https://api.openai.com/v1"
-```
+1. **Message Filtering**: Automatically detect and filter inappropriate content
+2. **Rate Limiting**: Prevent abuse by limiting request frequency
+3. **Custom Processing**: Add business logic before/after LLM responses
+4. **External APIs**: Integrate with databases, search engines, or other services
 
-## Advanced Features
+For complete pipeline documentation, see [OpenWebUI Pipelines](../pipelines).
+
+### Plugin System
 
 ### Authentication
 

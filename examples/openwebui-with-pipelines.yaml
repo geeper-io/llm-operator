@@ -1,0 +1,95 @@
+  apiVersion: llm.geeper.io/v1alpha1
+kind: LMDeployment
+metadata:
+  name: openwebui-with-pipelines
+  namespace: default
+  labels:
+    app: openwebui-with-pipelines
+    component: ai-chat-with-pipelines
+spec:
+  ollama:
+    models:
+      - "llama2:7b"
+      - "codellama:7b"
+    resources:
+      requests:
+        cpu: "2"
+        memory: "4Gi"
+      limits:
+        cpu: "4"
+        memory: "8Gi"
+    service:
+      type: ClusterIP
+      port: 11434
+  
+  openwebui:
+    enabled: true
+    replicas: 2
+    image: ghcr.io/open-webui/open-webui:main
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "1Gi"
+      limits:
+        cpu: "1"
+        memory: "2Gi"
+    service:
+      type: ClusterIP
+      port: 8080
+    ingress:
+      enabled: true
+      host: "chat-with-pipelines.localhost"
+      annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /
+        nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    
+    # Enable Pipelines for advanced functionality
+    pipelines:
+      enabled: true
+      image: ghcr.io/open-webui/pipelines:main
+      replicas: 1
+      port: 9099
+      serviceType: ClusterIP
+      resources:
+        requests:
+          cpu: "500m"
+          memory: "1Gi"
+        limits:
+          cpu: "1"
+          memory: "2Gi"
+      
+      # Configure pipeline directory
+      pipelinesDir: "/app/pipelines"
+      
+      # Add some example pipeline URLs
+      pipelineUrls:
+        - "https://github.com/open-webui/pipelines/blob/main/examples/filters/detoxify_filter_pipeline.py"
+        - "https://github.com/open-webui/pipelines/blob/main/examples/filters/rate_limit_filter_pipeline.py"
+      
+      # Enable persistence for pipeline data
+      persistence:
+        enabled: true
+        size: "20Gi"
+        storageClass: "fast-ssd"
+      
+      # Custom environment variables
+      envVars:
+        - name: PIPELINES_DEBUG
+          value: "true"
+        - name: PIPELINES_LOG_LEVEL
+          value: "info"
+    
+    # Redis for session management
+    redis:
+      enabled: true
+      image: redis:7-alpine
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "256Mi"
+        limits:
+          cpu: "200m"
+          memory: "512Mi"
+      persistence:
+        enabled: true
+        size: "5Gi"

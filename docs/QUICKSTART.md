@@ -120,6 +120,58 @@ The operator automatically creates:
 4. **OpenWebUI Service**: Exposes the web UI on port 8080
 5. **Ingress**: External access (if configured)
 
+## Advanced: Enable Pipelines
+
+OpenWebUI Pipelines provide powerful extensibility for custom workflows and integrations. To enable pipelines:
+
+```yaml
+apiVersion: llm.geeper.io/v1alpha1
+kind: LMDeployment
+metadata:
+  name: my-first-ollama
+spec:
+  ollama:
+    models:
+      - "llama2:7b"
+  
+  openwebui:
+    enabled: true
+    pipelines:
+      enabled: true
+      image: ghcr.io/open-webui/pipelines:main
+      replicas: 1
+      port: 9099
+      resources:
+        requests:
+          cpu: "500m"
+          memory: "1Gi"
+        limits:
+          cpu: "1"
+          memory: "2Gi"
+      
+      # Add example pipelines
+      pipelineUrls:
+        - "https://github.com/open-webui/pipelines/blob/main/examples/filters/detoxify_filter_pipeline.py"
+      
+      # Enable persistence
+      persistence:
+        enabled: true
+        size: "10Gi"
+```
+
+Apply the updated configuration:
+
+```bash
+kubectl apply -f deployment-with-pipelines.yaml
+```
+
+The operator will automatically:
+1. **Deploy Pipelines**: Create a separate Pipelines deployment
+2. **Configure OpenWebUI**: Automatically connect OpenWebUI to Pipelines
+3. **Set up Persistence**: Create persistent storage for pipeline data
+
+For complete pipeline documentation, see [OpenWebUI Pipelines](PIPELINES.md).
+
 ## Next Steps
 
 ### Scale Your LMDeployment

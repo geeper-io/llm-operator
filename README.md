@@ -8,13 +8,15 @@ The LLM Operator provides a Custom Resource Definition (CRD) called `LMDeploymen
 
 ## Features
 
-- **Ollama Deployment**: Deploy Ollama instances with custom configurations
-- **Model Management**: Automatically pull and manage specified models
-- **OpenWebUI Integration**: Optional web-based UI for interacting with Ollama
-- **Tabby Integration**: Optional code completion server using Ollama models
-- **Resource Management**: Configurable resource limits and requests
-- **Service Configuration**: Flexible service types (ClusterIP, NodePort, LoadBalancer)
-- **Ingress Support**: Optional ingress configuration for OpenWebUI and Tabby
+- **🚀 Easy Deployment**: Deploy LLM services with simple YAML configurations
+- **🔧 Multi-Model Support**: Support for various LLM frameworks (Ollama, OpenWebUI, Tabby, etc.)
+- **⚡ Auto-scaling**: Automatic scaling based on demand and resource usage
+- **🔌 Plugin System**: Extensible architecture with plugin support
+- **🔒 Security**: Built-in security features and RBAC integration
+- **📊 Monitoring**: Comprehensive metrics and observability
+- **🌐 Multi-cluster**: Support for multi-cluster LMDeployments
+- **⚡ Pipelines**: OpenWebUI Pipelines for custom workflows and integrations
+- **🔄 Redis Integration**: Automatic Redis deployment for multi-replica OpenWebUI
 
 ## Architecture
 

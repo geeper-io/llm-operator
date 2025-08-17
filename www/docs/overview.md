@@ -24,6 +24,8 @@ Geeper.AI is an open-source Kubernetes operator that extends Kubernetes with cus
 - **📊 Monitoring**: Comprehensive metrics and observability
 - **🌐 Multi-cluster**: Support for multi-cluster LMDeployments
 - **🔌 Plugin System**: Extensible architecture with plugin support
+- **⚡ Pipelines**: OpenWebUI Pipelines for custom workflows and integrations
+- **🔄 Redis Integration**: Automatic Redis deployment for multi-replica OpenWebUI
 
 ## What You Can Do
 
@@ -33,6 +35,7 @@ Deploy various LLM services with a single command:
 - **OpenWebUI**: Web-based chat interface for LLMs
 - **Tabby**: Code completion and generation models
 - **Custom Models**: Deploy your own trained models
+- **Pipelines**: Extend functionality with custom workflows and filters
 
 ### 2. Manage Infrastructure
 - Automatically provision and manage resources

@@ -29,6 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	llmgeeperiov1alpha1 "github.com/geeper-io/llm-operator/api/v1alpha1"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 // reconcileOpenWebUI reconciles the OpenWebUI deployment
@@ -36,6 +37,13 @@ func (r *LMDeploymentReconciler) reconcileOpenWebUI(ctx context.Context, deploym
 	// Reconcile Redis if needed for OpenWebUI
 	if err := r.reconcileRedis(ctx, deployment); err != nil {
 		return err
+	}
+
+	// Reconcile Pipelines if enabled
+	if deployment.Spec.OpenWebUI.Pipelines != nil && deployment.Spec.OpenWebUI.Pipelines.Enabled {
+		if err := r.reconcilePipelines(ctx, deployment); err != nil {
+			return err
+		}
 	}
 
 	// Create or update OpenWebUI configuration ConfigMap if plugins are defined
@@ -64,6 +72,37 @@ func (r *LMDeploymentReconciler) reconcileOpenWebUI(ctx context.Context, deploym
 		if err := r.createOrUpdateIngress(ctx, ingress); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+// reconcilePipelines reconciles the OpenWebUI Pipelines deployment
+func (r *LMDeploymentReconciler) reconcilePipelines(ctx context.Context, deployment *llmgeeperiov1alpha1.LMDeployment) error {
+	// Create or update PVC if persistence is enabled
+	if deployment.Spec.OpenWebUI.Pipelines.Persistence != nil && deployment.Spec.OpenWebUI.Pipelines.Persistence.Enabled {
+		pvc := r.buildPipelinesPVC(deployment)
+		if err := r.createOrUpdatePVC(ctx, pvc); err != nil {
+			return err
+		}
+	}
+
+	// Create or update Pipelines deployment
+	pipelinesDeployment := r.buildPipelinesDeployment(deployment)
+	if err := r.createOrUpdateDeployment(ctx, pipelinesDeployment); err != nil {
+		return err
+	}
+
+	// Create or update Pipelines service
+	pipelinesService := r.buildPipelinesService(deployment)
+	if err := r.createOrUpdateService(ctx, pipelinesService); err != nil {
+		return err
+	}
+
+	// Create or update OpenWebUI configuration to include Pipelines connection
+	openwebuiConfig := r.buildOpenWebUIConfigMap(deployment)
+	if err := r.createOrUpdateConfigMap(ctx, openwebuiConfig); err != nil {
+		return err
 	}
 
 	return nil
@@ -202,6 +241,248 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 	// Set owner reference
 	controllerutil.SetControllerReference(deployment, openwebuiDeployment, r.Scheme)
 	return openwebuiDeployment
+}
+
+// buildPipelinesDeployment builds the Pipelines deployment object
+func (r *LMDeploymentReconciler) buildPipelinesDeployment(deployment *llmgeeperiov1alpha1.LMDeployment) *appsv1.Deployment {
+	labels := map[string]string{
+		"app":            "pipelines",
+		"llm-deployment": deployment.Name,
+	}
+
+	pipelinesSpec := deployment.Spec.OpenWebUI.Pipelines
+
+	// Set default values
+	image := pipelinesSpec.Image
+	if image == "" {
+		image = "ghcr.io/open-webui/pipelines:main"
+	}
+
+	port := pipelinesSpec.Port
+	if port == 0 {
+		port = 9099
+	}
+
+	replicas := pipelinesSpec.Replicas
+	if replicas == 0 {
+		replicas = 1
+	}
+
+	serviceType := pipelinesSpec.ServiceType
+	if serviceType == "" {
+		serviceType = "ClusterIP"
+	}
+
+	// Build environment variables
+	envVars := []corev1.EnvVar{
+		{
+			Name:  "PIPELINES_DIR",
+			Value: pipelinesSpec.PipelinesDir,
+		},
+	}
+
+	// Add custom environment variables
+	if len(pipelinesSpec.EnvVars) > 0 {
+		envVars = append(envVars, pipelinesSpec.EnvVars...)
+	}
+
+	// Add pipeline URLs if specified
+	if len(pipelinesSpec.PipelineURLs) > 0 {
+		pipelineURLs := ""
+		for i, url := range pipelinesSpec.PipelineURLs {
+			if i > 0 {
+				pipelineURLs += ","
+			}
+			pipelineURLs += url
+		}
+		envVars = append(envVars, corev1.EnvVar{
+			Name:  "PIPELINES_URLS",
+			Value: pipelineURLs,
+		})
+	}
+
+	// Build container
+	container := corev1.Container{
+		Name:  "pipelines",
+		Image: image,
+		Ports: []corev1.ContainerPort{
+			{
+				ContainerPort: port,
+				Protocol:      corev1.ProtocolTCP,
+			},
+		},
+		Env: envVars,
+	}
+
+	// Add resource requirements if specified
+	if pipelinesSpec.Resources.Requests != nil || pipelinesSpec.Resources.Limits != nil {
+		container.Resources = corev1.ResourceRequirements{
+			Requests: corev1.ResourceList{},
+			Limits:   corev1.ResourceList{},
+		}
+
+		if pipelinesSpec.Resources.Requests.CPU != "" {
+			container.Resources.Requests[corev1.ResourceCPU] = resource.MustParse(pipelinesSpec.Resources.Requests.CPU)
+		}
+		if pipelinesSpec.Resources.Requests.Memory != "" {
+			container.Resources.Requests[corev1.ResourceMemory] = resource.MustParse(pipelinesSpec.Resources.Requests.Memory)
+		}
+		if pipelinesSpec.Resources.Limits.CPU != "" {
+			container.Resources.Limits[corev1.ResourceCPU] = resource.MustParse(pipelinesSpec.Resources.Limits.CPU)
+		}
+		if pipelinesSpec.Resources.Limits.Memory != "" {
+			container.Resources.Limits[corev1.ResourceMemory] = resource.MustParse(pipelinesSpec.Resources.Limits.Memory)
+		}
+	}
+
+	// Add volume mounts and volumes if specified
+	if len(pipelinesSpec.VolumeMounts) > 0 {
+		container.VolumeMounts = pipelinesSpec.VolumeMounts
+	}
+
+	// Build volumes
+	volumes := []corev1.Volume{}
+
+	// Add custom volumes if specified
+	if len(pipelinesSpec.Volumes) > 0 {
+		volumes = append(volumes, pipelinesSpec.Volumes...)
+	}
+
+	// Add persistence volume if enabled
+	if pipelinesSpec.Persistence != nil && pipelinesSpec.Persistence.Enabled {
+		volumeName := fmt.Sprintf("%s-pipelines-data", deployment.Name)
+		volumes = append(volumes, corev1.Volume{
+			Name: volumeName,
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: volumeName,
+				},
+			},
+		})
+
+		// Add volume mount for persistence
+		container.VolumeMounts = append(container.VolumeMounts, corev1.VolumeMount{
+			Name:      volumeName,
+			MountPath: "/app/pipelines",
+		})
+	}
+
+	// Build deployment
+	deploymentObj := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      deployment.GetPipelinesDeploymentName(),
+			Namespace: deployment.Namespace,
+			Labels:    labels,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &replicas,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: labels,
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: labels,
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{container},
+					Volumes:    volumes,
+				},
+			},
+		},
+	}
+
+	// Set owner reference
+	controllerutil.SetControllerReference(deployment, deploymentObj, r.Scheme)
+	return deploymentObj
+}
+
+// buildPipelinesService builds the Pipelines service object
+func (r *LMDeploymentReconciler) buildPipelinesService(deployment *llmgeeperiov1alpha1.LMDeployment) *corev1.Service {
+	labels := map[string]string{
+		"app":            "pipelines",
+		"llm-deployment": deployment.Name,
+	}
+
+	pipelinesSpec := deployment.Spec.OpenWebUI.Pipelines
+
+	port := pipelinesSpec.Port
+	if port == 0 {
+		port = 9099
+	}
+
+	serviceType := pipelinesSpec.ServiceType
+	if serviceType == "" {
+		serviceType = "ClusterIP"
+	}
+
+	service := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      deployment.GetPipelinesServiceName(),
+			Namespace: deployment.Namespace,
+			Labels:    labels,
+		},
+		Spec: corev1.ServiceSpec{
+			Type:     corev1.ServiceType(serviceType),
+			Selector: labels,
+			Ports: []corev1.ServicePort{
+				{
+					Port:       port,
+					TargetPort: intstr.FromInt(int(port)),
+					Protocol:   corev1.ProtocolTCP,
+				},
+			},
+		},
+	}
+
+	// Set owner reference
+	controllerutil.SetControllerReference(deployment, service, r.Scheme)
+	return service
+}
+
+// buildPipelinesPVC builds the Pipelines PVC object
+func (r *LMDeploymentReconciler) buildPipelinesPVC(deployment *llmgeeperiov1alpha1.LMDeployment) *corev1.PersistentVolumeClaim {
+	labels := map[string]string{
+		"app":            "pipelines",
+		"llm-deployment": deployment.Name,
+	}
+
+	pipelinesSpec := deployment.Spec.OpenWebUI.Pipelines
+	persistenceSpec := pipelinesSpec.Persistence
+
+	// Set default values
+	size := persistenceSpec.Size
+	if size == "" {
+		size = "10Gi"
+	}
+
+	storageClass := persistenceSpec.StorageClass
+
+	pvc := &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("%s-pipelines-data", deployment.Name),
+			Namespace: deployment.Namespace,
+			Labels:    labels,
+		},
+		Spec: corev1.PersistentVolumeClaimSpec{
+			AccessModes: []corev1.PersistentVolumeAccessMode{
+				corev1.ReadWriteOnce,
+			},
+			Resources: corev1.VolumeResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceStorage: resource.MustParse(size),
+				},
+			},
+		},
+	}
+
+	// Add storage class if specified
+	if storageClass != "" {
+		pvc.Spec.StorageClassName = &storageClass
+	}
+
+	// Set owner reference
+	controllerutil.SetControllerReference(deployment, pvc, r.Scheme)
+	return pvc
 }
 
 // buildOpenWebUIService builds the OpenWebUI service object
@@ -353,6 +634,47 @@ func (r *LMDeploymentReconciler) buildOpenWebUIConfigMap(deployment *llmgeeperio
 		}
 
 		config["tool_server"].(map[string]interface{})["connections"] = connections
+	}
+
+	// Add Pipelines connection if enabled
+	if deployment.Spec.OpenWebUI.Pipelines != nil && deployment.Spec.OpenWebUI.Pipelines.Enabled {
+		pipelinesConnections := []map[string]interface{}{}
+
+		// Add Pipelines connection
+		pipelinesConnection := map[string]interface{}{
+			"url":       fmt.Sprintf("http://%s:%d", deployment.GetPipelinesServiceName(), deployment.Spec.OpenWebUI.Pipelines.Port),
+			"path":      "openapi.json",
+			"auth_type": "none",
+			"key":       "",
+			"config": map[string]interface{}{
+				"enable": true,
+				"access_control": map[string]interface{}{
+					"read": map[string]interface{}{
+						"group_ids": []string{},
+						"user_ids":  []string{},
+					},
+					"write": map[string]interface{}{
+						"group_ids": []string{},
+						"user_ids":  []string{},
+					},
+				},
+			},
+			"info": map[string]interface{}{
+				"name":        "pipelines",
+				"description": fmt.Sprintf("OpenWebUI Pipelines for %s", deployment.Name),
+			},
+		}
+
+		pipelinesConnections = append(pipelinesConnections, pipelinesConnection)
+
+		// Add existing tool server connections if any
+		if existingConnections, exists := config["tool_server"].(map[string]interface{})["connections"]; exists {
+			if connections, ok := existingConnections.([]map[string]interface{}); ok {
+				pipelinesConnections = append(pipelinesConnections, connections...)
+			}
+		}
+
+		config["tool_server"].(map[string]interface{})["connections"] = pipelinesConnections
 	}
 
 	// Convert to JSON

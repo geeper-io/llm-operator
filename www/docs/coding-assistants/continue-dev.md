@@ -57,7 +57,7 @@ kubectl apply -f continue-dev-example.yaml
 
 1. Access your OpenWebUI instance at the ingress URL (e.g., `http://my-chat-ui.com`)
 2. Go to **Settings** → **Account** → **API keys**
-3. Add New API Key
+3. Click on **Create new secret key**
 4. Copy the generated API key - you'll need it for the next step
 
 ## Step 3: Install Continue.dev Extension

@@ -102,6 +102,9 @@ type OpenWebUISpec struct {
 
 	// Redis defines the Redis configuration for OpenWebUI
 	Redis RedisSpec `json:"redis,omitempty"`
+
+	// Pipelines defines the OpenWebUI Pipelines configuration
+	Pipelines *PipelinesSpec `json:"pipelines,omitempty"`
 }
 
 // TabbySpec defines the desired state of Tabby deployment
@@ -229,13 +232,71 @@ type OpenWebUIPlugin struct {
 	SecretName string `json:"secretName,omitempty"`
 }
 
+// PipelinesSpec defines the OpenWebUI Pipelines configuration
+type PipelinesSpec struct {
+	// Enabled determines if OpenWebUI Pipelines should be deployed
+	Enabled bool `json:"enabled,omitempty"`
+
+	// Image is the Pipelines container image to use (including tag)
+	Image string `json:"image,omitempty"`
+
+	// Replicas is the number of Pipelines pods to run
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=3
+	Replicas int32 `json:"replicas,omitempty"`
+
+	// Port is the port the Pipelines service exposes
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	Port int32 `json:"port,omitempty"`
+
+	// Resources defines the resource requirements for Pipelines pods
+	Resources ResourceRequirements `json:"resources,omitempty"`
+
+	// ServiceType is the type of service to expose the Pipelines
+	// +kubebuilder:validation:Enum=ClusterIP;NodePort;LoadBalancer
+	ServiceType string `json:"serviceType,omitempty"`
+
+	// PipelinesDir is the directory containing pipeline definitions
+	// Default: /app/pipelines
+	PipelinesDir string `json:"pipelinesDir,omitempty"`
+
+	// PipelineURLs is a list of URLs to fetch pipeline definitions from
+	// Format: https://github.com/open-webui/pipelines/blob/main/examples/filters/example.py
+	PipelineURLs []string `json:"pipelineUrls,omitempty"`
+
+	// EnvVars defines environment variables for the Pipelines
+	EnvVars []corev1.EnvVar `json:"envVars,omitempty"`
+
+	// VolumeMounts defines volume mounts for the Pipelines
+	VolumeMounts []corev1.VolumeMount `json:"volumeMounts,omitempty"`
+
+	// Volumes defines volumes for the Pipelines
+	Volumes []corev1.Volume `json:"volumes,omitempty"`
+
+	// Persistence defines Pipelines persistence configuration
+	Persistence *PipelinesPersistenceSpec `json:"persistence,omitempty"`
+}
+
+// PipelinesPersistenceSpec defines Pipelines persistence configuration
+type PipelinesPersistenceSpec struct {
+	// Enabled determines if Pipelines data should be persisted
+	Enabled bool `json:"enabled,omitempty"`
+
+	// StorageClass is the storage class to use for persistent volumes
+	StorageClass string `json:"storageClass,omitempty"`
+
+	// Size is the size of the persistent volume
+	Size string `json:"size,omitempty"`
+}
+
 // ResourceRequirements describes the compute resource requirements
 type ResourceRequirements struct {
 	// Limits describes the maximum amount of compute resources allowed
-	Limits ResourceList `json:"limits,omitempty"`
+	Limits *ResourceList `json:"limits,omitempty"`
 
 	// Requests describes the minimum amount of compute resources required
-	Requests ResourceList `json:"requests,omitempty"`
+	Requests *ResourceList `json:"requests,omitempty"`
 }
 
 // ResourceList is a set of (resource name, quantity) pairs
@@ -408,6 +469,16 @@ func (d *LMDeployment) GetTabbyIngressName() string {
 // GetTabbyConfigMapName returns the name of the Tabby ConfigMap for this deployment
 func (d *LMDeployment) GetTabbyConfigMapName() string {
 	return fmt.Sprintf("%s-tabby-config", d.Name)
+}
+
+// GetPipelinesServiceName returns the name of the Pipelines service for this deployment
+func (d *LMDeployment) GetPipelinesServiceName() string {
+	return fmt.Sprintf("%s-pipelines", d.Name)
+}
+
+// GetPipelinesDeploymentName returns the name of the Pipelines deployment for this deployment
+func (d *LMDeployment) GetPipelinesDeploymentName() string {
+	return fmt.Sprintf("%s-pipelines", d.Name)
 }
 
 func init() {

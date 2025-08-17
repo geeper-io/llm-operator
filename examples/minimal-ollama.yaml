@@ -8,9 +8,11 @@ spec:
     models:
 #      - "llama3.2:1b"
       - "gemma3:270m"
+#      - "qwen2.5-coder:0.5b"
 #      - "qwen3:0.6b"
   openwebui:
     enabled: true
+    replicas: 3
     ingress:
       enabled: true
       host: "openwebui.localhost"
