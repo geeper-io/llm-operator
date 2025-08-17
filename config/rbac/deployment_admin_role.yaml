@@ -16,7 +16,7 @@ rules:
 - apiGroups:
   - llm.geeper.io
   resources:
-  - deployments
+  - lmdeployments
   verbs:
   - '*'
 - apiGroups:

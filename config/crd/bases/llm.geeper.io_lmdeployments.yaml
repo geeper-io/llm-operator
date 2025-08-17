@@ -4,16 +4,16 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.18.0
-  name: deployments.llm.geeper.io
+  name: lmdeployments.llm.geeper.io
 spec:
   group: llm.geeper.io
   names:
-      kind: LMDeployment
-  listKind: LMDeploymentList
-    plural: deployments
+    kind: LMDeployment
+    listKind: LMDeploymentList
+    plural: lmdeployments
     shortNames:
     - ollamadep
-    singular: deployment
+    singular: lmdeployment
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -32,7 +32,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: LMDeployment is the Schema for the deployments API
+        description: LMDeployment is the Schema for the lmdeployments API
         properties:
           apiVersion:
             description: |-
@@ -52,16 +52,14 @@ spec:
           metadata:
             type: object
           spec:
-            description: DeploymentSpec defines the desired state of LMDeployment
+            description: LMDeploymentSpec defines the desired state of Deployment
             properties:
               ollama:
-                description: Ollama defines the Ollama LMDeployment configuration
+                description: Ollama defines the Ollama deployment configuration
                 properties:
                   image:
-                    description: Image is the Ollama container image to use
-                    type: string
-                  imageTag:
-                    description: ImageTag is the Ollama image tag to use
+                    description: Image is the Ollama container image to use (including
+                      tag)
                     type: string
                   models:
                     description: Models is the list of models to deploy with Ollama
@@ -135,16 +133,14 @@ spec:
                 - models
                 type: object
               openwebui:
-                description: OpenWebUI defines the OpenWebUI LMDeployment configuration
+                description: OpenWebUI defines the OpenWebUI deployment configuration
                 properties:
                   enabled:
                     description: Enabled determines if OpenWebUI should be deployed
                     type: boolean
                   image:
-                    description: Image is the OpenWebUI container image to use
-                    type: string
-                  imageTag:
-                    description: ImageTag is the OpenWebUI image tag to use
+                    description: Image is the OpenWebUI container image to use (including
+                      tag)
                     type: string
                   ingress:
                     description: Ingress defines the ingress configuration for OpenWebUI
@@ -320,9 +316,7 @@ spec:
                           type: array
                         image:
                           description: Image is the container image for the plugin
-                          type: string
-                        imageTag:
-                          description: ImageTag is the image tag for the plugin
+                            (including tag)
                           type: string
                         name:
                           description: Name is the unique name of the plugin
@@ -1293,6 +1287,7 @@ spec:
                                       If omitted, the default is to mount by volume name.
                                       Examples: For volume /dev/sda1, you specify the partition as "1".
                                       Similarly, the volume partition for /dev/sda is "0" (or you can leave the property empty).
+                                      More info: https://kubernetes.io/docs/concepts/storage/volumes#gcepersistentdisk
                                     format: int32
                                     type: integer
                                   pdName:
@@ -2281,6 +2276,100 @@ spec:
                       - type
                       type: object
                     type: array
+                  redis:
+                    description: Redis defines the Redis configuration for OpenWebUI
+                    properties:
+                      enabled:
+                        description: |-
+                          Enabled determines if Redis should be deployed automatically
+                          If false and RedisURL is not provided, Redis will not be deployed
+                        type: boolean
+                      image:
+                        description: Image is the Redis container image to use (including
+                          tag)
+                        type: string
+                      password:
+                        description: Password is the Redis password (optional)
+                        type: string
+                      persistence:
+                        description: Persistence defines Redis persistence configuration
+                        properties:
+                          enabled:
+                            description: Enabled determines if Redis data should be
+                              persisted
+                            type: boolean
+                          size:
+                            description: Size is the size of the persistent volume
+                            type: string
+                          storageClass:
+                            description: StorageClass is the storage class to use
+                              for persistent volumes
+                            type: string
+                        type: object
+                      redisUrl:
+                        description: |-
+                          RedisURL is the Redis connection URL
+                          If not provided and Enabled is true, Redis will be deployed automatically
+                          Format: redis://host:port/db or rediss://host:port/db for TLS
+                        type: string
+                      resources:
+                        description: Resources defines the resource requirements for
+                          Redis pods
+                        properties:
+                          limits:
+                            description: Limits describes the maximum amount of compute
+                              resources allowed
+                            properties:
+                              cpu:
+                                description: CPU is the CPU resource (e.g., "100m",
+                                  "2")
+                                type: string
+                              memory:
+                                description: Memory is the memory resource (e.g.,
+                                  "128Mi", "2Gi")
+                                type: string
+                              storage:
+                                description: Storage is the storage resource (e.g.,
+                                  "1Gi", "100Gi")
+                                type: string
+                            type: object
+                          requests:
+                            description: Requests describes the minimum amount of
+                              compute resources required
+                            properties:
+                              cpu:
+                                description: CPU is the CPU resource (e.g., "100m",
+                                  "2")
+                                type: string
+                              memory:
+                                description: Memory is the memory resource (e.g.,
+                                  "128Mi", "2Gi")
+                                type: string
+                              storage:
+                                description: Storage is the storage resource (e.g.,
+                                  "1Gi", "100Gi")
+                                type: string
+                            type: object
+                        type: object
+                      service:
+                        description: Service defines the service configuration for
+                          Redis
+                        properties:
+                          port:
+                            description: Port is the port to expose the service
+                            format: int32
+                            maximum: 65535
+                            minimum: 1
+                            type: integer
+                          type:
+                            description: Type is the type of service to expose
+                            enum:
+                            - ClusterIP
+                            - NodePort
+                            - LoadBalancer
+                            type: string
+                        type: object
+                    type: object
                   replicas:
                     description: Replicas is the number of OpenWebUI pods to run
                     format: int32
@@ -2343,7 +2432,7 @@ spec:
                     type: object
                 type: object
               tabby:
-                description: Tabby defines the Tabby LMDeployment configuration
+                description: Tabby defines the Tabby deployment configuration
                 properties:
                   configMapName:
                     description: ConfigMapName is the name of the ConfigMap containing
@@ -2473,10 +2562,8 @@ spec:
                       type: object
                     type: array
                   image:
-                    description: Image is the Tabby container image to use
-                    type: string
-                  imageTag:
-                    description: ImageTag is the Tabby image tag to use
+                    description: Image is the Tabby container image to use (including
+                      tag)
                     type: string
                   ingress:
                     description: Ingress defines the ingress configuration for Tabby
@@ -2764,8 +2851,7 @@ spec:
                               x-kubernetes-list-type: atomic
                             path:
                               description: 'path is Optional: Used as the mounted
-                                root, rather than the full Ceph tree, default
-                                is /'
+                                root, rather than the full Ceph tree, default is /'
                               type: string
                             readOnly:
                               description: |-
@@ -3035,13 +3121,12 @@ spec:
                                         anyOf:
                                         - type: integer
                                         - type: string
-                                        description: Specifies the output format
-                                          of the exposed resources, defaults to "1"
+                                        description: Specifies the output format of
+                                          the exposed resources, defaults to "1"
                                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                         x-kubernetes-int-or-string: true
                                       resource:
-                                        description: 'Required: resource to
-                                          select'
+                                        description: 'Required: resource to select'
                                         type: string
                                     required:
                                     - resource
@@ -3502,8 +3587,8 @@ spec:
                               description: repository is the URL
                               type: string
                             revision:
-                              description: revision is the commit hash for the
-                                specified revision.
+                              description: revision is the commit hash for the specified
+                                revision.
                               type: string
                           required:
                           - repository
@@ -3599,8 +3684,8 @@ spec:
                             More info: https://examples.k8s.io/volumes/iscsi/README.md
                           properties:
                             chapAuthDiscovery:
-                              description: chapAuthDiscovery defines whether
-                                support iSCSI Discovery CHAP authentication
+                              description: chapAuthDiscovery defines whether support
+                                iSCSI Discovery CHAP authentication
                               type: boolean
                             chapAuthSession:
                               description: chapAuthSession defines whether support
@@ -3620,8 +3705,7 @@ spec:
                                 <target portal>:<volume name> will be created for the connection.
                               type: string
                             iqn:
-                              description: iqn is the target iSCSI Qualified
-                                Name.
+                              description: iqn is the target iSCSI Qualified Name.
                               type: string
                             iscsiInterface:
                               default: default
@@ -3733,8 +3817,8 @@ spec:
                                 Ex. "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.
                               type: string
                             pdID:
-                              description: pdID is the ID that identifies Photon
-                                Controller persistent disk
+                              description: pdID is the ID that identifies Photon Controller
+                                persistent disk
                               type: string
                           required:
                           - pdID
@@ -3765,8 +3849,8 @@ spec:
                           - volumeID
                           type: object
                         projected:
-                          description: projected items for all in one resources
-                            secrets, configmaps, and downward API
+                          description: projected items for all in one resources secrets,
+                            configmaps, and downward API
                           properties:
                             defaultMode:
                               description: |-
@@ -3946,26 +4030,23 @@ spec:
                                         description: Items is a list of DownwardAPIVolume
                                           file
                                         items:
-                                          description: DownwardAPIVolumeFile
-                                            represents information to create
-                                            the file containing the pod field
+                                          description: DownwardAPIVolumeFile represents
+                                            information to create the file containing
+                                            the pod field
                                           properties:
                                             fieldRef:
-                                              description: 'Required: Selects
-                                                a field of the pod: only annotations,
-                                                labels, name, namespace and
-                                                uid are supported.'
+                                              description: 'Required: Selects a field
+                                                of the pod: only annotations, labels,
+                                                name, namespace and uid are supported.'
                                               properties:
                                                 apiVersion:
-                                                  description: Version of the
-                                                    schema the FieldPath is
-                                                    written in terms of, defaults
-                                                    to "v1".
+                                                  description: Version of the schema
+                                                    the FieldPath is written in terms
+                                                    of, defaults to "v1".
                                                   type: string
                                                 fieldPath:
-                                                  description: Path of the field
-                                                    to select in the specified
-                                                    API version.
+                                                  description: Path of the field to
+                                                    select in the specified API version.
                                                   type: string
                                               required:
                                               - fieldPath
@@ -3983,10 +4064,10 @@ spec:
                                               type: integer
                                             path:
                                               description: 'Required: Path is  the
-                                                relative path name of the file
-                                                to be created. Must not be absolute
-                                                or contain the ''..'' path. Must
-                                                be utf-8 encoded. The first item of the relative
+                                                relative path name of the file to
+                                                be created. Must not be absolute or
+                                                contain the ''..'' path. Must be utf-8
+                                                encoded. The first item of the relative
                                                 path must not start with ''..'''
                                               type: string
                                             resourceFieldRef:
@@ -3995,17 +4076,17 @@ spec:
                                                 (limits.cpu, limits.memory, requests.cpu and requests.memory) are currently supported.
                                               properties:
                                                 containerName:
-                                                  description: 'Container name:
-                                                    required for volumes, optional
-                                                    for env vars'
+                                                  description: 'Container name: required
+                                                    for volumes, optional for env
+                                                    vars'
                                                   type: string
                                                 divisor:
                                                   anyOf:
                                                   - type: integer
                                                   - type: string
-                                                  description: Specifies the
-                                                    output format of the exposed
-                                                    resources, defaults to "1"
+                                                  description: Specifies the output
+                                                    format of the exposed resources,
+                                                    defaults to "1"
                                                   pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                                                   x-kubernetes-int-or-string: true
                                                 resource:
@@ -4036,8 +4117,8 @@ spec:
                                           the volume setup will error unless it is marked optional. Paths must be
                                           relative and may not contain the '..' path or start with '..'.
                                         items:
-                                          description: Maps a string key to
-                                            a path within a volume.
+                                          description: Maps a string key to a path
+                                            within a volume.
                                           properties:
                                             key:
                                               description: key is the key to project.
@@ -4145,8 +4226,8 @@ spec:
                                 Defaults to serivceaccount user
                               type: string
                             volume:
-                              description: volume is a string that references
-                                an already created Quobyte volume by name.
+                              description: volume is a string that references an already
+                                created Quobyte volume by name.
                               type: string
                           required:
                           - registry
@@ -4445,7 +4526,7 @@ spec:
             - ollama
             type: object
           status:
-            description: DeploymentStatus defines the observed state of LMDeployment
+            description: LMDeploymentStatus defines the observed state of Deployment
             properties:
               conditions:
                 description: Conditions represent the latest available observations
@@ -4506,7 +4587,7 @@ spec:
                   type: object
                 type: array
               ollamaStatus:
-                description: OllamaStatus represents the status of Ollama LMDeployment
+                description: OllamaStatus represents the status of Ollama deployment
                 properties:
                   availableReplicas:
                     description: AvailableReplicas is the number of available replicas
@@ -4581,7 +4662,7 @@ spec:
                     type: integer
                 type: object
               openwebuiStatus:
-                description: OpenWebUIStatus represents the status of OpenWebUI LMDeployment
+                description: OpenWebUIStatus represents the status of OpenWebUI deployment
                 properties:
                   availableReplicas:
                     description: AvailableReplicas is the number of available replicas
@@ -4656,14 +4737,14 @@ spec:
                     type: integer
                 type: object
               phase:
-                description: Phase represents the current phase of the LMDeployment
+                description: Phase represents the current phase of the deployment
                 type: string
               readyReplicas:
                 description: ReadyReplicas is the number of ready replicas
                 format: int32
                 type: integer
               tabbyStatus:
-                description: TabbyStatus represents the status of Tabby LMDeployment
+                description: TabbyStatus represents the status of Tabby deployment
                 properties:
                   availableReplicas:
                     description: AvailableReplicas is the number of available replicas

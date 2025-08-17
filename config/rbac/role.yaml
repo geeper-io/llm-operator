@@ -27,7 +27,6 @@ rules:
   - watch
 - apiGroups:
   - apps
-  - llm.geeper.io
   resources:
   - deployments
   verbs:
@@ -41,13 +40,25 @@ rules:
 - apiGroups:
   - llm.geeper.io
   resources:
-  - deployments/finalizers
+  - lmdeployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - llm.geeper.io
+  resources:
+  - lmdeployments/finalizers
   verbs:
   - update
 - apiGroups:
   - llm.geeper.io
   resources:
-  - deployments/status
+  - lmdeployments/status
   verbs:
   - get
   - patch
