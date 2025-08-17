@@ -1,10 +1,10 @@
 # LLM Operator
 
-A Kubernetes operator for deploying and managing Ollama with OpenWebUI.
+The LLM Operator provides a Custom Resource Definition (CRD) called `LMDeployment` that allows you to declaratively deploy Ollama instances with specified models and optionally connect them to OpenWebUI for a web-based interface.
 
 ## Overview
 
-The LLM Operator provides a Custom Resource Definition (CRD) called `Deployment` that allows you to declaratively deploy Ollama instances with specified models and optionally connect them to OpenWebUI for a web-based interface.
+The LLM Operator provides a Custom Resource Definition (CRD) called `LMDeployment` that allows you to declaratively deploy Ollama instances with specified models and optionally connect them to OpenWebUI for a web-based interface.
 
 ## Features
 
@@ -18,13 +18,13 @@ The LLM Operator provides a Custom Resource Definition (CRD) called `Deployment`
 
 ## Architecture
 
-The operator creates the following Kubernetes resources:
+The operator creates and manages several Kubernetes resources:
 
-- **Deployments**: For Ollama, OpenWebUI (if enabled), and Tabby (if enabled)
-- **Services**: To expose Ollama, OpenWebUI, and Tabby
-- **Ingress**: For external access to OpenWebUI and Tabby (optional)
-- **PostStart Hooks**: To pull specified models after Ollama starts
-- **Automatic Integration**: Tabby automatically connects to Ollama for code completion
+- **Services**: For Ollama, OpenWebUI (if enabled), and Tabby (if enabled)
+- **LMDeployments**: For Ollama, OpenWebUI (if enabled), and Tabby (if enabled)
+- **ConfigMaps**: For configuration and plugin settings
+- **Secrets**: For sensitive configuration data
+- **PersistentVolumeClaims**: For persistent storage (if enabled)
 
 ## Installation
 
@@ -47,29 +47,31 @@ make deploy
 kubectl get crd | grep ollama
 ```
 
-## Usage
+## Examples
 
-### Basic Example
+### LMDeployment
 
-Create a `Deployment` resource:
+The `LMDeployment` CRD supports various configurations:
 
 ```yaml
 apiVersion: llm.geeper.io/v1alpha1
 kind: LMDeployment
 metadata:
   name: ollama-example
-  namespace: default
 spec:
   ollama:
-    replicas: 1
     models:
       - "llama2:7b"
       - "mistral:7b"
-  
-  openwebui:
-    enabled: true
-    ingressEnabled: true
-    ingressHost: "ollama-webui.local"
+    replicas: 1
+    image: ollama/ollama:latest
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "2Gi"
+      limits:
+        cpu: "2"
+        memory: "4Gi"
 ```
 
 ### Advanced Configuration
@@ -208,19 +210,18 @@ Tabby provides AI-powered code completion by connecting to your Ollama models. I
 
 ## Monitoring
 
-The operator provides status information through the CRD status field:
+Check the status of your deployment:
 
 ```bash
-kubectl get deployment ollama-example -o yaml
-```
+# Get the deployment status
+kubectl get lmdeployment ollama-example -o yaml
 
-Status fields include:
+# Check the status fields:
 - `status.phase`: Overall deployment phase (Pending, Progressing, Ready)
 - `status.ollamaStatus`: Ollama deployment status
 - `status.openwebuiStatus`: OpenWebUI deployment status
 - `status.tabbyStatus`: Tabby deployment status
-- `status.readyReplicas`: Number of ready replicas
-- `status.totalReplicas`: Total number of replicas
+```
 
 ## Development
 
@@ -261,27 +262,17 @@ make docker-push
 
 ## Troubleshooting
 
-### Common Issues
-
-1. **Models not pulling**: Check Ollama container logs for postStart hook execution
-2. **OpenWebUI not connecting**: Verify Ollama service is accessible
-3. **Tabby not connecting**: Verify Ollama service is accessible and model is available
-3. **Resource constraints**: Ensure sufficient CPU/memory for model loading
-
-### Debug Commands
+Check operator logs and deployment status:
 
 ```bash
 # Check operator logs
 kubectl logs -n llm-operator-system deployment/llm-operator-controller-manager
 
-# Check CRD status
-kubectl describe deployment ollama-example
+# Describe the deployment
+kubectl describe lmdeployment ollama-example
 
-# Check created resources
+# Get all resources with the deployment label
 kubectl get all -l ollama-deployment=ollama-example
-
-# Check model pulling in Ollama container logs
-kubectl logs <pod-name> -c ollama
 ```
 
 ## Contributing

@@ -11,7 +11,7 @@ metadata:
   labels:
     app.kubernetes.io/name: llm-operator
     app.kubernetes.io/managed-by: kustomize
-  name: deployment-viewer-role
+  name: lmdeployment-viewer-role
 rules:
 - apiGroups:
   - llm.geeper.io

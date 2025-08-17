@@ -52,13 +52,15 @@ spec:
 EOF
 ```
 
-## Step 4: Monitor the Deployment
+## Step 4: Monitor the LMDeployment
+
+Check the status of your LMDeployment:
 
 ```bash
 # Check the status
 kubectl get lmdeployment my-first-ollama
 
-# Watch the deployment progress
+# Watch the LMDeployment progress
 kubectl get lmdeployment my-first-ollama -w
 
 # Check created resources
@@ -67,7 +69,7 @@ kubectl get all -l ollama-deployment=my-first-ollama
 
 ## Step 5: Access Ollama
 
-Once the deployment is ready, you can access Ollama:
+Once the LMDeployment is ready, you can access Ollama:
 
 ```bash
 # Port forward to the Ollama service
@@ -85,7 +87,7 @@ curl -X POST http://localhost:11434/api/generate \
 
 ## Step 6: Add OpenWebUI (Optional)
 
-To add a web interface, update your deployment:
+To add a web interface, update your LMDeployment:
 
 ```bash
 kubectl patch lmdeployment my-first-ollama --type='merge' -p='{
@@ -112,15 +114,15 @@ kubectl port-forward svc/my-first-ollama-openwebui 8080:8080
 
 The operator automatically creates:
 
-1. **Ollama Deployment**: Runs the Ollama server with postStart hooks to pull models
+1. **Ollama LMDeployment**: Runs the Ollama server with postStart hooks to pull models
 2. **Ollama Service**: Exposes Ollama on port 11434
-3. **OpenWebUI Deployment**: Web interface (if enabled)
+3. **OpenWebUI LMDeployment**: Web interface (if enabled)
 4. **OpenWebUI Service**: Exposes the web UI on port 8080
 5. **Ingress**: External access (if configured)
 
 ## Next Steps
 
-### Scale Your Deployment
+### Scale Your LMDeployment
 
 ```bash
 # Scale to 3 replicas
@@ -215,7 +217,7 @@ make uninstall
 
 ## Production Considerations
 
-For production deployments:
+For production LMDeployments:
 
 1. **Use specific image tags** instead of `latest`
 2. **Set appropriate resource limits** based on model requirements

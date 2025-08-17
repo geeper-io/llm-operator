@@ -4,6 +4,6 @@ metadata:
   labels:
     app.kubernetes.io/name: llm-operator
     app.kubernetes.io/managed-by: kustomize
-  name: deployment-sample
+  name: lmdeployment-sample
 spec:
   # TODO(user): Add fields here

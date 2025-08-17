@@ -6,23 +6,23 @@ sidebar_position: 1
 description: Learn about Geeper.AI - the LLM Operator for Kubernetes
 ---
 
-# Geeper.AI - LLM Operator for Kubernetes
+# Overview
 
-Geeper.AI is a powerful Kubernetes operator that simplifies the deployment and management of Large Language Models (LLMs) in Kubernetes clusters. It provides a declarative way to deploy, configure, and manage various LLM services with enterprise-grade reliability and scalability.
+Geeper.AI is a powerful Kubernetes operator that simplifies the LMDeployment and management of Large Language Models (LLMs) in Kubernetes clusters. It provides a declarative way to deploy, configure, and manage various LLM services with enterprise-grade reliability and scalability.
 
 ## What is Geeper.AI?
 
-Geeper.AI is an open-source Kubernetes operator that extends Kubernetes with custom resources for managing LLM deployments. It automates the complex process of deploying and managing LLM services, making it easy for developers and DevOps teams to run AI workloads in production environments.
+Geeper.AI is an open-source Kubernetes operator that extends Kubernetes with custom resources for managing LLM LMDeployments. It automates the complex process of deploying and managing LLM services, making it easy for developers and DevOps teams to run AI workloads in production environments.
 
 ## Key Features
 
-- **🚀 Easy Deployment**: Deploy LLM services with simple YAML configurations
+- **🚀 Easy LMDeployment**: Deploy LLM services with simple YAML configurations
 - **🔧 Multi-Model Support**: Support for various LLM frameworks (Ollama, OpenWebUI, Tabby, etc.)
 - **⚡ Auto-scaling**: Automatic scaling based on demand and resource usage
 - **🔄 Lifecycle Management**: Automated updates, rollbacks, and health monitoring
 - **🔒 Security**: Built-in security features and RBAC integration
 - **📊 Monitoring**: Comprehensive metrics and observability
-- **🌐 Multi-cluster**: Support for multi-cluster deployments
+- **🌐 Multi-cluster**: Support for multi-cluster LMDeployments
 - **🔌 Plugin System**: Extensible architecture with plugin support
 
 ## What You Can Do
@@ -57,7 +57,7 @@ Deploy various LLM services with a single command:
 ### Prerequisites
 - Kubernetes cluster (v1.20+)
 - kubectl configured
-- Helm (optional, for advanced deployments)
+- Helm (optional, for advanced LMDeployments)
 
 ### Install with kubectl
 ```bash
@@ -94,7 +94,7 @@ Deploy your first LLM service:
 apiVersion: llm.geeper.io/v1alpha1
 kind: LMDeployment
 metadata:
-  name: llama2-deployment
+  name: llama2-lmdeployment
 spec:
   ollama:
     models:
@@ -114,7 +114,7 @@ spec:
 
 Apply the configuration:
 ```bash
-kubectl apply -f deployment.yaml
+kubectl apply -f lmdeployment.yaml
 ```
 
 ## Architecture
@@ -144,7 +144,7 @@ The operator watches for changes to custom resources and automatically:
 - [Installation Guide](/docs/installation) - Detailed installation instructions
 - [User Guide](/docs/usage) - Learn how to use Geeper.AI
 - [CRD Reference](/docs/crd-reference) - Complete API documentation
-- [Examples](/docs/examples) - Real-world deployment examples
+- [Examples](/docs/examples) - Real-world LMDeployment examples
 - [Troubleshooting](/docs/troubleshooting) - Common issues and solutions
 
 ## Community and Support
@@ -164,4 +164,4 @@ We welcome contributions! Please see our [Contributing Guide](/docs/contributing
 
 ---
 
-*Geeper.AI - Making LLM deployment simple and reliable in Kubernetes*
+*Geeper.AI - Making LLM LMDeployment simple and reliable in Kubernetes*

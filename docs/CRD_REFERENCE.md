@@ -7,11 +7,22 @@ description: Complete reference for Geeper.AI Custom Resource Definitions
 
 # CRD Reference
 
-This document provides a comprehensive reference for the Custom Resource Definitions (CRDs) used by Geeper.AI LLM Operator.
-
 ## Overview
 
-The Geeper.AI operator provides a unified `Deployment` CRD that allows you to declaratively deploy Ollama instances with specified models and optionally connect them to OpenWebUI, Tabby, and custom plugins. The operator automatically manages the underlying Kubernetes resources including Deployments, Services, and Ingresses.
+The Geeper.AI operator provides a unified `LMDeployment` CRD that allows you to declaratively deploy Ollama instances with specified models and optionally connect them to OpenWebUI, Tabby, and custom plugins. The operator automatically manages the underlying Kubernetes resources including Deployments, Services, and Ingresses.
+
+## LMDeployment
+
+The `LMDeployment` resource defines the complete configuration for deploying LLM services.
+
+```yaml
+apiVersion: llm.geeper.io/v1alpha1
+kind: LMDeployment
+metadata:
+  name: example-deployment
+spec:
+  # ... configuration details
+```
 
 ## API Version
 
@@ -24,19 +35,23 @@ kind: LMDeployment
 
 ### Top-level Fields
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `metadata` | [ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#objectmeta-v1-meta) | Yes | Standard Kubernetes metadata |
-| `spec` | [LMDeploymentSpec](#lmdeploymentspec) | Yes | Desired state of the deployment |
-| `status` | [LMDeploymentStatus](#lmdeploymentstatus) | No | Observed state of the deployment (read-only) |
+| Field | Type | Description | Required |
+|-------|------|-------------|----------|
+| `apiVersion` | string | `llm.geeper.io/v1alpha1` | Yes |
+| `kind` | string | `LMDeployment` | Yes |
+| `metadata` | [ObjectMeta](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta) | Standard object metadata | Yes |
+| `spec` | [LMDeploymentSpec](#lmdeploymentspec) | Yes | Desired state of the LMDeployment |
+| `status` | [LMDeploymentStatus](#lmdeploymentstatus) | No | Observed state of the LMDeployment (read-only) |
 
 ### LMDeploymentSpec
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `ollama` | [OllamaSpec](#ollamaspec) | Yes | Ollama deployment configuration |
-| `openwebui` | [OpenWebUISpec](#openwebuispec) | No | OpenWebUI deployment configuration |
-| `tabby` | [TabbySpec](#tabbyspec) | No | Tabby deployment configuration |
+The `LMDeploymentSpec` defines the desired state of the LMDeployment.
+
+| Field | Type | Description | Required |
+|-------|------|-------------|----------|
+| `ollama` | [OllamaSpec](#ollamaspec) | Yes | Ollama LMDeployment configuration |
+| `openwebui` | [OpenWebUISpec](#openwebuispec) | No | OpenWebUI LMDeployment configuration |
+| `tabby` | [TabbySpec](#tabbyspec) | No | Tabby LMDeployment configuration |
 
 ### OllamaSpec
 
@@ -75,7 +90,7 @@ kind: LMDeployment
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `enabled` | bool | No | false | Enable OpenWebUI deployment |
+| `enabled` | bool | No | false | Enable OpenWebUI LMDeployment |
 | `replicas` | int32 | No | 1 | Number of OpenWebUI pods (1-5) |
 | `image` | string | No | `ghcr.io/open-webui/open-webui` | OpenWebUI container image |
 | `imageTag` | string | No | `main` | OpenWebUI image tag |
@@ -87,7 +102,7 @@ kind: LMDeployment
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `enabled` | bool | No | false | Enable Tabby deployment |
+| `enabled` | bool | No | false | Enable Tabby LMDeployment |
 | `replicas` | int32 | No | 1 | Number of Tabby pods (1-5) |
 | `image` | string | No | `tabbyml/tabby` | Tabby container image |
 | `imageTag` | string | No | `latest` | Tabby image tag |
@@ -119,15 +134,17 @@ kind: LMDeployment
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `phase` | string | Overall deployment phase (Pending, Progressing, Ready) |
-| `conditions` | [metav1.Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#condition-v1-meta)[] | Latest observations of deployment state |
-| `ollamaStatus` | [DeploymentComponentStatus](#deploymentcomponentstatus) | Ollama deployment status |
-| `openwebuiStatus` | [DeploymentComponentStatus](#deploymentcomponentstatus) | OpenWebUI deployment status |
-| `tabbyStatus` | [DeploymentComponentStatus](#deploymentcomponentstatus) | Tabby deployment status |
+| `phase` | string | Overall LMDeployment phase (Pending, Progressing, Ready) |
+| `conditions` | [metav1.Condition](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#condition-v1-meta)[] | Latest observations of LMDeployment state |
+| `ollamaStatus` | [LMDeploymentComponentStatus](#lmdeploymentcomponentstatus) | Ollama LMDeployment status |
+| `openwebuiStatus` | [LMDeploymentComponentStatus](#lmdeploymentcomponentstatus) | OpenWebUI LMDeployment status |
+| `tabbyStatus` | [LMDeploymentComponentStatus](#lmdeploymentcomponentstatus) | Tabby LMDeployment status |
 | `readyReplicas` | int32 | Number of ready replicas |
 | `totalReplicas` | int32 | Total number of replicas |
 
-### DeploymentComponentStatus
+### LMDeploymentComponentStatus
+
+The `LMDeploymentComponentStatus` represents the status of a component within the LMDeployment.
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -213,33 +230,25 @@ If no resources are specified, the operator uses reasonable defaults for the mai
 
 ## Examples
 
-### Basic Tabby Deployment
+### Basic Tabby LMDeployment
 
 ```yaml
 apiVersion: llm.geeper.io/v1alpha1
 kind: LMDeployment
 metadata:
   name: tabby-example
-  namespace: default
 spec:
-  ollama:
-    models:
-      - "codellama:7b"
-    replicas: 1
-  
   tabby:
     enabled: true
     replicas: 1
-    ingress:
-      enabled: true
-      host: "tabby.localhost"
+    image: tabbyml/tabby:latest
     resources:
       requests:
-        cpu: "250m"
-        memory: "512Mi"
-      limits:
-        cpu: "1000m"
+        cpu: "500m"
         memory: "1Gi"
+      limits:
+        cpu: "2"
+        memory: "2Gi"
 ```
 
 ### Advanced Tabby Configuration
@@ -320,21 +329,17 @@ When `ingressEnabled: true` and `ingressHost` is specified, the operator creates
 - PathType: `Prefix`
 - Backend: Tabby service
 
-## Status Monitoring
+## Monitoring
 
-### Phase Values
-
-- **Pending**: No replicas are ready
-- **Progressing**: Some replicas are ready but not all
-- **Ready**: All replicas are ready
-
-### Status Fields
-
-Monitor deployment progress using:
+Monitor LMDeployment progress using:
 
 ```bash
-kubectl get deployment <name> -o yaml
-kubectl describe deployment <name>
+# Check the status
+kubectl get lmdeployment <name> -o yaml
+kubectl describe lmdeployment <name>
+
+# Watch the progress
+kubectl get lmdeployment <name> -w
 ```
 
 ## Best Practices
@@ -343,7 +348,7 @@ kubectl describe deployment <name>
 
 1. **Model Size**: Consider model size when setting memory limits
 2. **CPU Allocation**: Allocate sufficient CPU for model inference
-3. **Storage**: Use persistent volumes for production deployments
+3. **Storage**: Use persistent volumes for production LMDeployments
 
 ### High Availability
 
@@ -361,10 +366,10 @@ kubectl describe deployment <name>
 
 ### Common Issues
 
-1. **Models Not Pulling**: Check init container logs
-2. **OpenWebUI Connection**: Verify Ollama service accessibility
-3. **Tabby Connection**: Verify Ollama service accessibility and model availability
-4. **Resource Constraints**: Ensure sufficient cluster resources
+1. **Models not pulling**: Check Ollama container logs for postStart hook execution
+2. **OpenWebUI not connecting**: Verify Ollama service is accessible
+3. **Tabby not connecting**: Verify Ollama service is accessible and model is available
+4. **Resource constraints**: Ensure sufficient CPU/memory for model loading
 
 ### Debug Commands
 
@@ -373,12 +378,12 @@ kubectl describe deployment <name>
 kubectl logs -n llm-operator-system deployment/llm-operator-controller-manager
 
 # Check CRD status
-kubectl describe deployment <name>
+kubectl describe lmdeployment <name>
 
 # Check created resources
 kubectl get all -l ollama-deployment=<name>
 
-# Check postStart hook execution
+# Check model pulling in Ollama container logs
 kubectl logs <pod-name> -c ollama
 ```
 
