@@ -61,9 +61,6 @@ type ServiceSpec struct {
 
 // IngressSpec defines ingress configuration
 type IngressSpec struct {
-	// Enabled determines if an Ingress should be created
-	Enabled bool `json:"enabled,omitempty"`
-
 	// Host is the hostname for the Ingress
 	Host string `json:"host,omitempty"`
 

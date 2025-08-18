@@ -37,7 +37,7 @@ func (r *LMDeploymentReconciler) reconcileTabby(ctx context.Context, deployment 
 	}
 
 	// Create or update Tabby ingress if enabled
-	if deployment.Spec.Tabby.Ingress.Enabled && deployment.Spec.Tabby.Ingress.Host != "" {
+	if deployment.Spec.Tabby.Ingress.Host != "" {
 		tabbyIngress := r.buildTabbyIngress(deployment)
 		if err := r.createOrUpdateIngress(ctx, tabbyIngress); err != nil {
 			return err

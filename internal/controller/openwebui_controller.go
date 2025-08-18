@@ -75,7 +75,7 @@ func (r *LMDeploymentReconciler) reconcileOpenWebUI(ctx context.Context, deploym
 	}
 
 	// Create or update Ingress if enabled
-	if deployment.Spec.OpenWebUI.Ingress.Enabled && deployment.Spec.OpenWebUI.Ingress.Host != "" {
+	if deployment.Spec.OpenWebUI.Ingress.Host != "" {
 		ingress := r.buildOpenWebUIIngress(deployment)
 		if err := r.createOrUpdateIngress(ctx, ingress); err != nil {
 			return err
@@ -139,6 +139,13 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 			Name:  "WEBUI_SECRET_KEY",
 			Value: "your-secret-key-here",
 		},
+	}
+
+	if deployment.Spec.OpenWebUI.Ingress.Host != "" {
+		envVars = append(envVars, corev1.EnvVar{
+			Name:  "CORS_ALLOW_ORIGIN",
+			Value: deployment.Spec.OpenWebUI.Ingress.Host,
+		})
 	}
 
 	// Add Redis environment variables if Redis is enabled
@@ -236,13 +243,15 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 		},
 		Resources: r.buildResourceRequirements(deployment.Spec.OpenWebUI.Resources),
 		Env:       envVars,
-		VolumeMounts: []corev1.VolumeMount{
+	}
+	if len(deployment.Spec.OpenWebUI.Tools) > 0 {
+		container.VolumeMounts = []corev1.VolumeMount{
 			{
 				Name:      "openwebui-config",
 				MountPath: "/app/backend/data",
 				SubPath:   "config.json",
 			},
-		},
+		}
 	}
 
 	// Build volumes and volume mounts
@@ -804,7 +813,6 @@ func (r *LMDeploymentReconciler) reconcileLangfuse(ctx context.Context, deployme
 	// Create or update Ingress if enabled
 	if deployment.Spec.OpenWebUI.Langfuse.Deploy != nil &&
 		deployment.Spec.OpenWebUI.Langfuse.Deploy.Ingress != nil &&
-		deployment.Spec.OpenWebUI.Langfuse.Deploy.Ingress.Enabled &&
 		deployment.Spec.OpenWebUI.Langfuse.Deploy.Ingress.Host != "" {
 		ingress := r.buildLangfuseIngress(deployment)
 		if err := r.createOrUpdateIngress(ctx, ingress); err != nil {

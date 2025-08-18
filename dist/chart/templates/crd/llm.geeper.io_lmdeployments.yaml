@@ -276,9 +276,6 @@ spec:
                           type: string
                         description: Annotations are custom annotations for the Ingress
                         type: object
-                      enabled:
-                        description: Enabled determines if an Ingress should be created
-                        type: boolean
                       host:
                         description: Host is the hostname for the Ingress
                         type: string
@@ -431,10 +428,6 @@ spec:
                                 description: Annotations are custom annotations for
                                   the Ingress
                                 type: object
-                              enabled:
-                                description: Enabled determines if an Ingress should
-                                  be created
-                                type: boolean
                               host:
                                 description: Host is the hostname for the Ingress
                                 type: string
@@ -5022,9 +5015,6 @@ spec:
                           type: string
                         description: Annotations are custom annotations for the Ingress
                         type: object
-                      enabled:
-                        description: Enabled determines if an Ingress should be created
-                        type: boolean
                       host:
                         description: Host is the hostname for the Ingress
                         type: string
