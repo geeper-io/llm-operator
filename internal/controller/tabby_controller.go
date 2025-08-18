@@ -304,7 +304,7 @@ func (r *LMDeploymentReconciler) generateTabbyConfig(deployment *llmgeeperiov1al
 	}
 
 	// Build Ollama service host
-	ollamaHost := fmt.Sprintf("%s.%s.svc.cluster.local:%d",
+	ollamaHost := fmt.Sprintf("%s.%s:%d",
 		deployment.GetOllamaServiceName(),
 		deployment.Namespace,
 		deployment.Spec.Ollama.Service.Port)

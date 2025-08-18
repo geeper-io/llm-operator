@@ -40,13 +40,13 @@ var _ = Describe("Deployment Controller", func() {
 			Name:      resourceName,
 			Namespace: "default", // TODO(user):Modify as needed
 		}
-		deployment := &llmgeeperiov1alpha1.Deployment{}
+		deployment := &llmgeeperiov1alpha1.LMDeployment{}
 
 		BeforeEach(func() {
 			By("creating the custom resource for the Kind Deployment")
 			err := k8sClient.Get(ctx, typeNamespacedName, deployment)
 			if err != nil && errors.IsNotFound(err) {
-				resource := &llmgeeperiov1alpha1.Deployment{
+				resource := &llmgeeperiov1alpha1.LMDeployment{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      resourceName,
 						Namespace: "default",
@@ -65,7 +65,7 @@ var _ = Describe("Deployment Controller", func() {
 
 		AfterEach(func() {
 			// TODO(user): Cleanup logic after each test, like removing the resource instance.
-			resource := &llmgeeperiov1alpha1.Deployment{}
+			resource := &llmgeeperiov1alpha1.LMDeployment{}
 			err := k8sClient.Get(ctx, typeNamespacedName, resource)
 			Expect(err).NotTo(HaveOccurred())
 
