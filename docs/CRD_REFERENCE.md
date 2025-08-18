@@ -224,9 +224,9 @@ The operator automatically creates postStart hooks to pull specified models afte
 - **Memory**: Specified in bytes with SI suffixes (e.g., "1Gi", "512Mi")
 - **Storage**: Specified in bytes with SI suffixes (e.g., "10Gi", "100Mi")
 
-### Default Resource Values
+### Resource Configuration
 
-If no resources are specified, the operator uses reasonable defaults for the main Ollama container. Model pulling happens in the postStart hook using the same resources as the main container.
+Resources can be specified for CPU and memory. If no resources are specified, Kubernetes will use its default resource allocation.
 
 ## Examples
 

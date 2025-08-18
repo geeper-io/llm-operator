@@ -35,7 +35,7 @@ Ollama defines the Ollama deployment configuration
 |------|------|-------------|----------|
 | models | []string | Models is the list of models to deploy with Ollama | true |
 | image | string | Image is the Ollama container image to use (including tag) | false |
-| replicas | integer | Replicas is the number of Ollama pods to run<br/>*Format*: int32<br/>*Minimum*: 0x140005fb5c8<br/>*Maximum*: 0x140005fb5b8<br/> | false |
+| replicas | integer | Replicas is the number of Ollama pods to run<br/>*Format*: int32<br/>*Minimum*: 0x140003baad8<br/>*Maximum*: 0x140003baac8<br/> | false |
 | [resources](#lmdeploymentspecollamaresources) | object | Resources defines the resource requirements for Ollama pods | false |
 | [service](#lmdeploymentspecollamaservice) | object | Service defines the service configuration for Ollama | false |
 ### LMDeployment.spec.ollama.resources
@@ -70,7 +70,7 @@ Service defines the service configuration for Ollama
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| port | integer | Port is the port to expose the service<br/>*Format*: int32<br/>*Minimum*: 0x140005fb6d0<br/>*Maximum*: 0x140005fb6c0<br/> | false |
+| port | integer | Port is the port to expose the service<br/>*Format*: int32<br/>*Minimum*: 0x140003babe0<br/>*Maximum*: 0x140003babd0<br/> | false |
 | type | enum | Type is the type of service to expose<br/>*Enum*: ClusterIP, NodePort, LoadBalancer<br/> | false |
 ### LMDeployment.spec.openwebui
 
@@ -86,7 +86,7 @@ OpenWebUI defines the OpenWebUI deployment configuration
 | [pipelines](#lmdeploymentspecopenwebuipipelines) | object | Pipelines defines the OpenWebUI Pipelines configuration | false |
 | [plugins](#lmdeploymentspecopenwebuipluginsindex) | []object | Plugins defines the list of plugins to deploy and configure | false |
 | [redis](#lmdeploymentspecopenwebuiredis) | object | Redis defines the Redis configuration for OpenWebUI | false |
-| replicas | integer | Replicas is the number of OpenWebUI pods to run<br/>*Format*: int32<br/>*Minimum*: 0x14000370300<br/>*Maximum*: 0x140003702f8<br/> | false |
+| replicas | integer | Replicas is the number of OpenWebUI pods to run<br/>*Format*: int32<br/>*Minimum*: 0x14000327520<br/>*Maximum*: 0x14000327518<br/> | false |
 | [resources](#lmdeploymentspecopenwebuiresources) | object | Resources defines the resource requirements for OpenWebUI pods | false |
 | [service](#lmdeploymentspecopenwebuiservice) | object | Service defines the service configuration for OpenWebUI | false |
 ### LMDeployment.spec.openwebui.envVars[index]
@@ -115,7 +115,7 @@ Selects a key of a ConfigMap.
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
 | key | string | The key to select. | true |
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee0d0<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400004e170<br/> | false |
 | optional | boolean | Specify whether the ConfigMap or its key must be defined | false |
 ### LMDeployment.spec.openwebui.envVars[index].valueFrom.fieldRef
 
@@ -141,7 +141,7 @@ Selects a key of a secret in the pod's namespace
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
 | key | string | The key of the secret to select from.  Must be a valid secret key. | true |
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee100<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400004e1a0<br/> | false |
 | optional | boolean | Specify whether the Secret or its key must be defined | false |
 ### LMDeployment.spec.openwebui.ingress
 
@@ -168,12 +168,134 @@ Langfuse defines the Langfuse monitoring configuration for OpenWebUI
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
 | debug | boolean | Debug enables debug logging for Langfuse | false |
+| [deploy](#lmdeploymentspecopenwebuilangfusedeploy) | object | Deploy defines the self-hosted Langfuse deployment configuration<br/>Used when URL is not provided to deploy Langfuse automatically | false |
 | enabled | boolean | Enabled determines if Langfuse monitoring should be enabled | false |
 | environment | string | Environment is the environment name (e.g., "production", "staging", "development") | false |
-| projectName | string | ProjectName is the name of the project for Langfuse | false |
-| publicKey | string | PublicKey is the Langfuse public key for authentication | false |
-| secretKey | string | SecretKey is the Langfuse secret key for authentication | false |
-| url | string | URL is the Langfuse server URL<br/>Format: https://cloud.langfuse.com or http://localhost:3000 | false |
+| projectName | string | ProjectName is the name of the project for Langfuse<br/>If not provided and URL is empty, will default to deployment name | false |
+| publicKey | string | PublicKey is the Langfuse public key for authentication<br/>If not provided and URL is empty, will be auto-generated | false |
+| secretKey | string | SecretKey is the Langfuse secret key for authentication<br/>If not provided and URL is empty, will be auto-generated | false |
+| url | string | URL is the Langfuse server URL<br/>Format: https://cloud.langfuse.com or http://localhost:3000<br/>If not provided, Langfuse will be deployed automatically | false |
+### LMDeployment.spec.openwebui.langfuse.deploy
+
+Deploy defines the self-hosted Langfuse deployment configuration<br/>Used when URL is not provided to deploy Langfuse automatically
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [envVars](#lmdeploymentspecopenwebuilangfusedeployenvvarsindex) | []object | EnvVars defines environment variables for the Pipelines | false |
+| image | string | Image is the Langfuse container image to use (including tag) | false |
+| [ingress](#lmdeploymentspecopenwebuilangfusedeployingress) | object | Ingress defines the ingress configuration for Langfuse | false |
+| [persistence](#lmdeploymentspecopenwebuilangfusedeploypersistence) | object | Persistence defines Langfuse persistence configuration | false |
+| port | integer | Port is the port the Langfuse service exposes<br/>*Format*: int32<br/>*Minimum*: 0x140003bb398<br/>*Maximum*: 0x140003bb388<br/> | false |
+| replicas | integer | Replicas is the number of Langfuse pods to run<br/>*Format*: int32<br/>*Minimum*: 0x140003bb3c8<br/>*Maximum*: 0x140003bb3c0<br/> | false |
+| [resources](#lmdeploymentspecopenwebuilangfusedeployresources) | object | Resources defines the resource requirements for Langfuse pods | false |
+| serviceType | enum | ServiceType is the type of service to expose Langfuse<br/>*Enum*: ClusterIP, NodePort, LoadBalancer<br/> | false |
+### LMDeployment.spec.openwebui.langfuse.deploy.envVars[index]
+
+EnvVar represents an environment variable present in a Container.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| name | string | Name of the environment variable. Must be a C_IDENTIFIER. | true |
+| value | string | Variable references $(VAR_NAME) are expanded<br/>using the previously defined environment variables in the container and<br/>any service environment variables. If a variable cannot be resolved,<br/>the reference in the input string will be unchanged. Double $$ are reduced<br/>to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e.<br/>"$$(VAR_NAME)" will produce the string literal "$(VAR_NAME)".<br/>Escaped references will never be expanded, regardless of whether the variable<br/>exists or not.<br/>Defaults to "". | false |
+| [valueFrom](#lmdeploymentspecopenwebuilangfusedeployenvvarsindexvaluefrom) | object | Source for the environment variable's value. Cannot be used if value is not empty. | false |
+### LMDeployment.spec.openwebui.langfuse.deploy.envVars[index].valueFrom
+
+Source for the environment variable's value. Cannot be used if value is not empty.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [configMapKeyRef](#lmdeploymentspecopenwebuilangfusedeployenvvarsindexvaluefromconfigmapkeyref) | object | Selects a key of a ConfigMap. | false |
+| [fieldRef](#lmdeploymentspecopenwebuilangfusedeployenvvarsindexvaluefromfieldref) | object | Selects a field of the pod: supports metadata.name, metadata.namespace, `metadata.labels['&lt;KEY&gt;']`, `metadata.annotations['&lt;KEY&gt;']`,<br/>spec.nodeName, spec.serviceAccountName, status.hostIP, status.podIP, status.podIPs. | false |
+| [resourceFieldRef](#lmdeploymentspecopenwebuilangfusedeployenvvarsindexvaluefromresourcefieldref) | object | Selects a resource of the container: only resources limits and requests<br/>(limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported. | false |
+| [secretKeyRef](#lmdeploymentspecopenwebuilangfusedeployenvvarsindexvaluefromsecretkeyref) | object | Selects a key of a secret in the pod's namespace | false |
+### LMDeployment.spec.openwebui.langfuse.deploy.envVars[index].valueFrom.configMapKeyRef
+
+Selects a key of a ConfigMap.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | The key to select. | true |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032fbb0<br/> | false |
+| optional | boolean | Specify whether the ConfigMap or its key must be defined | false |
+### LMDeployment.spec.openwebui.langfuse.deploy.envVars[index].valueFrom.fieldRef
+
+Selects a field of the pod: supports metadata.name, metadata.namespace, `metadata.labels['&lt;KEY&gt;']`, `metadata.annotations['&lt;KEY&gt;']`,<br/>spec.nodeName, spec.serviceAccountName, status.hostIP, status.podIP, status.podIPs.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| fieldPath | string | Path of the field to select in the specified API version. | true |
+| apiVersion | string | Version of the schema the FieldPath is written in terms of, defaults to "v1". | false |
+### LMDeployment.spec.openwebui.langfuse.deploy.envVars[index].valueFrom.resourceFieldRef
+
+Selects a resource of the container: only resources limits and requests<br/>(limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| resource | string | Required: resource to select | true |
+| containerName | string | Container name: required for volumes, optional for env vars | false |
+| divisor | int or string | Specifies the output format of the exposed resources, defaults to "1" | false |
+### LMDeployment.spec.openwebui.langfuse.deploy.envVars[index].valueFrom.secretKeyRef
+
+Selects a key of a secret in the pod's namespace
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | The key of the secret to select from.  Must be a valid secret key. | true |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032fbd0<br/> | false |
+| optional | boolean | Specify whether the Secret or its key must be defined | false |
+### LMDeployment.spec.openwebui.langfuse.deploy.ingress
+
+Ingress defines the ingress configuration for Langfuse
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| annotations | map[string]string | Annotations are custom annotations for the Ingress | false |
+| enabled | boolean | Enabled determines if an Ingress should be created | false |
+| host | string | Host is the hostname for the Ingress | false |
+| [tls](#lmdeploymentspecopenwebuilangfusedeployingresstls) | object | TLS configuration for the Ingress | false |
+### LMDeployment.spec.openwebui.langfuse.deploy.ingress.tls
+
+TLS configuration for the Ingress
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| hosts | []string | hosts is a list of hosts included in the TLS certificate. The values in<br/>this list must match the name/s used in the tlsSecret. Defaults to the<br/>wildcard host setting for the loadbalancer controller fulfilling this<br/>Ingress, if left unspecified. | false |
+| secretName | string | secretName is the name of the secret used to terminate TLS traffic on<br/>port 443. Field is left optional to allow TLS routing based on SNI<br/>hostname alone. If the SNI host in a listener conflicts with the "Host"<br/>header field used by an IngressRule, the SNI host is used for termination<br/>and value of the "Host" header is used for routing. | false |
+### LMDeployment.spec.openwebui.langfuse.deploy.persistence
+
+Persistence defines Langfuse persistence configuration
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| enabled | boolean | Enabled determines if Langfuse data should be persisted | false |
+| size | string | Size is the size of the persistent volume | false |
+| storageClass | string | StorageClass is the storage class to use for persistent volumes | false |
+### LMDeployment.spec.openwebui.langfuse.deploy.resources
+
+Resources defines the resource requirements for Langfuse pods
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [limits](#lmdeploymentspecopenwebuilangfusedeployresourceslimits) | object | Limits describes the maximum amount of compute resources allowed | false |
+| [requests](#lmdeploymentspecopenwebuilangfusedeployresourcesrequests) | object | Requests describes the minimum amount of compute resources required | false |
+### LMDeployment.spec.openwebui.langfuse.deploy.resources.limits
+
+Limits describes the maximum amount of compute resources allowed
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| cpu | string | CPU is the CPU resource (e.g., "100m", "2") | false |
+| memory | string | Memory is the memory resource (e.g., "128Mi", "2Gi") | false |
+| storage | string | Storage is the storage resource (e.g., "1Gi", "100Gi") | false |
+### LMDeployment.spec.openwebui.langfuse.deploy.resources.requests
+
+Requests describes the minimum amount of compute resources required
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| cpu | string | CPU is the CPU resource (e.g., "100m", "2") | false |
+| memory | string | Memory is the memory resource (e.g., "128Mi", "2Gi") | false |
+| storage | string | Storage is the storage resource (e.g., "1Gi", "100Gi") | false |
 ### LMDeployment.spec.openwebui.pipelines
 
 Pipelines defines the OpenWebUI Pipelines configuration
@@ -186,8 +308,8 @@ Pipelines defines the OpenWebUI Pipelines configuration
 | [persistence](#lmdeploymentspecopenwebuipipelinespersistence) | object | Persistence defines Pipelines persistence configuration | false |
 | pipelineUrls | []string | PipelineURLs is a list of URLs to fetch pipeline definitions from<br/>Format: https://github.com/open-webui/pipelines/blob/main/examples/filters/example.py | false |
 | pipelinesDir | string | PipelinesDir is the directory containing pipeline definitions<br/>Default: /app/pipelines | false |
-| port | integer | Port is the port the Pipelines service exposes<br/>*Format*: int32<br/>*Minimum*: 0x140005fbef8<br/>*Maximum*: 0x140005fbee8<br/> | false |
-| replicas | integer | Replicas is the number of Pipelines pods to run<br/>*Format*: int32<br/>*Minimum*: 0x140005fbf28<br/>*Maximum*: 0x140005fbf20<br/> | false |
+| port | integer | Port is the port the Pipelines service exposes<br/>*Format*: int32<br/>*Minimum*: 0x140003bb928<br/>*Maximum*: 0x140003bb918<br/> | false |
+| replicas | integer | Replicas is the number of Pipelines pods to run<br/>*Format*: int32<br/>*Minimum*: 0x140003bb958<br/>*Maximum*: 0x140003bb950<br/> | false |
 | [resources](#lmdeploymentspecopenwebuipipelinesresources) | object | Resources defines the resource requirements for Pipelines pods | false |
 | serviceType | enum | ServiceType is the type of service to expose the Pipelines<br/>*Enum*: ClusterIP, NodePort, LoadBalancer<br/> | false |
 | [volumeMounts](#lmdeploymentspecopenwebuipipelinesvolumemountsindex) | []object | VolumeMounts defines volume mounts for the Pipelines | false |
@@ -218,7 +340,7 @@ Selects a key of a ConfigMap.
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
 | key | string | The key to select. | true |
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee160<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032ff30<br/> | false |
 | optional | boolean | Specify whether the ConfigMap or its key must be defined | false |
 ### LMDeployment.spec.openwebui.pipelines.envVars[index].valueFrom.fieldRef
 
@@ -244,7 +366,7 @@ Selects a key of a secret in the pod's namespace
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
 | key | string | The key of the secret to select from.  Must be a valid secret key. | true |
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee130<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032ff50<br/> | false |
 | optional | boolean | Specify whether the Secret or its key must be defined | false |
 ### LMDeployment.spec.openwebui.pipelines.persistence
 
@@ -350,9 +472,9 @@ azureDisk represents an Azure Data Disk mount on the host and bind mount to the 
 | diskName | string | diskName is the Name of the data disk in the blob storage | true |
 | diskURI | string | diskURI is the URI of data disk in the blob storage | true |
 | cachingMode | string | cachingMode is the Host Caching mode: None, Read Only, Read Write. | false |
-| fsType | string | fsType is Filesystem type to mount.<br/>Must be a filesystem type supported by the host operating system.<br/>Ex. "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.<br/>*Default*: 0x140004ee330<br/> | false |
+| fsType | string | fsType is Filesystem type to mount.<br/>Must be a filesystem type supported by the host operating system.<br/>Ex. "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.<br/>*Default*: 0x1400032fdf0<br/> | false |
 | kind | string | kind expected values are Shared: multiple blob disks per storage account  Dedicated: single blob disk per storage account  Managed: azure managed data disk (only in managed availability set). defaults to shared | false |
-| readOnly | boolean | readOnly Defaults to false (read/write). ReadOnly here will force<br/>the ReadOnly setting in VolumeMounts.<br/>*Default*: 0x140004ee310<br/> | false |
+| readOnly | boolean | readOnly Defaults to false (read/write). ReadOnly here will force<br/>the ReadOnly setting in VolumeMounts.<br/>*Default*: 0x1400032fe20<br/> | false |
 ### LMDeployment.spec.openwebui.pipelines.volumes[index].azureFile
 
 azureFile represents an Azure File Service mount on the host and bind mount to the pod.<br/>Deprecated: AzureFile is deprecated. All operations for the in-tree azureFile type<br/>are redirected to the file.csi.azure.com CSI driver.
@@ -380,7 +502,7 @@ secretRef is Optional: SecretRef is reference to the authentication secret for U
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee2b0<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032fe40<br/> | false |
 ### LMDeployment.spec.openwebui.pipelines.volumes[index].cinder
 
 cinder represents a cinder volume attached and mounted on kubelets host machine.<br/>Deprecated: Cinder is deprecated. All operations for the in-tree cinder type<br/>are redirected to the cinder.csi.openstack.org CSI driver.<br/>More info: https://examples.k8s.io/mysql-cinder-pd/README.md
@@ -397,7 +519,7 @@ secretRef is optional: points to a secret object containing parameters used to c
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee400<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032fc00<br/> | false |
 ### LMDeployment.spec.openwebui.pipelines.volumes[index].configMap
 
 configMap represents a configMap that should populate this volume
@@ -406,7 +528,7 @@ configMap represents a configMap that should populate this volume
 |------|------|-------------|----------|
 | defaultMode | integer | defaultMode is optional: mode bits used to set permissions on created files by default.<br/>Must be an octal value between 0000 and 0777 or a decimal value between 0 and 511.<br/>YAML accepts both octal and decimal values, JSON requires decimal values for mode bits.<br/>Defaults to 0644.<br/>Directories within the path are not affected by this setting.<br/>This might be in conflict with other options that affect the file<br/>mode, like fsGroup, and the result can be other mode bits set.<br/>*Format*: int32<br/> | false |
 | [items](#lmdeploymentspecopenwebuipipelinesvolumesindexconfigmapitemsindex) | []object | items if unspecified, each key-value pair in the Data field of the referenced<br/>ConfigMap will be projected into the volume as a file whose name is the<br/>key and content is the value. If specified, the listed keys will be<br/>projected into the specified paths, and unlisted keys will not be<br/>present. If a key is specified which is not present in the ConfigMap,<br/>the volume setup will error unless it is marked optional. Paths must be<br/>relative and may not contain the '..' path or start with '..'. | false |
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee1e0<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032fdd0<br/> | false |
 | optional | boolean | optional specify whether the ConfigMap or its keys must be defined | false |
 ### LMDeployment.spec.openwebui.pipelines.volumes[index].configMap.items[index]
 
@@ -434,7 +556,7 @@ nodePublishSecretRef is a reference to the secret object containing<br/>sensitiv
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee2e0<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032feb0<br/> | false |
 ### LMDeployment.spec.openwebui.pipelines.volumes[index].downwardAPI
 
 downwardAPI represents downward API about the pod that should populate this volume
@@ -580,7 +702,7 @@ secretRef is Optional: secretRef is reference to the secret object containing<br
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee490<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032fd70<br/> | false |
 ### LMDeployment.spec.openwebui.pipelines.volumes[index].flocker
 
 flocker represents a Flocker volume attached to a kubelet's host machine. This depends on the Flocker control service being running.<br/>Deprecated: Flocker is deprecated and the in-tree flocker type is no longer supported.
@@ -646,7 +768,7 @@ iscsi represents an ISCSI Disk resource that is attached to a<br/>kubelet's host
 | chapAuthSession | boolean | chapAuthSession defines whether support iSCSI Session CHAP authentication | false |
 | fsType | string | fsType is the filesystem type of the volume that you want to mount.<br/>Tip: Ensure that the filesystem type is supported by the host operating system.<br/>Examples: "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.<br/>More info: https://kubernetes.io/docs/concepts/storage/volumes#iscsi | false |
 | initiatorName | string | initiatorName is the custom iSCSI Initiator Name.<br/>If initiatorName is specified with iscsiInterface simultaneously, new iSCSI interface<br/>&lt;target portal&gt;:&lt;volume name&gt; will be created for the connection. | false |
-| iscsiInterface | string | iscsiInterface is the interface Name that uses an iSCSI transport.<br/>Defaults to 'default' (tcp).<br/>*Default*: 0x140004ee3b0<br/> | false |
+| iscsiInterface | string | iscsiInterface is the interface Name that uses an iSCSI transport.<br/>Defaults to 'default' (tcp).<br/>*Default*: 0x1400032fe80<br/> | false |
 | portals | []string | portals is the iSCSI Target Portal List. The portal is either an IP or ip_addr:port if the port<br/>is other than default (typically TCP ports 860 and 3260). | false |
 | readOnly | boolean | readOnly here will force the ReadOnly setting in VolumeMounts.<br/>Defaults to false. | false |
 | [secretRef](#lmdeploymentspecopenwebuipipelinesvolumesindexiscsisecretref) | object | secretRef is the CHAP Secret for iSCSI target and initiator authentication | false |
@@ -656,7 +778,7 @@ secretRef is the CHAP Secret for iSCSI target and initiator authentication
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee3e0<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032fe60<br/> | false |
 ### LMDeployment.spec.openwebui.pipelines.volumes[index].nfs
 
 nfs represents an NFS mount on the host that shares a pod's lifetime<br/>More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs
@@ -745,7 +867,7 @@ configMap information about the configMap data to project
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
 | [items](#lmdeploymentspecopenwebuipipelinesvolumesindexprojectedsourcesindexconfigmapitemsindex) | []object | items if unspecified, each key-value pair in the Data field of the referenced<br/>ConfigMap will be projected into the volume as a file whose name is the<br/>key and content is the value. If specified, the listed keys will be<br/>projected into the specified paths, and unlisted keys will not be<br/>present. If a key is specified which is not present in the ConfigMap,<br/>the volume setup will error unless it is marked optional. Paths must be<br/>relative and may not contain the '..' path or start with '..'. | false |
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee370<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032fef0<br/> | false |
 | optional | boolean | optional specify whether the ConfigMap or its keys must be defined | false |
 ### LMDeployment.spec.openwebui.pipelines.volumes[index].projected.sources[index].configMap.items[index]
 
@@ -797,7 +919,7 @@ secret information about the secret data to project
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
 | [items](#lmdeploymentspecopenwebuipipelinesvolumesindexprojectedsourcesindexsecretitemsindex) | []object | items if unspecified, each key-value pair in the Data field of the referenced<br/>Secret will be projected into the volume as a file whose name is the<br/>key and content is the value. If specified, the listed keys will be<br/>projected into the specified paths, and unlisted keys will not be<br/>present. If a key is specified which is not present in the Secret,<br/>the volume setup will error unless it is marked optional. Paths must be<br/>relative and may not contain the '..' path or start with '..'. | false |
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee390<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032ff10<br/> | false |
 | optional | boolean | optional field specify whether the Secret or its key must be defined | false |
 ### LMDeployment.spec.openwebui.pipelines.volumes[index].projected.sources[index].secret.items[index]
 
@@ -838,18 +960,18 @@ rbd represents a Rados Block Device mount on the host that shares a pod's lifeti
 | image | string | image is the rados image name.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it | true |
 | monitors | []string | monitors is a collection of Ceph monitors.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it | true |
 | fsType | string | fsType is the filesystem type of the volume that you want to mount.<br/>Tip: Ensure that the filesystem type is supported by the host operating system.<br/>Examples: "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.<br/>More info: https://kubernetes.io/docs/concepts/storage/volumes#rbd | false |
-| keyring | string | keyring is the path to key ring for RBDUser.<br/>Default is /etc/ceph/keyring.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it<br/>*Default*: 0x140004ee540<br/> | false |
-| pool | string | pool is the rados pool name.<br/>Default is rbd.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it<br/>*Default*: 0x140004ee4c0<br/> | false |
+| keyring | string | keyring is the path to key ring for RBDUser.<br/>Default is /etc/ceph/keyring.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it<br/>*Default*: 0x1400032fc70<br/> | false |
+| pool | string | pool is the rados pool name.<br/>Default is rbd.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it<br/>*Default*: 0x1400032fca0<br/> | false |
 | readOnly | boolean | readOnly here will force the ReadOnly setting in VolumeMounts.<br/>Defaults to false.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it | false |
 | [secretRef](#lmdeploymentspecopenwebuipipelinesvolumesindexrbdsecretref) | object | secretRef is name of the authentication secret for RBDUser. If provided<br/>overrides keyring.<br/>Default is nil.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it | false |
-| user | string | user is the rados user name.<br/>Default is admin.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it<br/>*Default*: 0x140004ee510<br/> | false |
+| user | string | user is the rados user name.<br/>Default is admin.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it<br/>*Default*: 0x1400032fc40<br/> | false |
 ### LMDeployment.spec.openwebui.pipelines.volumes[index].rbd.secretRef
 
 secretRef is name of the authentication secret for RBDUser. If provided<br/>overrides keyring.<br/>Default is nil.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee4f0<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032fc20<br/> | false |
 ### LMDeployment.spec.openwebui.pipelines.volumes[index].scaleIO
 
 scaleIO represents a ScaleIO persistent volume attached and mounted on Kubernetes nodes.<br/>Deprecated: ScaleIO is deprecated and the in-tree scaleIO type is no longer supported.
@@ -859,11 +981,11 @@ scaleIO represents a ScaleIO persistent volume attached and mounted on Kubernete
 | gateway | string | gateway is the host address of the ScaleIO API Gateway. | true |
 | [secretRef](#lmdeploymentspecopenwebuipipelinesvolumesindexscaleiosecretref) | object | secretRef references to the secret for ScaleIO user and other<br/>sensitive information. If this is not provided, Login operation will fail. | true |
 | system | string | system is the name of the storage system as configured in ScaleIO. | true |
-| fsType | string | fsType is the filesystem type to mount.<br/>Must be a filesystem type supported by the host operating system.<br/>Ex. "ext4", "xfs", "ntfs".<br/>Default is "xfs".<br/>*Default*: 0x140004ee270<br/> | false |
+| fsType | string | fsType is the filesystem type to mount.<br/>Must be a filesystem type supported by the host operating system.<br/>Ex. "ext4", "xfs", "ntfs".<br/>Default is "xfs".<br/>*Default*: 0x1400032fd20<br/> | false |
 | protectionDomain | string | protectionDomain is the name of the ScaleIO Protection Domain for the configured storage. | false |
 | readOnly | boolean | readOnly Defaults to false (read/write). ReadOnly here will force<br/>the ReadOnly setting in VolumeMounts. | false |
 | sslEnabled | boolean | sslEnabled Flag enable/disable SSL communication with Gateway, default false | false |
-| storageMode | string | storageMode indicates whether the storage for a volume should be ThickProvisioned or ThinProvisioned.<br/>Default is ThinProvisioned.<br/>*Default*: 0x140004ee220<br/> | false |
+| storageMode | string | storageMode indicates whether the storage for a volume should be ThickProvisioned or ThinProvisioned.<br/>Default is ThinProvisioned.<br/>*Default*: 0x1400032fcf0<br/> | false |
 | storagePool | string | storagePool is the ScaleIO Storage Pool associated with the protection domain. | false |
 | volumeName | string | volumeName is the name of a volume already created in the ScaleIO system<br/>that is associated with this volume source. | false |
 ### LMDeployment.spec.openwebui.pipelines.volumes[index].scaleIO.secretRef
@@ -872,7 +994,7 @@ secretRef references to the secret for ScaleIO user and other<br/>sensitive info
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee200<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032fcd0<br/> | false |
 ### LMDeployment.spec.openwebui.pipelines.volumes[index].secret
 
 secret represents a secret that should populate this volume.<br/>More info: https://kubernetes.io/docs/concepts/storage/volumes#secret
@@ -909,7 +1031,7 @@ secretRef specifies the secret to use for obtaining the StorageOS API<br/>creden
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee420<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032fd50<br/> | false |
 ### LMDeployment.spec.openwebui.pipelines.volumes[index].vsphereVolume
 
 vsphereVolume represents a vSphere volume attached and mounted on kubelets host machine.<br/>Deprecated: VsphereVolume is deprecated. All operations for the in-tree vsphereVolume type<br/>are redirected to the csi.vsphere.vmware.com CSI driver.
@@ -928,12 +1050,12 @@ OpenWebUIPlugin defines a plugin for OpenWebUI
 |------|------|-------------|----------|
 | image | string | Image is the container image for the plugin (including tag) | true |
 | name | string | Name is the unique name of the plugin | true |
-| port | integer | Port is the port the plugin service exposes<br/>*Format*: int32<br/>*Minimum*: 0x14000170138<br/>*Maximum*: 0x14000170128<br/> | true |
+| port | integer | Port is the port the plugin service exposes<br/>*Format*: int32<br/>*Minimum*: 0x1400030cf88<br/>*Maximum*: 0x1400030cf78<br/> | true |
 | type | enum | Type is the type of plugin (e.g., "openapi", "custom")<br/>*Enum*: openapi, custom<br/> | true |
 | configMapName | string | ConfigMapName is the name of the ConfigMap containing plugin configuration | false |
 | enabled | boolean | Enabled determines if this plugin should be deployed | false |
 | [envVars](#lmdeploymentspecopenwebuipluginsindexenvvarsindex) | []object | EnvVars defines environment variables for the plugin | false |
-| replicas | integer | Replicas is the number of plugin pods to run<br/>*Format*: int32<br/>*Minimum*: 0x14000170168<br/>*Maximum*: 0x14000170160<br/> | false |
+| replicas | integer | Replicas is the number of plugin pods to run<br/>*Format*: int32<br/>*Minimum*: 0x1400030cfb8<br/>*Maximum*: 0x1400030cfb0<br/> | false |
 | [resources](#lmdeploymentspecopenwebuipluginsindexresources) | object | Resources defines the resource requirements for plugin pods | false |
 | secretName | string | SecretName is the name of the Secret containing plugin credentials | false |
 | serviceType | enum | ServiceType is the type of service to expose the plugin<br/>*Enum*: ClusterIP, NodePort, LoadBalancer<br/> | false |
@@ -965,7 +1087,7 @@ Selects a key of a ConfigMap.
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
 | key | string | The key to select. | true |
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee580<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032fb20<br/> | false |
 | optional | boolean | Specify whether the ConfigMap or its key must be defined | false |
 ### LMDeployment.spec.openwebui.plugins[index].envVars[index].valueFrom.fieldRef
 
@@ -991,7 +1113,7 @@ Selects a key of a secret in the pod's namespace
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
 | key | string | The key of the secret to select from.  Must be a valid secret key. | true |
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee5a0<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032fb00<br/> | false |
 | optional | boolean | Specify whether the Secret or its key must be defined | false |
 ### LMDeployment.spec.openwebui.plugins[index].resources
 
@@ -1088,9 +1210,9 @@ azureDisk represents an Azure Data Disk mount on the host and bind mount to the 
 | diskName | string | diskName is the Name of the data disk in the blob storage | true |
 | diskURI | string | diskURI is the URI of data disk in the blob storage | true |
 | cachingMode | string | cachingMode is the Host Caching mode: None, Read Only, Read Write. | false |
-| fsType | string | fsType is Filesystem type to mount.<br/>Must be a filesystem type supported by the host operating system.<br/>Ex. "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.<br/>*Default*: 0x140004ee8a0<br/> | false |
+| fsType | string | fsType is Filesystem type to mount.<br/>Must be a filesystem type supported by the host operating system.<br/>Ex. "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.<br/>*Default*: 0x1400032f890<br/> | false |
 | kind | string | kind expected values are Shared: multiple blob disks per storage account  Dedicated: single blob disk per storage account  Managed: azure managed data disk (only in managed availability set). defaults to shared | false |
-| readOnly | boolean | readOnly Defaults to false (read/write). ReadOnly here will force<br/>the ReadOnly setting in VolumeMounts.<br/>*Default*: 0x140004ee880<br/> | false |
+| readOnly | boolean | readOnly Defaults to false (read/write). ReadOnly here will force<br/>the ReadOnly setting in VolumeMounts.<br/>*Default*: 0x1400032f8c0<br/> | false |
 ### LMDeployment.spec.openwebui.plugins[index].volumes[index].azureFile
 
 azureFile represents an Azure File Service mount on the host and bind mount to the pod.<br/>Deprecated: AzureFile is deprecated. All operations for the in-tree azureFile type<br/>are redirected to the file.csi.azure.com CSI driver.
@@ -1118,7 +1240,7 @@ secretRef is Optional: SecretRef is reference to the authentication secret for U
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee7c0<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032fa90<br/> | false |
 ### LMDeployment.spec.openwebui.plugins[index].volumes[index].cinder
 
 cinder represents a cinder volume attached and mounted on kubelets host machine.<br/>Deprecated: Cinder is deprecated. All operations for the in-tree cinder type<br/>are redirected to the cinder.csi.openstack.org CSI driver.<br/>More info: https://examples.k8s.io/mysql-cinder-pd/README.md
@@ -1135,7 +1257,7 @@ secretRef is optional: points to a secret object containing parameters used to c
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee980<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032fab0<br/> | false |
 ### LMDeployment.spec.openwebui.plugins[index].volumes[index].configMap
 
 configMap represents a configMap that should populate this volume
@@ -1144,7 +1266,7 @@ configMap represents a configMap that should populate this volume
 |------|------|-------------|----------|
 | defaultMode | integer | defaultMode is optional: mode bits used to set permissions on created files by default.<br/>Must be an octal value between 0000 and 0777 or a decimal value between 0 and 511.<br/>YAML accepts both octal and decimal values, JSON requires decimal values for mode bits.<br/>Defaults to 0644.<br/>Directories within the path are not affected by this setting.<br/>This might be in conflict with other options that affect the file<br/>mode, like fsGroup, and the result can be other mode bits set.<br/>*Format*: int32<br/> | false |
 | [items](#lmdeploymentspecopenwebuipluginsindexvolumesindexconfigmapitemsindex) | []object | items if unspecified, each key-value pair in the Data field of the referenced<br/>ConfigMap will be projected into the volume as a file whose name is the<br/>key and content is the value. If specified, the listed keys will be<br/>projected into the specified paths, and unlisted keys will not be<br/>present. If a key is specified which is not present in the ConfigMap,<br/>the volume setup will error unless it is marked optional. Paths must be<br/>relative and may not contain the '..' path or start with '..'. | false |
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee670<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032f7f0<br/> | false |
 | optional | boolean | optional specify whether the ConfigMap or its keys must be defined | false |
 ### LMDeployment.spec.openwebui.plugins[index].volumes[index].configMap.items[index]
 
@@ -1172,7 +1294,7 @@ nodePublishSecretRef is a reference to the secret object containing<br/>sensitiv
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee7f0<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032f8e0<br/> | false |
 ### LMDeployment.spec.openwebui.plugins[index].volumes[index].downwardAPI
 
 downwardAPI represents downward API about the pod that should populate this volume
@@ -1318,7 +1440,7 @@ secretRef is Optional: secretRef is reference to the secret object containing<br
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee6a0<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032fae0<br/> | false |
 ### LMDeployment.spec.openwebui.plugins[index].volumes[index].flocker
 
 flocker represents a Flocker volume attached to a kubelet's host machine. This depends on the Flocker control service being running.<br/>Deprecated: Flocker is deprecated and the in-tree flocker type is no longer supported.
@@ -1384,7 +1506,7 @@ iscsi represents an ISCSI Disk resource that is attached to a<br/>kubelet's host
 | chapAuthSession | boolean | chapAuthSession defines whether support iSCSI Session CHAP authentication | false |
 | fsType | string | fsType is the filesystem type of the volume that you want to mount.<br/>Tip: Ensure that the filesystem type is supported by the host operating system.<br/>Examples: "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.<br/>More info: https://kubernetes.io/docs/concepts/storage/volumes#iscsi | false |
 | initiatorName | string | initiatorName is the custom iSCSI Initiator Name.<br/>If initiatorName is specified with iscsiInterface simultaneously, new iSCSI interface<br/>&lt;target portal&gt;:&lt;volume name&gt; will be created for the connection. | false |
-| iscsiInterface | string | iscsiInterface is the interface Name that uses an iSCSI transport.<br/>Defaults to 'default' (tcp).<br/>*Default*: 0x140004ee810<br/> | false |
+| iscsiInterface | string | iscsiInterface is the interface Name that uses an iSCSI transport.<br/>Defaults to 'default' (tcp).<br/>*Default*: 0x1400032f840<br/> | false |
 | portals | []string | portals is the iSCSI Target Portal List. The portal is either an IP or ip_addr:port if the port<br/>is other than default (typically TCP ports 860 and 3260). | false |
 | readOnly | boolean | readOnly here will force the ReadOnly setting in VolumeMounts.<br/>Defaults to false. | false |
 | [secretRef](#lmdeploymentspecopenwebuipluginsindexvolumesindexiscsisecretref) | object | secretRef is the CHAP Secret for iSCSI target and initiator authentication | false |
@@ -1394,7 +1516,7 @@ secretRef is the CHAP Secret for iSCSI target and initiator authentication
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee840<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032f870<br/> | false |
 ### LMDeployment.spec.openwebui.plugins[index].volumes[index].nfs
 
 nfs represents an NFS mount on the host that shares a pod's lifetime<br/>More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs
@@ -1483,7 +1605,7 @@ configMap information about the configMap data to project
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
 | [items](#lmdeploymentspecopenwebuipluginsindexvolumesindexprojectedsourcesindexconfigmapitemsindex) | []object | items if unspecified, each key-value pair in the Data field of the referenced<br/>ConfigMap will be projected into the volume as a file whose name is the<br/>key and content is the value. If specified, the listed keys will be<br/>projected into the specified paths, and unlisted keys will not be<br/>present. If a key is specified which is not present in the ConfigMap,<br/>the volume setup will error unless it is marked optional. Paths must be<br/>relative and may not contain the '..' path or start with '..'. | false |
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee6f0<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032fa50<br/> | false |
 | optional | boolean | optional specify whether the ConfigMap or its keys must be defined | false |
 ### LMDeployment.spec.openwebui.plugins[index].volumes[index].projected.sources[index].configMap.items[index]
 
@@ -1535,7 +1657,7 @@ secret information about the secret data to project
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
 | [items](#lmdeploymentspecopenwebuipluginsindexvolumesindexprojectedsourcesindexsecretitemsindex) | []object | items if unspecified, each key-value pair in the Data field of the referenced<br/>Secret will be projected into the volume as a file whose name is the<br/>key and content is the value. If specified, the listed keys will be<br/>projected into the specified paths, and unlisted keys will not be<br/>present. If a key is specified which is not present in the Secret,<br/>the volume setup will error unless it is marked optional. Paths must be<br/>relative and may not contain the '..' path or start with '..'. | false |
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee6c0<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032fa70<br/> | false |
 | optional | boolean | optional field specify whether the Secret or its key must be defined | false |
 ### LMDeployment.spec.openwebui.plugins[index].volumes[index].projected.sources[index].secret.items[index]
 
@@ -1576,18 +1698,18 @@ rbd represents a Rados Block Device mount on the host that shares a pod's lifeti
 | image | string | image is the rados image name.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it | true |
 | monitors | []string | monitors is a collection of Ceph monitors.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it | true |
 | fsType | string | fsType is the filesystem type of the volume that you want to mount.<br/>Tip: Ensure that the filesystem type is supported by the host operating system.<br/>Examples: "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.<br/>More info: https://kubernetes.io/docs/concepts/storage/volumes#rbd | false |
-| keyring | string | keyring is the path to key ring for RBDUser.<br/>Default is /etc/ceph/keyring.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it<br/>*Default*: 0x140004ee790<br/> | false |
-| pool | string | pool is the rados pool name.<br/>Default is rbd.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it<br/>*Default*: 0x140004ee710<br/> | false |
+| keyring | string | keyring is the path to key ring for RBDUser.<br/>Default is /etc/ceph/keyring.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it<br/>*Default*: 0x1400032f990<br/> | false |
+| pool | string | pool is the rados pool name.<br/>Default is rbd.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it<br/>*Default*: 0x1400032f910<br/> | false |
 | readOnly | boolean | readOnly here will force the ReadOnly setting in VolumeMounts.<br/>Defaults to false.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it | false |
 | [secretRef](#lmdeploymentspecopenwebuipluginsindexvolumesindexrbdsecretref) | object | secretRef is name of the authentication secret for RBDUser. If provided<br/>overrides keyring.<br/>Default is nil.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it | false |
-| user | string | user is the rados user name.<br/>Default is admin.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it<br/>*Default*: 0x140004ee760<br/> | false |
+| user | string | user is the rados user name.<br/>Default is admin.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it<br/>*Default*: 0x1400032f960<br/> | false |
 ### LMDeployment.spec.openwebui.plugins[index].volumes[index].rbd.secretRef
 
 secretRef is name of the authentication secret for RBDUser. If provided<br/>overrides keyring.<br/>Default is nil.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee740<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032f940<br/> | false |
 ### LMDeployment.spec.openwebui.plugins[index].volumes[index].scaleIO
 
 scaleIO represents a ScaleIO persistent volume attached and mounted on Kubernetes nodes.<br/>Deprecated: ScaleIO is deprecated and the in-tree scaleIO type is no longer supported.
@@ -1597,11 +1719,11 @@ scaleIO represents a ScaleIO persistent volume attached and mounted on Kubernete
 | gateway | string | gateway is the host address of the ScaleIO API Gateway. | true |
 | [secretRef](#lmdeploymentspecopenwebuipluginsindexvolumesindexscaleiosecretref) | object | secretRef references to the secret for ScaleIO user and other<br/>sensitive information. If this is not provided, Login operation will fail. | true |
 | system | string | system is the name of the storage system as configured in ScaleIO. | true |
-| fsType | string | fsType is the filesystem type to mount.<br/>Must be a filesystem type supported by the host operating system.<br/>Ex. "ext4", "xfs", "ntfs".<br/>Default is "xfs".<br/>*Default*: 0x140004ee900<br/> | false |
+| fsType | string | fsType is the filesystem type to mount.<br/>Must be a filesystem type supported by the host operating system.<br/>Ex. "ext4", "xfs", "ntfs".<br/>Default is "xfs".<br/>*Default*: 0x1400032f9c0<br/> | false |
 | protectionDomain | string | protectionDomain is the name of the ScaleIO Protection Domain for the configured storage. | false |
 | readOnly | boolean | readOnly Defaults to false (read/write). ReadOnly here will force<br/>the ReadOnly setting in VolumeMounts. | false |
 | sslEnabled | boolean | sslEnabled Flag enable/disable SSL communication with Gateway, default false | false |
-| storageMode | string | storageMode indicates whether the storage for a volume should be ThickProvisioned or ThinProvisioned.<br/>Default is ThinProvisioned.<br/>*Default*: 0x140004ee950<br/> | false |
+| storageMode | string | storageMode indicates whether the storage for a volume should be ThickProvisioned or ThinProvisioned.<br/>Default is ThinProvisioned.<br/>*Default*: 0x1400032fa10<br/> | false |
 | storagePool | string | storagePool is the ScaleIO Storage Pool associated with the protection domain. | false |
 | volumeName | string | volumeName is the name of a volume already created in the ScaleIO system<br/>that is associated with this volume source. | false |
 ### LMDeployment.spec.openwebui.plugins[index].volumes[index].scaleIO.secretRef
@@ -1610,7 +1732,7 @@ secretRef references to the secret for ScaleIO user and other<br/>sensitive info
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee930<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032f9f0<br/> | false |
 ### LMDeployment.spec.openwebui.plugins[index].volumes[index].secret
 
 secret represents a secret that should populate this volume.<br/>More info: https://kubernetes.io/docs/concepts/storage/volumes#secret
@@ -1647,7 +1769,7 @@ secretRef specifies the secret to use for obtaining the StorageOS API<br/>creden
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004ee860<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400032f7d0<br/> | false |
 ### LMDeployment.spec.openwebui.plugins[index].volumes[index].vsphereVolume
 
 vsphereVolume represents a vSphere volume attached and mounted on kubelets host machine.<br/>Deprecated: VsphereVolume is deprecated. All operations for the in-tree vsphereVolume type<br/>are redirected to the csi.vsphere.vmware.com CSI driver.
@@ -1712,7 +1834,7 @@ Service defines the service configuration for Redis
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| port | integer | Port is the port to expose the service<br/>*Format*: int32<br/>*Minimum*: 0x140003702a0<br/>*Maximum*: 0x14000370290<br/> | false |
+| port | integer | Port is the port to expose the service<br/>*Format*: int32<br/>*Minimum*: 0x140003274c0<br/>*Maximum*: 0x140003274b0<br/> | false |
 | type | enum | Type is the type of service to expose<br/>*Enum*: ClusterIP, NodePort, LoadBalancer<br/> | false |
 ### LMDeployment.spec.openwebui.resources
 
@@ -1746,7 +1868,7 @@ Service defines the service configuration for OpenWebUI
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| port | integer | Port is the port to expose the service<br/>*Format*: int32<br/>*Minimum*: 0x14000370410<br/>*Maximum*: 0x14000370400<br/> | false |
+| port | integer | Port is the port to expose the service<br/>*Format*: int32<br/>*Minimum*: 0x14000327630<br/>*Maximum*: 0x14000327620<br/> | false |
 | type | enum | Type is the type of service to expose<br/>*Enum*: ClusterIP, NodePort, LoadBalancer<br/> | false |
 ### LMDeployment.spec.tabby
 
@@ -1760,7 +1882,7 @@ Tabby defines the Tabby deployment configuration
 | image | string | Image is the Tabby container image to use (including tag) | false |
 | [ingress](#lmdeploymentspectabbyingress) | object | Ingress defines the ingress configuration for Tabby | false |
 | modelName | string | ModelName is the name of the Ollama model to use for code completion | false |
-| replicas | integer | Replicas is the number of Tabby pods to run<br/>*Format*: int32<br/>*Minimum*: 0x14000370818<br/>*Maximum*: 0x14000370810<br/> | false |
+| replicas | integer | Replicas is the number of Tabby pods to run<br/>*Format*: int32<br/>*Minimum*: 0x14000327a38<br/>*Maximum*: 0x14000327a30<br/> | false |
 | [resources](#lmdeploymentspectabbyresources) | object | Resources defines the resource requirements for Tabby pods | false |
 | [service](#lmdeploymentspectabbyservice) | object | Service defines the service configuration for Tabby | false |
 | [volumeMounts](#lmdeploymentspectabbyvolumemountsindex) | []object | VolumeMounts defines volume mounts for Tabby | false |
@@ -1791,7 +1913,7 @@ Selects a key of a ConfigMap.
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
 | key | string | The key to select. | true |
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004eea10<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400004f030<br/> | false |
 | optional | boolean | Specify whether the ConfigMap or its key must be defined | false |
 ### LMDeployment.spec.tabby.envVars[index].valueFrom.fieldRef
 
@@ -1817,7 +1939,7 @@ Selects a key of a secret in the pod's namespace
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
 | key | string | The key of the secret to select from.  Must be a valid secret key. | true |
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004eea40<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400004f060<br/> | false |
 | optional | boolean | Specify whether the Secret or its key must be defined | false |
 ### LMDeployment.spec.tabby.ingress
 
@@ -1869,7 +1991,7 @@ Service defines the service configuration for Tabby
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| port | integer | Port is the port to expose the service<br/>*Format*: int32<br/>*Minimum*: 0x14000370920<br/>*Maximum*: 0x14000370910<br/> | false |
+| port | integer | Port is the port to expose the service<br/>*Format*: int32<br/>*Minimum*: 0x14000327b40<br/>*Maximum*: 0x14000327b30<br/> | false |
 | type | enum | Type is the type of service to expose<br/>*Enum*: ClusterIP, NodePort, LoadBalancer<br/> | false |
 ### LMDeployment.spec.tabby.volumeMounts[index]
 
@@ -1940,9 +2062,9 @@ azureDisk represents an Azure Data Disk mount on the host and bind mount to the 
 | diskName | string | diskName is the Name of the data disk in the blob storage | true |
 | diskURI | string | diskURI is the URI of data disk in the blob storage | true |
 | cachingMode | string | cachingMode is the Host Caching mode: None, Read Only, Read Write. | false |
-| fsType | string | fsType is Filesystem type to mount.<br/>Must be a filesystem type supported by the host operating system.<br/>Ex. "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.<br/>*Default*: 0x140004eed60<br/> | false |
+| fsType | string | fsType is Filesystem type to mount.<br/>Must be a filesystem type supported by the host operating system.<br/>Ex. "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.<br/>*Default*: 0x1400004f0a0<br/> | false |
 | kind | string | kind expected values are Shared: multiple blob disks per storage account  Dedicated: single blob disk per storage account  Managed: azure managed data disk (only in managed availability set). defaults to shared | false |
-| readOnly | boolean | readOnly Defaults to false (read/write). ReadOnly here will force<br/>the ReadOnly setting in VolumeMounts.<br/>*Default*: 0x140004eeda0<br/> | false |
+| readOnly | boolean | readOnly Defaults to false (read/write). ReadOnly here will force<br/>the ReadOnly setting in VolumeMounts.<br/>*Default*: 0x1400004f0d0<br/> | false |
 ### LMDeployment.spec.tabby.volumes[index].azureFile
 
 azureFile represents an Azure File Service mount on the host and bind mount to the pod.<br/>Deprecated: AzureFile is deprecated. All operations for the in-tree azureFile type<br/>are redirected to the file.csi.azure.com CSI driver.
@@ -1970,7 +2092,7 @@ secretRef is Optional: SecretRef is reference to the authentication secret for U
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004eec90<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400004f080<br/> | false |
 ### LMDeployment.spec.tabby.volumes[index].cinder
 
 cinder represents a cinder volume attached and mounted on kubelets host machine.<br/>Deprecated: Cinder is deprecated. All operations for the in-tree cinder type<br/>are redirected to the cinder.csi.openstack.org CSI driver.<br/>More info: https://examples.k8s.io/mysql-cinder-pd/README.md
@@ -1987,7 +2109,7 @@ secretRef is optional: points to a secret object containing parameters used to c
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004eead0<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400004f0f0<br/> | false |
 ### LMDeployment.spec.tabby.volumes[index].configMap
 
 configMap represents a configMap that should populate this volume
@@ -1996,7 +2118,7 @@ configMap represents a configMap that should populate this volume
 |------|------|-------------|----------|
 | defaultMode | integer | defaultMode is optional: mode bits used to set permissions on created files by default.<br/>Must be an octal value between 0000 and 0777 or a decimal value between 0 and 511.<br/>YAML accepts both octal and decimal values, JSON requires decimal values for mode bits.<br/>Defaults to 0644.<br/>Directories within the path are not affected by this setting.<br/>This might be in conflict with other options that affect the file<br/>mode, like fsGroup, and the result can be other mode bits set.<br/>*Format*: int32<br/> | false |
 | [items](#lmdeploymentspectabbyvolumesindexconfigmapitemsindex) | []object | items if unspecified, each key-value pair in the Data field of the referenced<br/>ConfigMap will be projected into the volume as a file whose name is the<br/>key and content is the value. If specified, the listed keys will be<br/>projected into the specified paths, and unlisted keys will not be<br/>present. If a key is specified which is not present in the ConfigMap,<br/>the volume setup will error unless it is marked optional. Paths must be<br/>relative and may not contain the '..' path or start with '..'. | false |
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004eec20<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400004f110<br/> | false |
 | optional | boolean | optional specify whether the ConfigMap or its keys must be defined | false |
 ### LMDeployment.spec.tabby.volumes[index].configMap.items[index]
 
@@ -2024,7 +2146,7 @@ nodePublishSecretRef is a reference to the secret object containing<br/>sensitiv
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004eece0<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400004f130<br/> | false |
 ### LMDeployment.spec.tabby.volumes[index].downwardAPI
 
 downwardAPI represents downward API about the pod that should populate this volume
@@ -2170,7 +2292,7 @@ secretRef is Optional: secretRef is reference to the secret object containing<br
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004eecc0<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400004f250<br/> | false |
 ### LMDeployment.spec.tabby.volumes[index].flocker
 
 flocker represents a Flocker volume attached to a kubelet's host machine. This depends on the Flocker control service being running.<br/>Deprecated: Flocker is deprecated and the in-tree flocker type is no longer supported.
@@ -2236,7 +2358,7 @@ iscsi represents an ISCSI Disk resource that is attached to a<br/>kubelet's host
 | chapAuthSession | boolean | chapAuthSession defines whether support iSCSI Session CHAP authentication | false |
 | fsType | string | fsType is the filesystem type of the volume that you want to mount.<br/>Tip: Ensure that the filesystem type is supported by the host operating system.<br/>Examples: "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.<br/>More info: https://kubernetes.io/docs/concepts/storage/volumes#iscsi | false |
 | initiatorName | string | initiatorName is the custom iSCSI Initiator Name.<br/>If initiatorName is specified with iscsiInterface simultaneously, new iSCSI interface<br/>&lt;target portal&gt;:&lt;volume name&gt; will be created for the connection. | false |
-| iscsiInterface | string | iscsiInterface is the interface Name that uses an iSCSI transport.<br/>Defaults to 'default' (tcp).<br/>*Default*: 0x140004eea60<br/> | false |
+| iscsiInterface | string | iscsiInterface is the interface Name that uses an iSCSI transport.<br/>Defaults to 'default' (tcp).<br/>*Default*: 0x1400004f310<br/> | false |
 | portals | []string | portals is the iSCSI Target Portal List. The portal is either an IP or ip_addr:port if the port<br/>is other than default (typically TCP ports 860 and 3260). | false |
 | readOnly | boolean | readOnly here will force the ReadOnly setting in VolumeMounts.<br/>Defaults to false. | false |
 | [secretRef](#lmdeploymentspectabbyvolumesindexiscsisecretref) | object | secretRef is the CHAP Secret for iSCSI target and initiator authentication | false |
@@ -2246,7 +2368,7 @@ secretRef is the CHAP Secret for iSCSI target and initiator authentication
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004eea90<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400004f3b0<br/> | false |
 ### LMDeployment.spec.tabby.volumes[index].nfs
 
 nfs represents an NFS mount on the host that shares a pod's lifetime<br/>More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs
@@ -2335,7 +2457,7 @@ configMap information about the configMap data to project
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
 | [items](#lmdeploymentspectabbyvolumesindexprojectedsourcesindexconfigmapitemsindex) | []object | items if unspecified, each key-value pair in the Data field of the referenced<br/>ConfigMap will be projected into the volume as a file whose name is the<br/>key and content is the value. If specified, the listed keys will be<br/>projected into the specified paths, and unlisted keys will not be<br/>present. If a key is specified which is not present in the ConfigMap,<br/>the volume setup will error unless it is marked optional. Paths must be<br/>relative and may not contain the '..' path or start with '..'. | false |
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004eec40<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400004f3f0<br/> | false |
 | optional | boolean | optional specify whether the ConfigMap or its keys must be defined | false |
 ### LMDeployment.spec.tabby.volumes[index].projected.sources[index].configMap.items[index]
 
@@ -2387,7 +2509,7 @@ secret information about the secret data to project
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
 | [items](#lmdeploymentspectabbyvolumesindexprojectedsourcesindexsecretitemsindex) | []object | items if unspecified, each key-value pair in the Data field of the referenced<br/>Secret will be projected into the volume as a file whose name is the<br/>key and content is the value. If specified, the listed keys will be<br/>projected into the specified paths, and unlisted keys will not be<br/>present. If a key is specified which is not present in the Secret,<br/>the volume setup will error unless it is marked optional. Paths must be<br/>relative and may not contain the '..' path or start with '..'. | false |
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004eec60<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400004f410<br/> | false |
 | optional | boolean | optional field specify whether the Secret or its key must be defined | false |
 ### LMDeployment.spec.tabby.volumes[index].projected.sources[index].secret.items[index]
 
@@ -2428,18 +2550,18 @@ rbd represents a Rados Block Device mount on the host that shares a pod's lifeti
 | image | string | image is the rados image name.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it | true |
 | monitors | []string | monitors is a collection of Ceph monitors.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it | true |
 | fsType | string | fsType is the filesystem type of the volume that you want to mount.<br/>Tip: Ensure that the filesystem type is supported by the host operating system.<br/>Examples: "ext4", "xfs", "ntfs". Implicitly inferred to be "ext4" if unspecified.<br/>More info: https://kubernetes.io/docs/concepts/storage/volumes#rbd | false |
-| keyring | string | keyring is the path to key ring for RBDUser.<br/>Default is /etc/ceph/keyring.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it<br/>*Default*: 0x140004eeb70<br/> | false |
-| pool | string | pool is the rados pool name.<br/>Default is rbd.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it<br/>*Default*: 0x140004eeaf0<br/> | false |
+| keyring | string | keyring is the path to key ring for RBDUser.<br/>Default is /etc/ceph/keyring.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it<br/>*Default*: 0x1400004f160<br/> | false |
+| pool | string | pool is the rados pool name.<br/>Default is rbd.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it<br/>*Default*: 0x1400004f190<br/> | false |
 | readOnly | boolean | readOnly here will force the ReadOnly setting in VolumeMounts.<br/>Defaults to false.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it | false |
 | [secretRef](#lmdeploymentspectabbyvolumesindexrbdsecretref) | object | secretRef is name of the authentication secret for RBDUser. If provided<br/>overrides keyring.<br/>Default is nil.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it | false |
-| user | string | user is the rados user name.<br/>Default is admin.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it<br/>*Default*: 0x140004eeb40<br/> | false |
+| user | string | user is the rados user name.<br/>Default is admin.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it<br/>*Default*: 0x1400004f1e0<br/> | false |
 ### LMDeployment.spec.tabby.volumes[index].rbd.secretRef
 
 secretRef is name of the authentication secret for RBDUser. If provided<br/>overrides keyring.<br/>Default is nil.<br/>More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004eeb20<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400004f1c0<br/> | false |
 ### LMDeployment.spec.tabby.volumes[index].scaleIO
 
 scaleIO represents a ScaleIO persistent volume attached and mounted on Kubernetes nodes.<br/>Deprecated: ScaleIO is deprecated and the in-tree scaleIO type is no longer supported.
@@ -2449,11 +2571,11 @@ scaleIO represents a ScaleIO persistent volume attached and mounted on Kubernete
 | gateway | string | gateway is the host address of the ScaleIO API Gateway. | true |
 | [secretRef](#lmdeploymentspectabbyvolumesindexscaleiosecretref) | object | secretRef references to the secret for ScaleIO user and other<br/>sensitive information. If this is not provided, Login operation will fail. | true |
 | system | string | system is the name of the storage system as configured in ScaleIO. | true |
-| fsType | string | fsType is the filesystem type to mount.<br/>Must be a filesystem type supported by the host operating system.<br/>Ex. "ext4", "xfs", "ntfs".<br/>Default is "xfs".<br/>*Default*: 0x140004eebc0<br/> | false |
+| fsType | string | fsType is the filesystem type to mount.<br/>Must be a filesystem type supported by the host operating system.<br/>Ex. "ext4", "xfs", "ntfs".<br/>Default is "xfs".<br/>*Default*: 0x1400004f2c0<br/> | false |
 | protectionDomain | string | protectionDomain is the name of the ScaleIO Protection Domain for the configured storage. | false |
 | readOnly | boolean | readOnly Defaults to false (read/write). ReadOnly here will force<br/>the ReadOnly setting in VolumeMounts. | false |
 | sslEnabled | boolean | sslEnabled Flag enable/disable SSL communication with Gateway, default false | false |
-| storageMode | string | storageMode indicates whether the storage for a volume should be ThickProvisioned or ThinProvisioned.<br/>Default is ThinProvisioned.<br/>*Default*: 0x140004eebf0<br/> | false |
+| storageMode | string | storageMode indicates whether the storage for a volume should be ThickProvisioned or ThinProvisioned.<br/>Default is ThinProvisioned.<br/>*Default*: 0x1400004f290<br/> | false |
 | storagePool | string | storagePool is the ScaleIO Storage Pool associated with the protection domain. | false |
 | volumeName | string | volumeName is the name of a volume already created in the ScaleIO system<br/>that is associated with this volume source. | false |
 ### LMDeployment.spec.tabby.volumes[index].scaleIO.secretRef
@@ -2462,7 +2584,7 @@ secretRef references to the secret for ScaleIO user and other<br/>sensitive info
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004eeba0<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400004f270<br/> | false |
 ### LMDeployment.spec.tabby.volumes[index].secret
 
 secret represents a secret that should populate this volume.<br/>More info: https://kubernetes.io/docs/concepts/storage/volumes#secret
@@ -2499,7 +2621,7 @@ secretRef specifies the secret to use for obtaining the StorageOS API<br/>creden
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x140004eeab0<br/> | false |
+| name | string | Name of the referent.<br/>This field is effectively required, but due to backwards compatibility is<br/>allowed to be empty. Instances of this type with an empty value here are<br/>almost certainly wrong.<br/>More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names<br/>*Default*: 0x1400004f2f0<br/> | false |
 ### LMDeployment.spec.tabby.volumes[index].vsphereVolume
 
 vsphereVolume represents a vSphere volume attached and mounted on kubelets host machine.<br/>Deprecated: VsphereVolume is deprecated. All operations for the in-tree vsphereVolume type<br/>are redirected to the csi.vsphere.vmware.com CSI driver.
@@ -2534,7 +2656,7 @@ Condition contains details for one aspect of the current state of this API Resou
 | reason | string | reason contains a programmatic identifier indicating the reason for the condition's last transition.<br/>Producers of specific condition types may define expected values and meanings for this field,<br/>and whether the values are considered a guaranteed API.<br/>The value should be a CamelCase string.<br/>This field may not be empty. | true |
 | status | enum | status of the condition, one of True, False, Unknown.<br/>*Enum*: True, False, Unknown<br/> | true |
 | type | string | type of condition in CamelCase or in foo.example.com/CamelCase. | true |
-| observedGeneration | integer | observedGeneration represents the .metadata.generation that the condition was set based upon.<br/>For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date<br/>with respect to the current state of the instance.<br/>*Format*: int64<br/>*Minimum*: 0x1400052c7e0<br/> | false |
+| observedGeneration | integer | observedGeneration represents the .metadata.generation that the condition was set based upon.<br/>For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date<br/>with respect to the current state of the instance.<br/>*Format*: int64<br/>*Minimum*: 0x14000288130<br/> | false |
 ### LMDeployment.status.ollamaStatus
 
 OllamaStatus represents the status of Ollama deployment
@@ -2556,7 +2678,7 @@ Condition contains details for one aspect of the current state of this API Resou
 | reason | string | reason contains a programmatic identifier indicating the reason for the condition's last transition.<br/>Producers of specific condition types may define expected values and meanings for this field,<br/>and whether the values are considered a guaranteed API.<br/>The value should be a CamelCase string.<br/>This field may not be empty. | true |
 | status | enum | status of the condition, one of True, False, Unknown.<br/>*Enum*: True, False, Unknown<br/> | true |
 | type | string | type of condition in CamelCase or in foo.example.com/CamelCase. | true |
-| observedGeneration | integer | observedGeneration represents the .metadata.generation that the condition was set based upon.<br/>For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date<br/>with respect to the current state of the instance.<br/>*Format*: int64<br/>*Minimum*: 0x1400052c920<br/> | false |
+| observedGeneration | integer | observedGeneration represents the .metadata.generation that the condition was set based upon.<br/>For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date<br/>with respect to the current state of the instance.<br/>*Format*: int64<br/>*Minimum*: 0x14000288270<br/> | false |
 ### LMDeployment.status.openwebuiStatus
 
 OpenWebUIStatus represents the status of OpenWebUI deployment
@@ -2578,7 +2700,7 @@ Condition contains details for one aspect of the current state of this API Resou
 | reason | string | reason contains a programmatic identifier indicating the reason for the condition's last transition.<br/>Producers of specific condition types may define expected values and meanings for this field,<br/>and whether the values are considered a guaranteed API.<br/>The value should be a CamelCase string.<br/>This field may not be empty. | true |
 | status | enum | status of the condition, one of True, False, Unknown.<br/>*Enum*: True, False, Unknown<br/> | true |
 | type | string | type of condition in CamelCase or in foo.example.com/CamelCase. | true |
-| observedGeneration | integer | observedGeneration represents the .metadata.generation that the condition was set based upon.<br/>For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date<br/>with respect to the current state of the instance.<br/>*Format*: int64<br/>*Minimum*: 0x1400052cae0<br/> | false |
+| observedGeneration | integer | observedGeneration represents the .metadata.generation that the condition was set based upon.<br/>For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date<br/>with respect to the current state of the instance.<br/>*Format*: int64<br/>*Minimum*: 0x14000288430<br/> | false |
 ### LMDeployment.status.tabbyStatus
 
 TabbyStatus represents the status of Tabby deployment
@@ -2600,4 +2722,4 @@ Condition contains details for one aspect of the current state of this API Resou
 | reason | string | reason contains a programmatic identifier indicating the reason for the condition's last transition.<br/>Producers of specific condition types may define expected values and meanings for this field,<br/>and whether the values are considered a guaranteed API.<br/>The value should be a CamelCase string.<br/>This field may not be empty. | true |
 | status | enum | status of the condition, one of True, False, Unknown.<br/>*Enum*: True, False, Unknown<br/> | true |
 | type | string | type of condition in CamelCase or in foo.example.com/CamelCase. | true |
-| observedGeneration | integer | observedGeneration represents the .metadata.generation that the condition was set based upon.<br/>For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date<br/>with respect to the current state of the instance.<br/>*Format*: int64<br/>*Minimum*: 0x14000904060<br/> | false |
+| observedGeneration | integer | observedGeneration represents the .metadata.generation that the condition was set based upon.<br/>For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date<br/>with respect to the current state of the instance.<br/>*Format*: int64<br/>*Minimum*: 0x14000288640<br/> | false |

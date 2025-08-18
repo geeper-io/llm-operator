@@ -11,13 +11,7 @@ spec:
     models:
       - "llama2:7b"
       - "mistral:7b"
-    resources:
-      requests:
-        cpu: "500m"
-        memory: "2Gi"
-      limits:
-        cpu: "2"
-        memory: "4Gi"
+
     serviceType: ClusterIP
     servicePort: 11434
 
@@ -26,13 +20,7 @@ spec:
     replicas: 1
     image: ghcr.io/open-webui/open-webui
     imageTag: latest
-    resources:
-      requests:
-        cpu: "250m"
-        memory: "512Mi"
-      limits:
-        cpu: "1"
-        memory: "1Gi"
+
     serviceType: ClusterIP
     servicePort: 8080
     ingressEnabled: true
@@ -48,13 +36,7 @@ spec:
         imageTag: latest
         replicas: 1
         port: 8081
-        resources:
-          requests:
-            cpu: "100m"
-            memory: "128Mi"
-          limits:
-            cpu: "500m"
-            memory: "256Mi"
+
         serviceType: ClusterIP
         configMapName: "weather-api-config"
         secretName: "weather-api-secret"
@@ -70,13 +52,7 @@ spec:
         imageTag: v1.0.0
         replicas: 2
         port: 8082
-        resources:
-          requests:
-            cpu: "200m"
-            memory: "256Mi"
-          limits:
-            cpu: "1"
-            memory: "512Mi"
+
         serviceType: ClusterIP
         configMapName: "document-processor-config"
         envVars:
@@ -100,13 +76,7 @@ spec:
         imageTag: latest
         replicas: 1
         port: 8083
-        resources:
-          requests:
-            cpu: "150m"
-            memory: "200Mi"
-          limits:
-            cpu: "500m"
-            memory: "400Mi"
+
         serviceType: ClusterIP
         configMapName: "stripe-config"
         secretName: "stripe-secret"
@@ -122,13 +92,7 @@ spec:
         imageTag: latest
         replicas: 1
         port: 8084
-        resources:
-          requests:
-            cpu: "100m"
-            memory: "150Mi"
-          limits:
-            cpu: "300m"
-            memory: "300Mi"
+
         serviceType: ClusterIP
         configMapName: "github-config"
         secretName: "github-token-secret"

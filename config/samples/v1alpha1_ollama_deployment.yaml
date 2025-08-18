@@ -10,13 +10,7 @@ spec:
     imageTag: latest
     serviceType: ClusterIP
     servicePort: 11434
-    resources:
-      requests:
-        cpu: "500m"
-        memory: "1Gi"
-      limits:
-        cpu: "2"
-        memory: "4Gi"
+
     models:
       - "llama2:7b"
       - "mistral:7b"
@@ -31,10 +25,4 @@ spec:
     servicePort: 8080
     ingressEnabled: true
     ingressHost: "ollama-webui.local"
-    resources:
-      requests:
-        cpu: "100m"
-        memory: "256Mi"
-      limits:
-        cpu: "500m"
-        memory: "512Mi"
+

@@ -29,31 +29,14 @@ Geeper.AI is an open-source Kubernetes operator that extends Kubernetes with cus
 
 ## What You Can Do
 
-### 1. Deploy LLM Services
-Deploy various LLM services with a single command:
-- **Ollama**: Run local LLMs with GPU acceleration
-- **OpenWebUI**: Web-based chat interface for LLMs
-- **Tabby**: Code completion and generation models
-- **Custom Models**: Deploy your own trained models
-- **Pipelines**: Extend functionality with custom workflows and filters
-
-### 2. Manage Infrastructure
-- Automatically provision and manage resources
-- Handle GPU allocation and scheduling
-- Manage persistent storage and networking
-- Monitor resource usage and costs
-
-### 3. Scale and Optimize
-- Auto-scale based on demand
-- Optimize resource allocation
-- Handle traffic distribution
-- Manage model updates and rollbacks
-
-### 4. Integrate with Existing Systems
-- Kubernetes-native integration
-- CI/CD pipeline integration
-- Monitoring and alerting systems
-- Security and compliance tools
+- **Deploy LLMs**: Run Ollama instances with your preferred models
+- **Web Interface**: Add OpenWebUI for a chat-based interface
+- **Code Completion**: Use Tabby for intelligent code suggestions
+- **Plugin System**: Extend functionality with custom plugins
+- **RAG Integration**: Connect to external knowledge sources
+- **Pipelines**: Advanced workflow and integration capabilities
+- **Monitoring**: Comprehensive observability with Langfuse
+- **Multi-Instance**: Scale across multiple replicas with Redis
 
 ## Quick Installation
 

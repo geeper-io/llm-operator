@@ -276,28 +276,6 @@ spec:
                       host:
                         description: Host is the hostname for the Ingress
                         type: string
-                      tls:
-                        description: TLS configuration for the Ingress
-                        properties:
-                          hosts:
-                            description: |-
-                              hosts is a list of hosts included in the TLS certificate. The values in
-                              this list must match the name/s used in the tlsSecret. Defaults to the
-                              wildcard host setting for the loadbalancer controller fulfilling this
-                              Ingress, if left unspecified.
-                            items:
-                              type: string
-                            type: array
-                            x-kubernetes-list-type: atomic
-                          secretName:
-                            description: |-
-                              secretName is the name of the secret used to terminate TLS traffic on
-                              port 443. Field is left optional to allow TLS routing based on SNI
-                              hostname alone. If the SNI host in a listener conflicts with the "Host"
-                              header field used by an IngressRule, the SNI host is used for termination
-                              and value of the "Host" header is used for routing.
-                            type: string
-                        type: object
                     type: object
                   langfuse:
                     description: Langfuse defines the Langfuse monitoring configuration
@@ -306,6 +284,232 @@ spec:
                       debug:
                         description: Debug enables debug logging for Langfuse
                         type: boolean
+                      deploy:
+                        description: |-
+                          Deploy defines the self-hosted Langfuse deployment configuration
+                          Used when URL is not provided to deploy Langfuse automatically
+                        properties:
+                          envVars:
+                            description: EnvVars defines environment variables for
+                              the Pipelines
+                            items:
+                              description: EnvVar represents an environment variable
+                                present in a Container.
+                              properties:
+                                name:
+                                  description: Name of the environment variable. Must
+                                    be a C_IDENTIFIER.
+                                  type: string
+                                value:
+                                  description: |-
+                                    Variable references $(VAR_NAME) are expanded
+                                    using the previously defined environment variables in the container and
+                                    any service environment variables. If a variable cannot be resolved,
+                                    the reference in the input string will be unchanged. Double $$ are reduced
+                                    to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e.
+                                    "$$(VAR_NAME)" will produce the string literal "$(VAR_NAME)".
+                                    Escaped references will never be expanded, regardless of whether the variable
+                                    exists or not.
+                                    Defaults to "".
+                                  type: string
+                                valueFrom:
+                                  description: Source for the environment variable's
+                                    value. Cannot be used if value is not empty.
+                                  properties:
+                                    configMapKeyRef:
+                                      description: Selects a key of a ConfigMap.
+                                      properties:
+                                        key:
+                                          description: The key to select.
+                                          type: string
+                                        name:
+                                          default: ""
+                                          description: |-
+                                            Name of the referent.
+                                            This field is effectively required, but due to backwards compatibility is
+                                            allowed to be empty. Instances of this type with an empty value here are
+                                            almost certainly wrong.
+                                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                          type: string
+                                        optional:
+                                          description: Specify whether the ConfigMap
+                                            or its key must be defined
+                                          type: boolean
+                                      required:
+                                      - key
+                                      type: object
+                                      x-kubernetes-map-type: atomic
+                                    fieldRef:
+                                      description: |-
+                                        Selects a field of the pod: supports metadata.name, metadata.namespace, `metadata.labels['<KEY>']`, `metadata.annotations['<KEY>']`,
+                                        spec.nodeName, spec.serviceAccountName, status.hostIP, status.podIP, status.podIPs.
+                                      properties:
+                                        apiVersion:
+                                          description: Version of the schema the FieldPath
+                                            is written in terms of, defaults to "v1".
+                                          type: string
+                                        fieldPath:
+                                          description: Path of the field to select
+                                            in the specified API version.
+                                          type: string
+                                      required:
+                                      - fieldPath
+                                      type: object
+                                      x-kubernetes-map-type: atomic
+                                    resourceFieldRef:
+                                      description: |-
+                                        Selects a resource of the container: only resources limits and requests
+                                        (limits.cpu, limits.memory, limits.ephemeral-storage, requests.cpu, requests.memory and requests.ephemeral-storage) are currently supported.
+                                      properties:
+                                        containerName:
+                                          description: 'Container name: required for
+                                            volumes, optional for env vars'
+                                          type: string
+                                        divisor:
+                                          anyOf:
+                                          - type: integer
+                                          - type: string
+                                          description: Specifies the output format
+                                            of the exposed resources, defaults to
+                                            "1"
+                                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                          x-kubernetes-int-or-string: true
+                                        resource:
+                                          description: 'Required: resource to select'
+                                          type: string
+                                      required:
+                                      - resource
+                                      type: object
+                                      x-kubernetes-map-type: atomic
+                                    secretKeyRef:
+                                      description: Selects a key of a secret in the
+                                        pod's namespace
+                                      properties:
+                                        key:
+                                          description: The key of the secret to select
+                                            from.  Must be a valid secret key.
+                                          type: string
+                                        name:
+                                          default: ""
+                                          description: |-
+                                            Name of the referent.
+                                            This field is effectively required, but due to backwards compatibility is
+                                            allowed to be empty. Instances of this type with an empty value here are
+                                            almost certainly wrong.
+                                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                          type: string
+                                        optional:
+                                          description: Specify whether the Secret
+                                            or its key must be defined
+                                          type: boolean
+                                      required:
+                                      - key
+                                      type: object
+                                      x-kubernetes-map-type: atomic
+                                  type: object
+                              required:
+                              - name
+                              type: object
+                            type: array
+                          image:
+                            description: Image is the Langfuse container image to
+                              use (including tag)
+                            type: string
+                          ingress:
+                            description: Ingress defines the ingress configuration
+                              for Langfuse
+                            properties:
+                              annotations:
+                                additionalProperties:
+                                  type: string
+                                description: Annotations are custom annotations for
+                                  the Ingress
+                                type: object
+                              enabled:
+                                description: Enabled determines if an Ingress should
+                                  be created
+                                type: boolean
+                              host:
+                                description: Host is the hostname for the Ingress
+                                type: string
+                            type: object
+                          persistence:
+                            description: Persistence defines Langfuse persistence
+                              configuration
+                            properties:
+                              enabled:
+                                description: Enabled determines if Langfuse data should
+                                  be persisted
+                                type: boolean
+                              size:
+                                description: Size is the size of the persistent volume
+                                type: string
+                              storageClass:
+                                description: StorageClass is the storage class to
+                                  use for persistent volumes
+                                type: string
+                            type: object
+                          port:
+                            description: Port is the port the Langfuse service exposes
+                            format: int32
+                            maximum: 65535
+                            minimum: 1
+                            type: integer
+                          replicas:
+                            description: Replicas is the number of Langfuse pods to
+                              run
+                            format: int32
+                            maximum: 3
+                            minimum: 1
+                            type: integer
+                          resources:
+                            description: Resources defines the resource requirements
+                              for Langfuse pods
+                            properties:
+                              limits:
+                                description: Limits describes the maximum amount of
+                                  compute resources allowed
+                                properties:
+                                  cpu:
+                                    description: CPU is the CPU resource (e.g., "100m",
+                                      "2")
+                                    type: string
+                                  memory:
+                                    description: Memory is the memory resource (e.g.,
+                                      "128Mi", "2Gi")
+                                    type: string
+                                  storage:
+                                    description: Storage is the storage resource (e.g.,
+                                      "1Gi", "100Gi")
+                                    type: string
+                                type: object
+                              requests:
+                                description: Requests describes the minimum amount
+                                  of compute resources required
+                                properties:
+                                  cpu:
+                                    description: CPU is the CPU resource (e.g., "100m",
+                                      "2")
+                                    type: string
+                                  memory:
+                                    description: Memory is the memory resource (e.g.,
+                                      "128Mi", "2Gi")
+                                    type: string
+                                  storage:
+                                    description: Storage is the storage resource (e.g.,
+                                      "1Gi", "100Gi")
+                                    type: string
+                                type: object
+                            type: object
+                          serviceType:
+                            description: ServiceType is the type of service to expose
+                              Langfuse
+                            enum:
+                            - ClusterIP
+                            - NodePort
+                            - LoadBalancer
+                            type: string
+                        type: object
                       enabled:
                         description: Enabled determines if Langfuse monitoring should
                           be enabled
@@ -315,18 +519,25 @@ spec:
                           "staging", "development")
                         type: string
                       projectName:
-                        description: ProjectName is the name of the project for Langfuse
+                        description: |-
+                          ProjectName is the name of the project for Langfuse
+                          If not provided and URL is empty, will default to deployment name
                         type: string
                       publicKey:
-                        description: PublicKey is the Langfuse public key for authentication
+                        description: |-
+                          PublicKey is the Langfuse public key for authentication
+                          If not provided and URL is empty, will be auto-generated
                         type: string
                       secretKey:
-                        description: SecretKey is the Langfuse secret key for authentication
+                        description: |-
+                          SecretKey is the Langfuse secret key for authentication
+                          If not provided and URL is empty, will be auto-generated
                         type: string
                       url:
                         description: |-
                           URL is the Langfuse server URL
                           Format: https://cloud.langfuse.com or http://localhost:3000
+                          If not provided, Langfuse will be deployed automatically
                         type: string
                     type: object
                   pipelines:
@@ -4813,28 +5024,6 @@ spec:
                       host:
                         description: Host is the hostname for the Ingress
                         type: string
-                      tls:
-                        description: TLS configuration for the Ingress
-                        properties:
-                          hosts:
-                            description: |-
-                              hosts is a list of hosts included in the TLS certificate. The values in
-                              this list must match the name/s used in the tlsSecret. Defaults to the
-                              wildcard host setting for the loadbalancer controller fulfilling this
-                              Ingress, if left unspecified.
-                            items:
-                              type: string
-                            type: array
-                            x-kubernetes-list-type: atomic
-                          secretName:
-                            description: |-
-                              secretName is the name of the secret used to terminate TLS traffic on
-                              port 443. Field is left optional to allow TLS routing based on SNI
-                              hostname alone. If the SNI host in a listener conflicts with the "Host"
-                              header field used by an IngressRule, the SNI host is used for termination
-                              and value of the "Host" header is used for routing.
-                            type: string
-                        type: object
                     type: object
                   modelName:
                     description: ModelName is the name of the Ollama model to use

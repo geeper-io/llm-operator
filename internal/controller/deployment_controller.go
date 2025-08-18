@@ -183,21 +183,75 @@ func (r *LMDeploymentReconciler) setDefaults(deployment *llmgeeperiov1alpha1.LMD
 	if deployment.Spec.OpenWebUI.Redis.Persistence.Size == "" {
 		deployment.Spec.OpenWebUI.Redis.Persistence.Size = "1Gi"
 	}
-	if deployment.Spec.OpenWebUI.Redis.Resources.Requests.CPU == "" {
-		deployment.Spec.OpenWebUI.Redis.Resources.Requests.CPU = "100m"
-	}
-	if deployment.Spec.OpenWebUI.Redis.Resources.Requests.Memory == "" {
-		deployment.Spec.OpenWebUI.Redis.Resources.Requests.Memory = "128Mi"
-	}
-	if deployment.Spec.OpenWebUI.Redis.Resources.Limits.CPU == "" {
-		deployment.Spec.OpenWebUI.Redis.Resources.Limits.CPU = "500m"
-	}
-	if deployment.Spec.OpenWebUI.Redis.Resources.Limits.Memory == "" {
-		deployment.Spec.OpenWebUI.Redis.Resources.Limits.Memory = "256Mi"
-	}
 	if deployment.Spec.OpenWebUI.Redis.Password == "" {
 		// Generate a default Redis password if not provided
 		deployment.Spec.OpenWebUI.Redis.Password = "redis-password-123"
+	}
+
+	// Set OpenWebUI Langfuse defaults and auto-enable pipelines if needed
+	if deployment.Spec.OpenWebUI.Langfuse != nil && deployment.Spec.OpenWebUI.Langfuse.Enabled {
+		// Auto-enable pipelines if Langfuse is enabled
+		if deployment.Spec.OpenWebUI.Pipelines == nil {
+			deployment.Spec.OpenWebUI.Pipelines = &llmgeeperiov1alpha1.PipelinesSpec{}
+		}
+		deployment.Spec.OpenWebUI.Pipelines.Enabled = true
+
+		// Set Langfuse defaults
+		if deployment.Spec.OpenWebUI.Langfuse.ProjectName == "" {
+			deployment.Spec.OpenWebUI.Langfuse.ProjectName = deployment.Name
+		}
+		if deployment.Spec.OpenWebUI.Langfuse.Environment == "" {
+			deployment.Spec.OpenWebUI.Langfuse.Environment = "production"
+		}
+
+		// If no URL is provided, set up self-hosted Langfuse defaults
+		if deployment.Spec.OpenWebUI.Langfuse.URL == "" {
+			if deployment.Spec.OpenWebUI.Langfuse.Deploy == nil {
+				deployment.Spec.OpenWebUI.Langfuse.Deploy = &llmgeeperiov1alpha1.LangfuseDeploySpec{}
+			}
+
+			// Set self-hosted defaults
+			if deployment.Spec.OpenWebUI.Langfuse.Deploy.Image == "" {
+				deployment.Spec.OpenWebUI.Langfuse.Deploy.Image = "langfuse/langfuse:latest"
+			}
+			if deployment.Spec.OpenWebUI.Langfuse.Deploy.Replicas == 0 {
+				deployment.Spec.OpenWebUI.Langfuse.Deploy.Replicas = 1
+			}
+			if deployment.Spec.OpenWebUI.Langfuse.Deploy.Port == 0 {
+				deployment.Spec.OpenWebUI.Langfuse.Deploy.Port = 3000
+			}
+			if deployment.Spec.OpenWebUI.Langfuse.Deploy.ServiceType == "" {
+				deployment.Spec.OpenWebUI.Langfuse.Deploy.ServiceType = "ClusterIP"
+			}
+
+			// Set persistence defaults
+			if deployment.Spec.OpenWebUI.Langfuse.Deploy.Persistence == nil {
+				deployment.Spec.OpenWebUI.Langfuse.Deploy.Persistence = &llmgeeperiov1alpha1.LangfusePersistenceSpec{}
+			}
+			if deployment.Spec.OpenWebUI.Langfuse.Deploy.Persistence.Size == "" {
+				deployment.Spec.OpenWebUI.Langfuse.Deploy.Persistence.Size = "10Gi"
+			}
+
+		}
+	}
+
+	// Set OpenWebUI Pipelines defaults (for both manual and auto-enabled)
+	if deployment.Spec.OpenWebUI.Pipelines != nil && deployment.Spec.OpenWebUI.Pipelines.Enabled {
+		if deployment.Spec.OpenWebUI.Pipelines.Image == "" {
+			deployment.Spec.OpenWebUI.Pipelines.Image = "ghcr.io/open-webui/pipelines:main"
+		}
+		if deployment.Spec.OpenWebUI.Pipelines.Replicas == 0 {
+			deployment.Spec.OpenWebUI.Pipelines.Replicas = 1
+		}
+		if deployment.Spec.OpenWebUI.Pipelines.Port == 0 {
+			deployment.Spec.OpenWebUI.Pipelines.Port = 9099
+		}
+		if deployment.Spec.OpenWebUI.Pipelines.ServiceType == "" {
+			deployment.Spec.OpenWebUI.Pipelines.ServiceType = "ClusterIP"
+		}
+		if deployment.Spec.OpenWebUI.Pipelines.PipelinesDir == "" {
+			deployment.Spec.OpenWebUI.Pipelines.PipelinesDir = "/app/pipelines"
+		}
 	}
 
 	// Set Tabby defaults

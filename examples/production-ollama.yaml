@@ -11,13 +11,7 @@ spec:
     service:
       type: LoadBalancer
       port: 11434
-    resources:
-      requests:
-        cpu: "2"
-        memory: "4Gi"
-      limits:
-        cpu: "8"
-        memory: "16Gi"
+
     models:
       - "llama2:13b"
       - "codellama:34b"
@@ -35,10 +29,4 @@ spec:
     ingress:
       enabled: true
       host: "ai.company.com"
-    resources:
-      requests:
-        cpu: "500m"
-        memory: "1Gi"
-      limits:
-        cpu: "2"
-        memory: "2Gi"
+

@@ -20,7 +20,6 @@ import (
 	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
-	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -70,9 +69,6 @@ type IngressSpec struct {
 
 	// Annotations are custom annotations for the Ingress
 	Annotations map[string]string `json:"annotations,omitempty"`
-
-	// TLS configuration for the Ingress
-	TLS *networkingv1.IngressTLS `json:"tls,omitempty"`
 }
 
 // OpenWebUISpec defines the desired state of OpenWebUI deployment
@@ -303,15 +299,19 @@ type LangfuseSpec struct {
 
 	// URL is the Langfuse server URL
 	// Format: https://cloud.langfuse.com or http://localhost:3000
+	// If not provided, Langfuse will be deployed automatically
 	URL string `json:"url,omitempty"`
 
 	// PublicKey is the Langfuse public key for authentication
+	// If not provided and URL is empty, will be auto-generated
 	PublicKey string `json:"publicKey,omitempty"`
 
 	// SecretKey is the Langfuse secret key for authentication
+	// If not provided and URL is empty, will be auto-generated
 	SecretKey string `json:"secretKey,omitempty"`
 
 	// ProjectName is the name of the project for Langfuse
+	// If not provided and URL is empty, will default to deployment name
 	ProjectName string `json:"projectName,omitempty"`
 
 	// Environment is the environment name (e.g., "production", "staging", "development")
@@ -319,6 +319,54 @@ type LangfuseSpec struct {
 
 	// Debug enables debug logging for Langfuse
 	Debug bool `json:"debug,omitempty"`
+
+	// Deploy defines the self-hosted Langfuse deployment configuration
+	// Used when URL is not provided to deploy Langfuse automatically
+	Deploy *LangfuseDeploySpec `json:"deploy,omitempty"`
+}
+
+// LangfuseDeploySpec defines the self-hosted Langfuse deployment configuration
+type LangfuseDeploySpec struct {
+	// Image is the Langfuse container image to use (including tag)
+	Image string `json:"image,omitempty"`
+
+	// Replicas is the number of Langfuse pods to run
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=3
+	Replicas int32 `json:"replicas,omitempty"`
+
+	// Port is the port the Langfuse service exposes
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	Port int32 `json:"port,omitempty"`
+
+	// Resources defines the resource requirements for Langfuse pods
+	Resources ResourceRequirements `json:"resources,omitempty"`
+
+	// ServiceType is the type of service to expose Langfuse
+	// +kubebuilder:validation:Enum=ClusterIP;NodePort;LoadBalancer
+	ServiceType string `json:"serviceType,omitempty"`
+
+	// Persistence defines Langfuse persistence configuration
+	Persistence *LangfusePersistenceSpec `json:"persistence,omitempty"`
+
+	// Ingress defines the ingress configuration for Langfuse
+	Ingress *IngressSpec `json:"ingress,omitempty"`
+
+	// EnvVars defines environment variables for the Pipelines
+	EnvVars []corev1.EnvVar `json:"envVars,omitempty"`
+}
+
+// LangfusePersistenceSpec defines Langfuse persistence configuration
+type LangfusePersistenceSpec struct {
+	// Enabled determines if Langfuse data should be persisted
+	Enabled bool `json:"enabled,omitempty"`
+
+	// StorageClass is the storage class to use for persistent volumes
+	StorageClass string `json:"storageClass,omitempty"`
+
+	// Size is the size of the persistent volume
+	Size string `json:"size,omitempty"`
 }
 
 // ResourceRequirements describes the compute resource requirements
@@ -510,6 +558,21 @@ func (d *LMDeployment) GetPipelinesServiceName() string {
 // GetPipelinesDeploymentName returns the name of the Pipelines deployment for this deployment
 func (d *LMDeployment) GetPipelinesDeploymentName() string {
 	return fmt.Sprintf("%s-pipelines", d.Name)
+}
+
+// GetLangfuseServiceName returns the name of the Langfuse service for this deployment
+func (d *LMDeployment) GetLangfuseServiceName() string {
+	return fmt.Sprintf("%s-langfuse", d.Name)
+}
+
+// GetLangfuseDeploymentName returns the name of the Langfuse deployment for this deployment
+func (d *LMDeployment) GetLangfuseDeploymentName() string {
+	return fmt.Sprintf("%s-langfuse", d.Name)
+}
+
+// GetLangfusePVCName returns the name of the Langfuse PVC for this deployment
+func (d *LMDeployment) GetLangfusePVCName() string {
+	return fmt.Sprintf("%s-langfuse", d.Name)
 }
 
 func init() {

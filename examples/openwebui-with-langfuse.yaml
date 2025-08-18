@@ -11,13 +11,7 @@ spec:
     models:
       - "llama2:7b"
       - "codellama:7b"
-    resources:
-      requests:
-        cpu: "2"
-        memory: "4Gi"
-      limits:
-        cpu: "4"
-        memory: "8Gi"
+
     service:
       type: ClusterIP
       port: 11434
@@ -26,13 +20,7 @@ spec:
     enabled: true
     replicas: 2
     image: ghcr.io/open-webui/open-webui:main
-    resources:
-      requests:
-        cpu: "500m"
-        memory: "1Gi"
-      limits:
-        cpu: "1"
-        memory: "2Gi"
+
     service:
       type: ClusterIP
       port: 8080
@@ -50,13 +38,7 @@ spec:
       replicas: 1
       port: 9099
       serviceType: ClusterIP
-      resources:
-        requests:
-          cpu: "500m"
-          memory: "1Gi"
-        limits:
-          cpu: "1"
-          memory: "2Gi"
+
       
       # Configure pipeline directory
       pipelinesDir: "/app/pipelines"
@@ -94,13 +76,7 @@ spec:
     redis:
       enabled: true
       image: redis:7-alpine
-      resources:
-        requests:
-          cpu: "100m"
-          memory: "256Mi"
-        limits:
-          cpu: "200m"
-          memory: "512Mi"
+
       persistence:
         enabled: true
         size: "5Gi"
