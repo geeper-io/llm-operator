@@ -25,7 +25,4 @@ resources:
 - deployment_admin_role.yaml
 - deployment_editor_role.yaml
 - deployment_viewer_role.yaml
-- ollama_deployment_admin_role.yaml
-- ollama_deployment_editor_role.yaml
-- ollama_deployment_viewer_role.yaml
 

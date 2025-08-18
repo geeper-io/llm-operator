@@ -278,7 +278,7 @@ kubectl exec -it deployment/openwebui-chat -- curl ollama-backend:11434/api/tags
 ## Next Steps
 
 - [RAG Integration](/docs/chat/rag) - Learn how to add Retrieval-Augmented Generation
-- [Plugin System](/docs/chat/plugins) - Extend functionality with plugins
+- [Tool System](/docs/chat/tools) - Extend functionality with tools
 - [Advanced Configuration](/docs/chat/advanced) - Deep dive into configuration options
 - [API Reference](/docs/api/openwebui) - Complete API documentation
 

@@ -6,6 +6,8 @@ cliVersion: 4.6.0
 domain: llm.geeper.io
 layout:
 - go.kubebuilder.io/v4
+plugins:
+  helm.kubebuilder.io/v1-alpha: {}
 projectName: llm-operator
 repo: github.com/geeper-io/llm-operator
 resources:

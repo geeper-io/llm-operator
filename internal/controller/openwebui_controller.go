@@ -54,8 +54,8 @@ func (r *LMDeploymentReconciler) reconcileOpenWebUI(ctx context.Context, deploym
 		}
 	}
 
-	// Create or update OpenWebUI configuration ConfigMap if plugins are defined
-	if len(deployment.Spec.OpenWebUI.Plugins) > 0 {
+	// Create or update OpenWebUI configuration ConfigMap if tools are defined
+	if len(deployment.Spec.OpenWebUI.Tools) > 0 {
 		openwebuiConfig := r.buildOpenWebUIConfigMap(deployment)
 		if err := r.createOrUpdateConfigMap(ctx, openwebuiConfig); err != nil {
 			return err
@@ -130,6 +130,10 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 		{
 			Name:  "OLLAMA_BASE_URL",
 			Value: fmt.Sprintf("http://%s:%d", ollamaServiceName, deployment.GetOllamaServicePort()),
+		},
+		{
+			Name:  "ENABLE_VERSION_UPDATE_CHECK",
+			Value: "False",
 		},
 		{
 			Name:  "WEBUI_SECRET_KEY",
@@ -245,8 +249,8 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 	volumes := []corev1.Volume{}
 	volumeMounts := []corev1.VolumeMount{}
 
-	// Add plugin configuration volume if plugins are defined
-	if len(deployment.Spec.OpenWebUI.Plugins) > 0 {
+	// Add tool configuration volume if tools are defined
+	if len(deployment.Spec.OpenWebUI.Tools) > 0 {
 		// Add config volume
 		volumes = append(volumes, corev1.Volume{
 			Name: "openwebui-config",
@@ -659,18 +663,18 @@ func (r *LMDeploymentReconciler) buildOpenWebUIConfigMap(deployment *llmgeeperio
 		},
 	}
 
-	// Add tool server connections for each plugin
-	if len(deployment.Spec.OpenWebUI.Plugins) > 0 {
+	// Add tool server connections for each tool
+	if len(deployment.Spec.OpenWebUI.Tools) > 0 {
 		connections := []map[string]interface{}{}
 
-		for _, plugin := range deployment.Spec.OpenWebUI.Plugins {
-			if !plugin.Enabled {
+		for _, tool := range deployment.Spec.OpenWebUI.Tools {
+			if !tool.Enabled {
 				continue
 			}
 
 			// Build connection configuration
 			connection := map[string]interface{}{
-				"url":       fmt.Sprintf("http://%s:%d", deployment.GetPluginServiceName(plugin.Name), plugin.Port),
+				"url":       fmt.Sprintf("http://%s:%d", deployment.GetToolServiceName(tool.Name), tool.Port),
 				"path":      "openapi.json", // Default OpenAPI path
 				"auth_type": "none",         // Default auth type
 				"key":       "",             // Default empty key
@@ -688,18 +692,18 @@ func (r *LMDeploymentReconciler) buildOpenWebUIConfigMap(deployment *llmgeeperio
 					},
 				},
 				"info": map[string]interface{}{
-					"name":        plugin.Name,
-					"description": fmt.Sprintf("%s tool for %s", plugin.Type, deployment.Name),
+					"name":        tool.Name,
+					"description": fmt.Sprintf("%s tool for %s", tool.Type, deployment.Name),
 				},
 			}
 
 			// Override defaults if ConfigMap is specified
-			if plugin.ConfigMapName != "" {
+			if tool.ConfigMapName != "" {
 				connection["path"] = "openapi.json" // Could be made configurable
 			}
 
 			// Override auth type if Secret is specified
-			if plugin.SecretName != "" {
+			if tool.SecretName != "" {
 				connection["auth_type"] = "bearer" // Default to bearer when credentials are provided
 			}
 

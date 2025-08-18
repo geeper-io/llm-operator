@@ -1,8 +1,8 @@
 {
   "label": "Chat & Interaction",
-  "position": 2,
+  "position": 3,
   "link": {
     "type": "generated-index",
-    "description": "Learn how to interact with LLMs through chat interfaces, RAG, and plugins"
+    "description": "Learn how to interact with LLMs through chat interfaces, RAG, and tools"
   }
 }

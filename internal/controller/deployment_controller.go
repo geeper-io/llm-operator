@@ -114,10 +114,10 @@ func (r *LMDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			return ctrl.Result{RequeueAfter: time.Minute}, err
 		}
 
-		// Reconcile plugins if any are defined
-		if len(deployment.Spec.OpenWebUI.Plugins) > 0 {
-			if err := r.reconcilePlugins(ctx, deployment); err != nil {
-				logger.Error(err, "Failed to reconcile plugins")
+		// Reconcile tools if any are defined
+		if len(deployment.Spec.OpenWebUI.Tools) > 0 {
+			if err := r.reconcileTools(ctx, deployment); err != nil {
+				logger.Error(err, "Failed to reconcile tools")
 				return ctrl.Result{RequeueAfter: time.Minute}, err
 			}
 		}
@@ -309,30 +309,34 @@ func (r *LMDeploymentReconciler) finalizeDeployment(ctx context.Context, deploym
 func (r *LMDeploymentReconciler) buildResourceRequirements(resources llmgeeperiov1alpha1.ResourceRequirements) corev1.ResourceRequirements {
 	req := corev1.ResourceRequirements{}
 
-	if resources.Requests.CPU != "" {
-		if req.Requests == nil {
-			req.Requests = corev1.ResourceList{}
+	if resources.Requests != nil {
+		if resources.Requests.CPU != "" {
+			if req.Requests == nil {
+				req.Requests = corev1.ResourceList{}
+			}
+			req.Requests[corev1.ResourceCPU] = resource.MustParse(resources.Requests.CPU)
 		}
-		req.Requests[corev1.ResourceCPU] = resource.MustParse(resources.Requests.CPU)
-	}
-	if resources.Requests.Memory != "" {
-		if req.Requests == nil {
-			req.Requests = corev1.ResourceList{}
+		if resources.Requests.Memory != "" {
+			if req.Requests == nil {
+				req.Requests = corev1.ResourceList{}
+			}
+			req.Requests[corev1.ResourceMemory] = resource.MustParse(resources.Requests.Memory)
 		}
-		req.Requests[corev1.ResourceMemory] = resource.MustParse(resources.Requests.Memory)
 	}
 
-	if resources.Limits.CPU != "" {
-		if req.Limits == nil {
-			req.Limits = corev1.ResourceList{}
+	if resources.Limits != nil {
+		if resources.Limits.CPU != "" {
+			if req.Limits == nil {
+				req.Limits = corev1.ResourceList{}
+			}
+			req.Limits[corev1.ResourceCPU] = resource.MustParse(resources.Limits.CPU)
 		}
-		req.Limits[corev1.ResourceCPU] = resource.MustParse(resources.Limits.CPU)
-	}
-	if resources.Limits.Memory != "" {
-		if req.Limits == nil {
-			req.Limits = corev1.ResourceList{}
+		if resources.Limits.Memory != "" {
+			if req.Limits == nil {
+				req.Limits = corev1.ResourceList{}
+			}
+			req.Limits[corev1.ResourceMemory] = resource.MustParse(resources.Limits.Memory)
 		}
-		req.Limits[corev1.ResourceMemory] = resource.MustParse(resources.Limits.Memory)
 	}
 
 	return req
@@ -481,32 +485,32 @@ func (r *LMDeploymentReconciler) updateStatus(ctx context.Context, deployment *l
 			}
 		}
 
-		// Get plugin deployment statuses
-		pluginStatuses := make(map[string]llmgeeperiov1alpha1.LMDeploymentComponentStatus)
-		for _, plugin := range deployment.Spec.OpenWebUI.Plugins {
-			if !plugin.Enabled {
+		// Get tool deployment statuses
+		toolStatuses := make(map[string]llmgeeperiov1alpha1.LMDeploymentComponentStatus)
+		for _, tool := range deployment.Spec.OpenWebUI.Tools {
+			if !tool.Enabled {
 				continue
 			}
 
-			pluginDeployment := &appsv1.Deployment{}
+			toolDeployment := &appsv1.Deployment{}
 			err := r.Get(ctx, types.NamespacedName{
-				Name:      deployment.GetPluginDeploymentName(plugin.Name),
+				Name:      deployment.GetToolDeploymentName(tool.Name),
 				Namespace: deployment.Namespace,
-			}, pluginDeployment)
+			}, toolDeployment)
 
 			if err == nil {
-				pluginStatuses[plugin.Name] = llmgeeperiov1alpha1.LMDeploymentComponentStatus{
-					AvailableReplicas: pluginDeployment.Status.AvailableReplicas,
-					ReadyReplicas:     pluginDeployment.Status.ReadyReplicas,
-					UpdatedReplicas:   pluginDeployment.Status.UpdatedReplicas,
+				toolStatuses[tool.Name] = llmgeeperiov1alpha1.LMDeploymentComponentStatus{
+					AvailableReplicas: toolDeployment.Status.AvailableReplicas,
+					ReadyReplicas:     toolDeployment.Status.ReadyReplicas,
+					UpdatedReplicas:   toolDeployment.Status.UpdatedReplicas,
 				}
 			}
 		}
 
-		// Store plugin statuses in annotations for now (you can extend the status struct if needed)
-		if len(pluginStatuses) > 0 {
-			pluginStatusJSON, _ := json.Marshal(pluginStatuses)
-			deployment.Annotations["llm.geeper.io/plugin-statuses"] = string(pluginStatusJSON)
+		// Store tool statuses in annotations for now (you can extend the status struct if needed)
+		if len(toolStatuses) > 0 {
+			toolStatusJSON, _ := json.Marshal(toolStatuses)
+			deployment.Annotations["llm.geeper.io/tool-statuses"] = string(toolStatusJSON)
 		}
 	}
 
@@ -541,10 +545,10 @@ func (r *LMDeploymentReconciler) updateStatus(ctx context.Context, deployment *l
 	if deployment.Spec.OpenWebUI.Enabled {
 		deployment.Status.TotalReplicas += deployment.Spec.OpenWebUI.Replicas
 
-		// Add plugin replicas
-		for _, plugin := range deployment.Spec.OpenWebUI.Plugins {
-			if plugin.Enabled {
-				replicas := plugin.Replicas
+		// Add tool replicas
+		for _, tool := range deployment.Spec.OpenWebUI.Tools {
+			if tool.Enabled {
+				replicas := tool.Replicas
 				if replicas == 0 {
 					replicas = 1
 				}
@@ -562,17 +566,17 @@ func (r *LMDeploymentReconciler) updateStatus(ctx context.Context, deployment *l
 	if deployment.Spec.OpenWebUI.Enabled {
 		deployment.Status.ReadyReplicas += deployment.Status.OpenWebUIStatus.ReadyReplicas
 
-		// Add plugin ready replicas
-		for _, plugin := range deployment.Spec.OpenWebUI.Plugins {
-			if plugin.Enabled {
-				pluginDeployment := &appsv1.Deployment{}
+		// Add tool ready replicas
+		for _, tool := range deployment.Spec.OpenWebUI.Tools {
+			if tool.Enabled {
+				toolDeployment := &appsv1.Deployment{}
 				err := r.Get(ctx, types.NamespacedName{
-					Name:      deployment.GetPluginDeploymentName(plugin.Name),
+					Name:      deployment.GetToolDeploymentName(tool.Name),
 					Namespace: deployment.Namespace,
-				}, pluginDeployment)
+				}, toolDeployment)
 
 				if err == nil {
-					deployment.Status.ReadyReplicas += pluginDeployment.Status.ReadyReplicas
+					deployment.Status.ReadyReplicas += toolDeployment.Status.ReadyReplicas
 				}
 			}
 		}

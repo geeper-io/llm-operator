@@ -23,7 +23,7 @@ Geeper.AI is an open-source Kubernetes operator that extends Kubernetes with cus
 - **🔒 Security**: Built-in security features and RBAC integration
 - **📊 Monitoring**: Comprehensive metrics and observability
 - **🌐 Multi-cluster**: Support for multi-cluster LMDeployments
-- **🔌 Plugin System**: Extensible architecture with plugin support
+- **🔧 Tool System**: Extensible architecture with tool support
 - **⚡ Pipelines**: OpenWebUI Pipelines for custom workflows and integrations
 - **🔄 Redis Integration**: Automatic Redis deployment for multi-replica OpenWebUI
 
@@ -125,7 +125,7 @@ The operator watches for changes to custom resources and automatically:
 
 - [Chat & Interaction](/docs/chat/openwebui) - Chat with LLMs using OpenWebUI
 - [RAG Integration](/docs/chat/rag) - Add Retrieval-Augmented Generation
-- [Plugin System](/docs/chat/plugins) - Extend functionality with plugins
+- [Tool System](/docs/chat/tools) - Extend functionality with tools
 - [Coding Assistants](/docs/coding-assistants/continue-dev) - AI-powered coding with Continue.dev and Tabby
 - [Installation Guide](/docs/installation) - Detailed installation instructions
 - [User Guide](/docs/usage) - Learn how to use Geeper.AI

@@ -1,7 +1,7 @@
 apiVersion: llm.geeper.io/v1alpha1
 kind: LMDeployment
 metadata:
-  name: ollama-with-plugins
+  name: ollama-with-tools
   namespace: default
 spec:
   ollama:
@@ -26,10 +26,10 @@ spec:
     ingressEnabled: true
     ingressHost: "openwebui.example.com"
     
-    # Plugin system configuration
-    plugins:
-      # Weather API plugin
-      - name: weather-api
+    # Tool system configuration
+tools:
+              # Weather API tool
+        - name: weather-api
         enabled: true
         type: openapi
         image: openapitools/openapi-generator-cli
@@ -44,8 +44,8 @@ spec:
           - name: "API_BASE_URL"
             value: "https://api.openweathermap.org/data/2.0"
 
-      # Document processing plugin
-      - name: document-processor
+              # Document processing tool
+        - name: document-processor
         enabled: true
         type: custom
         image: custom/document-processor
@@ -68,8 +68,8 @@ spec:
             persistentVolumeClaim:
               claimName: document-storage-pvc
 
-      # Payment gateway plugin
-      - name: payment-gateway
+              # Payment gateway tool
+        - name: payment-gateway
         enabled: true
         type: openapi
         image: stripe/stripe-cli
@@ -84,8 +84,8 @@ spec:
           - name: "STRIPE_API_VERSION"
             value: "2023-10-16"
 
-      # GitHub API plugin
-      - name: github-api
+              # GitHub API tool
+        - name: github-api
         enabled: true
         type: openapi
         image: ghcr.io/octokit/octokit.rb
@@ -100,4 +100,4 @@ spec:
           - name: "GITHUB_API_VERSION"
             value: "2022-11-28"
           - name: "GITHUB_USER_AGENT"
-            value: "OpenWebUI-Plugin/1.0"
+            value: "OpenWebUI-Tool/1.0"

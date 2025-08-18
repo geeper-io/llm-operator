@@ -1,9 +1,9 @@
 ---
-# Weather Tool Configuration
+# Weather API Tool Configuration
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: weather-tool-config
+  name: weather-api-config
   namespace: default
 data:
   config: |
@@ -15,23 +15,23 @@ data:
     }
 
 ---
-# Weather Tool Secret
+# Weather API Secret
 apiVersion: v1
 kind: Secret
 metadata:
-  name: weather-tool-secret
+  name: weather-api-secret
   namespace: default
 type: Opaque
 data:
-  credentials: <base64-encoded-api-key>
+  api-key: <base64-encoded-api-key>
   # echo -n "your-actual-api-key" | base64
 
 ---
-# Document Tool Configuration
+# Document Processor Configuration
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: document-tool-config
+  name: document-processor-config
   namespace: default
 data:
   config: |
@@ -43,30 +43,57 @@ data:
     }
 
 ---
-# GitHub Tool Configuration
+# Stripe Configuration
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: github-tool-config
+  name: stripe-config
+  namespace: default
+data:
+  config: |
+    {
+      "api_version": "2023-10-16",
+      "webhook_endpoint": "/webhooks/stripe",
+      "currency": "usd",
+      "timeout": 30
+    }
+
+---
+# Stripe Secret
+apiVersion: v1
+kind: Secret
+metadata:
+  name: stripe-secret
+  namespace: default
+type: Opaque
+data:
+  api-key: <base64-encoded-stripe-secret-key>
+  webhook-secret: <base64-encoded-webhook-secret>
+
+---
+# GitHub Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: github-config
   namespace: default
 data:
   config: |
     {
       "api_version": "2022-11-28",
       "base_url": "https://api.github.com",
-      "user_agent": "OpenWebUI-Tool/1.0",
+              "user_agent": "OpenWebUI-Tool/1.0",
       "rate_limit_warning": 1000
     }
 
 ---
-# GitHub Tool Secret
+# GitHub Token Secret
 apiVersion: v1
 kind: Secret
 metadata:
-  name: github-tool-secret
+  name: github-token-secret
   namespace: default
 type: Opaque
 data:
-  credentials: <base64-encoded-github-token>
+  token: <base64-encoded-github-token>
   # echo -n "ghp_your_github_token" | base64
-

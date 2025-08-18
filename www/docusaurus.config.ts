@@ -47,16 +47,16 @@ const config: Config = {
           editUrl:
             'https://github.com/geeper-ai/llm-operator/tree/main/www/docs/',
           // Versioning
-          versions: {
-            current: {
-              label: 'Next 🚀',
-              path: 'next',
-            },
-          },
-          // Last updated
-          showLastUpdateTime: true,
-          // Last update author
-          showLastUpdateAuthor: true,
+          // versions: {
+          //   current: {
+          //     label: 'Next 🚀',
+          //     path: 'next',
+          //   },
+          // },
+          // // Last updated
+          // showLastUpdateTime: true,
+          // // Last update author
+          // showLastUpdateAuthor: true,
         },
         blog: {
           showReadingTime: true,
@@ -82,17 +82,6 @@ const config: Config = {
 
   // Search configuration
   plugins: [
-    [
-      '@docusaurus/plugin-content-docs',
-      {
-        id: 'api',
-        path: 'api',
-        routeBasePath: 'api',
-        sidebarPath: './sidebars.api.ts',
-        editUrl:
-          'https://github.com/geeper-ai/llm-operator/tree/main/www/api/',
-      },
-    ],
   ],
 
   themeConfig: {

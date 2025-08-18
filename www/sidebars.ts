@@ -23,7 +23,7 @@ const sidebars: SidebarsConfig = {
     {
       type: 'category',
       label: 'Chat & Interaction',
-      items: ['chat/openwebui', 'chat/rag', 'chat/plugins'],
+      items: ['chat/openwebui', 'chat/rag', 'chat/tools'],
     },
     {
       type: 'category',

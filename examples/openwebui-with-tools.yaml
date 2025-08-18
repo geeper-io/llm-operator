@@ -1,4 +1,4 @@
-bvapiVersion: llm.geeper.io/v1alpha1
+apiVersion: llm.geeper.io/v1alpha1
 kind: LMDeployment
 metadata:
   name: ollama-with-tools
@@ -26,35 +26,40 @@ spec:
     ingressEnabled: true
     ingressHost: "openwebui.example.com"
     
-    # External tools that OpenWebUI will use
-    plugins:
-      # Weather API tool
-      - name: "weather-tool"
+    # Tool system configuration
+tools:
+              # Weather API tool
+        - name: weather-api
         enabled: true
-        type: "openapi"
-        image: "openapitools/openapi-generator-cli"
+        type: openapi
+        image: openapitools/openapi-generator-cli
         imageTag: latest
         replicas: 1
         port: 8081
 
         serviceType: ClusterIP
-        configMapName: "weather-tool-config"
-        secretName: "weather-tool-secret"
+        configMapName: "weather-api-config"
+        secretName: "weather-api-secret"
+        envVars:
+          - name: "API_BASE_URL"
+            value: "https://api.openweathermap.org/data/2.0"
 
-      # Document processing tool
-      - name: "document-tool"
+              # Document processing tool
+        - name: document-processor
         enabled: true
-        type: "custom"
-        image: "custom/document-processor"
+        type: custom
+        image: custom/document-processor
         imageTag: v1.0.0
-        replicas: 1
+        replicas: 2
         port: 8082
 
         serviceType: ClusterIP
-        configMapName: "document-tool-config"
+        configMapName: "document-processor-config"
         envVars:
           - name: "PROCESSING_MODE"
             value: "async"
+          - name: "MAX_FILE_SIZE"
+            value: "100MB"
         volumeMounts:
           - name: shared-storage
             mountPath: /data
@@ -63,17 +68,36 @@ spec:
             persistentVolumeClaim:
               claimName: document-storage-pvc
 
-      # GitHub API tool
-      - name: "github-tool"
+              # Payment gateway tool
+        - name: payment-gateway
         enabled: true
-        type: "openapi"
-        image: "ghcr.io/octokit/octokit.rb"
+        type: openapi
+        image: stripe/stripe-cli
         imageTag: latest
         replicas: 1
         port: 8083
 
         serviceType: ClusterIP
-        configMapName: "github-tool-config"
-        secretName: "github-tool-secret"
+        configMapName: "stripe-config"
+        secretName: "stripe-secret"
+        envVars:
+          - name: "STRIPE_API_VERSION"
+            value: "2023-10-16"
 
+              # GitHub API tool
+        - name: github-api
+        enabled: true
+        type: openapi
+        image: ghcr.io/octokit/octokit.rb
+        imageTag: latest
+        replicas: 1
+        port: 8084
 
+        serviceType: ClusterIP
+        configMapName: "github-config"
+        secretName: "github-token-secret"
+        envVars:
+          - name: "GITHUB_API_VERSION"
+            value: "2022-11-28"
+          - name: "GITHUB_USER_AGENT"
+            value: "OpenWebUI-Tool/1.0"

@@ -1,5 +1,5 @@
 # This ConfigMap is automatically created by the controller
-# when you define plugins in your deployment spec
+# when you define tools in your deployment spec
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -26,7 +26,7 @@ data:
       "tool_server": {
         "connections": [
           {
-            "url": "http://ollama-with-tools-plugin-weather-tool:8081",
+            "url": "http://ollama-with-tools-tool-weather-tool:8081",
             "path": "openapi.json",
             "auth_type": "bearer",
             "key": "",
@@ -49,7 +49,7 @@ data:
             }
           },
           {
-            "url": "http://ollama-with-tools-plugin-document-tool:8082",
+            "url": "http://ollama-with-tools-tool-document-tool:8082",
             "path": "openapi.json",
             "auth_type": "none",
             "key": "",
@@ -72,7 +72,7 @@ data:
             }
           },
           {
-            "url": "http://ollama-with-tools-plugin-github-tool:8083",
+            "url": "http://ollama-with-tools-tool-github-tool:8083",
             "path": "openapi.json",
             "auth_type": "bearer",
             "key": "",

@@ -11,7 +11,7 @@ The LLM Operator provides a Custom Resource Definition (CRD) called `LMDeploymen
 - **🚀 Easy Deployment**: Deploy LLM services with simple YAML configurations
 - **🔧 Multi-Model Support**: Support for various LLM frameworks (Ollama, OpenWebUI, Tabby, etc.)
 - **⚡ Auto-scaling**: Automatic scaling based on demand and resource usage
-- **🔌 Plugin System**: Extensible architecture with plugin support
+- **🔧 Tool System**: Extensible architecture with tool support
 - **🔒 Security**: Built-in security features and RBAC integration
 - **📊 Monitoring**: Comprehensive metrics and observability
 - **🌐 Multi-cluster**: Support for multi-cluster LMDeployments
@@ -24,7 +24,7 @@ The operator creates and manages several Kubernetes resources:
 
 - **Services**: For Ollama, OpenWebUI (if enabled), and Tabby (if enabled)
 - **LMDeployments**: For Ollama, OpenWebUI (if enabled), and Tabby (if enabled)
-- **ConfigMaps**: For configuration and plugin settings
+- **ConfigMaps**: For configuration and tool settings
 - **Secrets**: For sensitive configuration data
 - **PersistentVolumeClaims**: For persistent storage (if enabled)
 
