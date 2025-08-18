@@ -1,0 +1,63 @@
+name: Test Documentation Build
+
+on:
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'www/**'
+      - '.github/workflows/docs-test.yml'
+      - 'docs/**'
+      - 'examples/**'
+  workflow_dispatch:
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'www/package-lock.json'
+      
+      - name: Install dependencies
+        working-directory: www
+        run: npm ci
+      
+      - name: Lint documentation
+        working-directory: www
+        run: npm run lint
+      
+      - name: Test build
+        working-directory: www
+        run: npm run build
+        env:
+          NODE_ENV: production
+      
+      - name: Check build output
+        working-directory: www
+        run: |
+          if [ ! -d "build" ]; then
+            echo "Build directory not found!"
+            exit 1
+          fi
+          
+          if [ ! -f "build/index.html" ]; then
+            echo "index.html not found in build output!"
+            exit 1
+          fi
+          
+          echo "Build successful! Found $(find build -type f | wc -l) files."
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: docs-build-${{ github.run_number }}
+          path: www/build
+          retention-days: 7

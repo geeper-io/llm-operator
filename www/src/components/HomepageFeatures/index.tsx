@@ -11,32 +11,79 @@ type FeatureItem = {
 
 const FeatureList: FeatureItem[] = [
   {
-    title: 'Easy to Use',
-    Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
+    title: 'Kubernetes Native',
+    Svg: require('@site/static/img/kubernetes-logo.svg').default,
     description: (
       <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
+        Built as a native Kubernetes operator using Go and Kubebuilder. 
+        Automatically manages the complete lifecycle of LLM services with 
+        declarative configuration and GitOps workflows.
       </>
     ),
   },
   {
-    title: 'Focus on What Matters',
-    Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
+    title: 'Chat with LLM',
+    Svg: require('@site/static/img/chat-llm.svg').default,
     description: (
       <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
+        Interactive chat interfaces powered by OpenWebUI with real-time 
+        conversations, context awareness, and seamless integration with 
+        multiple LLM backends for natural AI interactions.
       </>
     ),
   },
   {
-    title: 'Powered by React',
-    Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
+    title: 'Coding Assistants',
+    Svg: require('@site/static/img/coding-assistants.svg').default,
     description: (
       <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
+        Advanced coding assistance with Tabby integration, providing 
+        intelligent code completion, refactoring suggestions, and 
+        AI-powered development workflows for multiple programming languages.
+      </>
+    ),
+  },
+  {
+    title: 'Multi-LLM Support',
+    Svg: require('@site/static/img/llm-integration.svg').default,
+    description: (
+      <>
+        Seamlessly integrates Ollama, OpenWebUI, Tabby, and custom models. 
+        Supports multiple model formats, automatic scaling, and unified 
+        management across different LLM backends.
+      </>
+    ),
+  },
+  {
+    title: 'Advanced Observability',
+    Svg: require('@site/static/img/observability.svg').default,
+    description: (
+      <>
+        Built-in Langfuse integration for comprehensive LLM monitoring, 
+        tracing, and analytics. Track requests, performance metrics, 
+        costs, and user interactions in real-time.
+      </>
+    ),
+  },
+  {
+    title: 'Pipeline Processing',
+    Svg: require('@site/static/img/pipeline.svg').default,
+    description: (
+      <>
+        OpenWebUI Pipelines enable custom workflows, filters, and 
+        integrations. Process requests through configurable stages 
+        with Python-based extensibility and automatic monitoring.
+      </>
+    ),
+  },
+  {
+    title: 'Production Ready',
+    Svg: require('@site/static/img/multi-component.svg').default,
+    description: (
+      <>
+        Enterprise-grade features including Redis persistence, 
+        auto-scaling, ingress management, and multi-replica support. 
+        Ready for production workloads with minimal configuration.
       </>
     ),
   },

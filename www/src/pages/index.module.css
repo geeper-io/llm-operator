@@ -16,8 +16,32 @@
   }
 }
 
+.hero__description {
+  font-size: 1.2rem;
+  max-width: 800px;
+  margin: 1.5rem auto;
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+@media screen and (max-width: 768px) {
+  .hero__description {
+    font-size: 1rem;
+    margin: 1rem auto;
+  }
+}
+
 .buttons {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+@media screen and (max-width: 768px) {
+  .buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
 }

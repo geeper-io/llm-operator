@@ -17,15 +17,15 @@ const config: Config = {
   // Set the production url of your site here
   url: 'https://your-docusaurus-site.example.com',
   // Set the /<baseUrl>/ pathname under which your site is served
-  // For GitHub pages deployment, it is often '/<projectName>/'
+  // For GitHub pages deployment, this is often '/<projectName>/'
   baseUrl: '/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'facebook', // Usually your GitHub org/user name.
-  projectName: 'docusaurus', // Usually your repo name.
+  organizationName: 'geeper-ai', // Usually your GitHub org/user name.
+  projectName: 'llm-operator', // Usually your repo name.
 
-  onBrokenLinks: 'throw',
+  onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
 
   // Even if you don't use internationalization, you can use this field to set
@@ -45,7 +45,18 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/your-org/llm-operator/tree/main/www/docs/',
+            'https://github.com/geeper-ai/llm-operator/tree/main/www/docs/',
+          // Versioning
+          versions: {
+            current: {
+              label: 'Next 🚀',
+              path: 'next',
+            },
+          },
+          // Last updated
+          showLastUpdateTime: true,
+          // Last update author
+          showLastUpdateAuthor: true,
         },
         blog: {
           showReadingTime: true,
@@ -56,7 +67,7 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/your-org/llm-operator/tree/main/www/blog/',
+            'https://github.com/geeper-ai/llm-operator/tree/main/www/blog/',
           // Useful options to enforce blogging best practices
           onInlineTags: 'warn',
           onInlineAuthors: 'warn',
@@ -69,9 +80,54 @@ const config: Config = {
     ],
   ],
 
+  // Search configuration
+  plugins: [
+    [
+      '@docusaurus/plugin-content-docs',
+      {
+        id: 'api',
+        path: 'api',
+        routeBasePath: 'api',
+        sidebarPath: './sidebars.api.ts',
+        editUrl:
+          'https://github.com/geeper-ai/llm-operator/tree/main/www/api/',
+      },
+    ],
+  ],
+
   themeConfig: {
     // Replace with your project's social card
     image: 'img/docusaurus-social-card.jpg',
+    
+    // Search configuration
+    algolia: {
+      // The application ID provided by Algolia
+      appId: 'YOUR_APP_ID',
+      
+      // Public API key: it is safe to commit it
+      apiKey: 'YOUR_SEARCH_API_KEY',
+      
+      indexName: 'YOUR_INDEX_NAME',
+      
+      // Optional: see doc section below
+      contextualSearch: true,
+      
+      // Optional: Specify domains where the navigation should occur through window.location instead on history.push. Useful when our Algolia config crawls multiple documentation sites and we want to navigate with window.location.href to them.
+      externalUrlRegex: 'external\\.com|domain\\.com',
+      
+      // Optional: Replace parts of the item URLs from Algolia search results. Useful when using the same search index for multiple deployments using a different baseUrl. You can use regexp or string in the `from` param. For example: localhost:3000 vs myCompany.com/docs
+      replaceSearchResultPathname: {
+        from: '/docs/', // or as RegExp: /\/docs\//
+        to: '/',
+      },
+      
+      // Optional: Algolia search parameters
+      searchParameters: {},
+      
+      // Optional: path for search page that enabled by default (`false` to disable it)
+      searchPagePath: 'search',
+    },
+    
     navbar: {
       title: 'Geeper.AI',
       logo: {
@@ -86,8 +142,19 @@ const config: Config = {
           label: 'Docs',
         },
         {to: '/blog', label: 'Blog', position: 'left'},
+        // Version dropdown
         {
-          href: 'https://github.com/facebook/docusaurus',
+          type: 'docsVersionDropdown',
+          position: 'right',
+          dropdownActiveClassDisabled: true,
+        },
+        // Search
+        {
+          type: 'search',
+          position: 'right',
+        },
+        {
+          href: 'https://github.com/geeper-ai/llm-operator',
           label: 'GitHub',
           position: 'right',
         },
@@ -109,16 +176,16 @@ const config: Config = {
           title: 'Community',
           items: [
             {
-              label: 'Stack Overflow',
-              href: 'https://stackoverflow.com/questions/tagged/docusaurus',
+              label: 'GitHub Discussions',
+              href: 'https://github.com/geeper-ai/llm-operator/discussions',
             },
             {
-              label: 'Discord',
-              href: 'https://discordapp.com/invite/docusaurus',
+              label: 'Issues',
+              href: 'https://github.com/geeper-ai/llm-operator/issues',
             },
             {
-              label: 'X',
-              href: 'https://x.com/docusaurus',
+              label: 'Releases',
+              href: 'https://github.com/geeper-ai/llm-operator/releases',
             },
           ],
         },
@@ -130,8 +197,12 @@ const config: Config = {
               to: '/blog',
             },
             {
-              label: 'GitHub',
-              href: 'https://github.com/facebook/docusaurus',
+              label: 'Examples',
+              href: 'https://github.com/geeper-ai/llm-operator/tree/main/examples',
+            },
+            {
+              label: 'Contributing',
+              href: 'https://github.com/geeper-ai/llm-operator/blob/main/CONTRIBUTING.md',
             },
           ],
         },
