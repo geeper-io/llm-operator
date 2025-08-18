@@ -1,0 +1,8 @@
+{
+  "label": "Documentation",
+  "position": 1,
+  "link": {
+    "type": "generated-index",
+    "description": "Learn about Geeper.AI - the LLM Operator for Kubernetes"
+  }
+}

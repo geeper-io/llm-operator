@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="90" fill="#059669" opacity="0.1"/>
+
+  <!-- Editor window -->
+  <g transform="translate(100 100)" font-family="monospace">
+    <!-- Window frame -->
+    <rect width="150" height="110" x="-75" y="-55" fill="#1F2937" rx="8"/>
+    <rect width="140" height="100" x="-70" y="-50" fill="#111827" rx="4"/>
+
+    <!-- Header bar -->
+    <rect width="150" height="18" x="-75" y="-55" fill="#374151" rx="4"/>
+    <circle cx="-65" cy="-46" r="4" fill="#EF4444"/>
+    <circle cx="-55" cy="-46" r="4" fill="#F59E0B"/>
+    <circle cx="-45" cy="-46" r="4" fill="#10B981"/>
+
+    <!-- Code area -->
+    <g font-size="9">
+      <!-- Line numbers -->
+      <text x="-65" y="-28" fill="#6B7280">1</text>
+      <text x="-65" y="-14" fill="#6B7280">2</text>
+      <text x="-65" y="0" fill="#6B7280">3</text>
+      <text x="-65" y="14" fill="#6B7280">4</text>
+
+      <!-- User code -->
+      <text x="-55" y="-28" fill="#10B981">def</text>
+      <text x="-36" y="-28" fill="#fff">add</text>
+      <text x="-20" y="-28" fill="#fff">(</text>
+      <text x="-14" y="-28" fill="#F59E0B">a</text>
+      <text x="-8" y="-28" fill="#fff">,</text>
+      <text x="-2" y="-28" fill="#F59E0B">b</text>
+      <text x="4" y="-28" fill="#fff">):</text>
+
+      <!-- AI suggested body (ghost text with indentation) -->
+      <text x="-40" y="-14" fill="#6B7280">    return a + b</text>
+    </g>
+  </g>
+</svg>

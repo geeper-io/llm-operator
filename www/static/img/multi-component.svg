@@ -1,0 +1,109 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="90" fill="#EF4444" opacity="0.1"/>
+  
+  <!-- Central hub -->
+  <g transform="translate(100, 100)">
+    <!-- Main hub -->
+    <circle cx="0" cy="0" r="25" fill="#EF4444"/>
+    <circle cx="0" cy="0" r="15" fill="white"/>
+    <circle cx="0" cy="0" r="8" fill="#EF4444"/>
+    
+    <!-- Hub connections -->
+    <g stroke="#EF4444" stroke-width="2" opacity="0.6">
+      <line x1="-25" y1="0" x2="-45" y2="0"/>
+      <line x1="25" y1="0" x2="45" y2="0"/>
+      <line x1="0" y1="-25" x2="0" y2="-45"/>
+      <line x1="0" y1="25" x2="0" y2="45"/>
+      <line x1="-18" y1="-18" x2="-32" y2="-32"/>
+      <line x1="18" y1="18" x2="32" y2="32"/>
+      <line x1="-18" y1="18" x2="-32" y2="32"/>
+      <line x1="18" y1="-18" x2="32" y2="-32"/>
+    </g>
+  </g>
+  
+  <!-- Component nodes -->
+  <g transform="translate(100, 100)">
+    <!-- Top component - Ollama -->
+    <rect x="-20" y="-65" width="40" height="25" rx="8" fill="#EF4444" opacity="0.8"/>
+    <circle cx="0" cy="-52" r="4" fill="white"/>
+    <text x="0" y="-48" text-anchor="middle" font-size="8" fill="white" font-weight="bold">Ollama</text>
+    
+    <!-- Right component - OpenWebUI -->
+    <rect x="65" y="-20" width="40" height="25" rx="8" fill="#EF4444" opacity="0.7"/>
+    <circle cx="85" cy="-7" r="4" fill="white"/>
+    <text x="85" y="-3" text-anchor="middle" font-size="8" fill="white" font-weight="bold">WebUI</text>
+    
+    <!-- Bottom component - Tabby -->
+    <rect x="-20" y="40" width="40" height="25" rx="8" fill="#EF4444" opacity="0.6"/>
+    <circle cx="0" cy="53" r="4" fill="white"/>
+    <text x="0" y="57" text-anchor="middle" font-size="8" fill="white" font-weight="bold">Tabby</text>
+    
+    <!-- Left component - Redis -->
+    <rect x="-65" y="-20" width="40" height="25" rx="8" fill="#EF4444" opacity="0.9"/>
+    <circle cx="-45" cy="-7" r="4" fill="white"/>
+    <text x="-45" y="-3" text-anchor="middle" font-size="8" fill="white" font-weight="bold">Redis</text>
+    
+    <!-- Top-right component - Pipelines -->
+    <rect x="45" y="-45" width="35" height="20" rx="6" fill="#EF4444" opacity="0.6"/>
+    <circle cx="62.5" cy="-35" r="3" fill="white"/>
+    <text x="62.5" y="-31" text-anchor="middle" font-size="7" fill="white" font-weight="bold">Pipes</text>
+    
+    <!-- Bottom-right component - Langfuse -->
+    <rect x="45" y="25" width="35" height="20" rx="6" fill="#EF4444" opacity="0.5"/>
+    <circle cx="62.5" cy="35" r="3" fill="white"/>
+    <text x="62.5" y="39" text-anchor="middle" font-size="7" fill="white" font-weight="bold">Lang</text>
+    
+    <!-- Bottom-left component - Tools -->
+    <rect x="-80" y="25" width="35" height="20" rx="6" fill="#EF4444" opacity="0.8"/>
+    <circle cx="-62.5" cy="35" r="3" fill="white"/>
+    <text x="-62.5" y="39" text-anchor="middle" font-size="7" fill="white" font-weight="bold">Plug</text>
+    
+    <!-- Top-left component - Models -->
+    <rect x="-80" y="-45" width="35" height="20" rx="6" fill="#EF4444" opacity="0.7"/>
+    <circle cx="-62.5" cy="-35" r="3" fill="white"/>
+    <text x="-62.5" y="-31" text-anchor="middle" font-size="7" fill="white" font-weight="bold">Models</text>
+  </g>
+  
+  <!-- Data flow indicators -->
+  <g transform="translate(100, 100)">
+    <!-- Flow arrows -->
+    <g fill="#EF4444" opacity="0.8">
+      <path d="M-20 -40 L-15 -35 L-20 -30 Z"/>
+      <path d="M40 -20 L35 -15 L30 -20 Z"/>
+      <path d="M20 40 L15 35 L20 30 Z"/>
+      <path d="M-40 20 L-35 15 L-30 20 Z"/>
+      <path d="M25 -35 L20 -30 L15 -35 Z"/>
+      <path d="M25 35 L20 30 L15 35 Z"/>
+      <path d="M-25 35 L-20 30 L-15 35 Z"/>
+      <path d="M-25 -35 L-20 -30 L-15 -35 Z"/>
+    </g>
+    
+    <!-- Connection points -->
+    <g fill="#EF4444" opacity="0.6">
+      <circle cx="-45" cy="0" r="2"/>
+      <circle cx="45" cy="0" r="2"/>
+      <circle cx="0" cy="-45" r="2"/>
+      <circle cx="0" cy="45" r="2"/>
+      <circle cx="32" cy="-32" r="2"/>
+      <circle cx="32" cy="32" r="2"/>
+      <circle cx="-32" cy="32" r="2"/>
+      <circle cx="-32" cy="-32" r="2"/>
+    </g>
+  </g>
+  
+  <!-- Service indicators -->
+  <g transform="translate(100, 100)">
+    <!-- Service status -->
+    <g fill="#10B981">
+      <circle cx="-80" cy="-70" r="4"/>
+      <circle cx="80" cy="-70" r="4"/>
+      <circle cx="80" cy="70" r="4"/>
+      <circle cx="-80" cy="70" r="4"/>
+    </g>
+    
+    <!-- Load balancer -->
+    <rect x="-15" y="70" width="30" height="8" rx="4" fill="#EF4444" opacity="0.3"/>
+    <text x="0" y="76" text-anchor="middle" font-size="6" fill="#EF4444" font-weight="bold">LB</text>
+  </g>
+</svg>

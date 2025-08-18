@@ -1,0 +1,82 @@
+apiVersion: llm.geeper.io/v1alpha1
+kind: LMDeployment
+metadata:
+  name: openwebui-auto-langfuse
+  namespace: default
+spec:
+  ollama:
+    enabled: true
+    image: ollama/ollama:latest
+    replicas: 1
+    models:
+      - "llama2:7b"
+    service:
+      type: ClusterIP
+      port: 11434
+
+
+  openwebui:
+    enabled: true
+    image: ghcr.io/open-webui/open-webui:main
+    replicas: 2
+    service:
+      type: ClusterIP
+      port: 8080
+    ingress:
+      enabled: true
+      host: "ai-chat.local"
+      annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /
+
+    
+    # Redis will be auto-enabled for multi-replica setup
+    redis:
+      enabled: true
+      image: redis:7-alpine
+      replicas: 1
+      service:
+        type: ClusterIP
+        port: 6379
+      persistence:
+        enabled: true
+        size: "5Gi"
+        storageClass: "fast-ssd"
+
+    
+    # Pipelines will be automatically enabled when Langfuse is enabled
+    # No need to explicitly set pipelines.enabled = true
+    
+    # Langfuse monitoring - will auto-deploy self-hosted instance
+    langfuse:
+      enabled: true
+      # No URL provided - will deploy self-hosted Langfuse
+      # PublicKey and SecretKey will be auto-generated
+      projectName: "auto-langfuse-demo"
+      environment: "development"
+      debug: true
+      
+      # Self-hosted configuration (optional - defaults will be used)
+      deploy:
+        image: langfuse/langfuse:latest
+        replicas: 1
+        port: 3000
+        serviceType: ClusterIP
+        persistence:
+          enabled: true
+          size: "10Gi"
+          storageClass: "fast-ssd"
+
+        ingress:
+          enabled: true
+          host: "langfuse.local"
+          annotations:
+            nginx.ingress.kubernetes.io/rewrite-target: /
+    
+    # Custom environment variables
+    env:
+      - name: OPENWEBUI_DEFAULT_MODELS
+        value: "llama2:7b"
+      - name: OPENWEBUI_DEFAULT_USER_ROLE
+        value: "admin"
+      - name: OPENWEBUI_AUTH_DISABLED
+        value: "true"

@@ -1,0 +1,137 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="90" fill="#8B5CF6" opacity="0.1"/>
+  
+  <!-- Main chart area -->
+  <g transform="translate(100, 100)">
+    <!-- Chart background -->
+    <rect x="-60" y="-40" width="120" height="60" rx="8" fill="#8B5CF6" opacity="0.1"/>
+    <rect x="-55" y="-35" width="110" height="50" rx="6" fill="white"/>
+    
+    <!-- Chart grid lines -->
+    <g stroke="#E5E7EB" stroke-width="1" opacity="0.6">
+      <line x1="-55" y1="-35" x2="55" y2="-35"/>
+      <line x1="-55" y1="-25" x2="55" y2="-25"/>
+      <line x1="-55" y1="-15" x2="55" y2="-15"/>
+      <line x1="-55" y1="-5" x2="55" y2="-5"/>
+      <line x1="-55" y1="5" x2="55" y2="5"/>
+      <line x1="-55" y1="15" x2="55" y2="15"/>
+    </g>
+    
+    <!-- Main line chart -->
+    <g stroke="#8B5CF6" stroke-width="3" fill="none">
+      <path d="M-50 -30 L-40 -25 L-30 -28 L-20 -20 L-10 -22 L0 -15 L10 -18 L20 -12 L30 -15 L40 -8 L50 -10" stroke-linecap="round"/>
+    </g>
+    
+    <!-- Chart data points -->
+    <g fill="#8B5CF6">
+      <circle cx="-50" cy="-30" r="3"/>
+      <circle cx="-40" cy="-25" r="3"/>
+      <circle cx="-30" cy="-28" r="3"/>
+      <circle cx="-20" cy="-20" r="3"/>
+      <circle cx="-10" cy="-22" r="3"/>
+      <circle cx="0" cy="-15" r="3"/>
+      <circle cx="10" cy="-18" r="3"/>
+      <circle cx="20" cy="-12" r="3"/>
+      <circle cx="30" cy="-15" r="3"/>
+      <circle cx="40" cy="-8" r="3"/>
+      <circle cx="50" cy="-10" r="3"/>
+    </g>
+    
+    <!-- Bar chart overlay -->
+    <g fill="#8B5CF6" opacity="0.7">
+      <rect x="-52" y="-32" width="4" height="32" rx="1"/>
+      <rect x="-44" y="-27" width="4" height="27" rx="1"/>
+      <rect x="-36" y="-30" width="4" height="30" rx="1"/>
+      <rect x="-28" y="-22" width="4" height="22" rx="1"/>
+      <rect x="-20" y="-24" width="4" height="24" rx="1"/>
+      <rect x="-12" y="-17" width="4" height="17" rx="1"/>
+      <rect x="-4" y="-19" width="4" height="19" rx="1"/>
+      <rect x="4" y="-14" width="4" height="14" rx="1"/>
+      <rect x="12" y="-16" width="4" height="16" rx="1"/>
+      <rect x="20" y="-10" width="4" height="10" rx="1"/>
+      <rect x="28" y="-12" width="4" height="12" rx="1"/>
+      <rect x="36" y="-6" width="4" height="6" rx="1"/>
+      <rect x="44" y="-8" width="4" height="8" rx="1"/>
+      <rect x="52" y="-2" width="4" height="2" rx="1"/>
+    </g>
+  </g>
+  
+  <!-- Metrics dashboard panels -->
+  <g transform="translate(100, 100)">
+    <!-- Panel 1 - Response Time -->
+    <rect x="-70" y="30" width="30" height="25" rx="4" fill="#8B5CF6" opacity="0.9"/>
+    <text x="-65" y="42" font-size="7" fill="white" font-weight="bold">RT</text>
+    <text x="-65" y="50" font-size="6" fill="white">120ms</text>
+    
+    <!-- Panel 2 - Throughput -->
+    <rect x="-35" y="30" width="30" height="25" rx="4" fill="#8B5CF6" opacity="0.7"/>
+    <text x="-30" y="42" font-size="7" fill="white" font-weight="bold">TP</text>
+    <text x="-30" y="50" font-size="6" fill="white">1.2k/s</text>
+    
+    <!-- Panel 3 - Error Rate -->
+    <rect x="0" y="30" width="30" height="25" rx="4" fill="#8B5CF6" opacity="0.6"/>
+    <text x="5" y="42" font-size="7" fill="white" font-weight="bold">ERR</text>
+    <text x="5" y="50" font-size="6" fill="white">0.1%</text>
+    
+    <!-- Panel 4 - CPU Usage -->
+    <rect x="35" y="30" width="30" height="25" rx="4" fill="#8B5CF6" opacity="0.8"/>
+    <text x="40" y="42" font-size="7" fill="white" font-weight="bold">CPU</text>
+    <text x="40" y="50" font-size="6" fill="white">45%</text>
+    
+    <!-- Panel 5 - Memory -->
+    <rect x="70" y="30" width="30" height="25" rx="4" fill="#8B5CF6" opacity="0.5"/>
+    <text x="75" y="42" font-size="7" fill="white" font-weight="bold">MEM</text>
+    <text x="75" y="50" font-size="6" fill="white">2.1GB</text>
+  </g>
+  
+  <!-- Observability tools -->
+  <g transform="translate(100, 100)">
+    <!-- Logs icon -->
+    <g transform="translate(-80, -70)">
+      <rect x="-8" y="-6" width="16" height="12" rx="2" fill="#8B5CF6"/>
+      <line x1="-6" y1="-2" x2="6" y2="-2" stroke="white" stroke-width="1"/>
+      <line x1="-6" y1="1" x2="4" y2="1" stroke="white" stroke-width="1"/>
+      <line x1="-6" y1="4" x2="6" y2="4" stroke="white" stroke-width="1"/>
+    </g>
+    
+    <!-- Traces icon -->
+    <g transform="translate(80, -70)">
+      <circle cx="0" cy="0" r="8" fill="#8B5CF6"/>
+      <path d="M-4 -4 L4 4 M-4 4 L4 -4" stroke="white" stroke-width="1.5"/>
+    </g>
+    
+    <!-- Metrics icon -->
+    <g transform="translate(-80, 70)">
+      <rect x="-6" y="-6" width="12" height="12" rx="2" fill="#8B5CF6"/>
+      <path d="M-4 -2 L-2 -4 L0 -2 L2 -4 L4 -2" stroke="white" stroke-width="1.5" fill="none"/>
+    </g>
+    
+    <!-- Alert icon -->
+    <g transform="translate(80, 70)">
+      <path d="M0 -8 L6 0 L0 8 L-6 0 Z" fill="#F59E0B"/>
+      <circle cx="0" cy="0" r="2" fill="white"/>
+    </g>
+  </g>
+  
+  <!-- Status indicators -->
+  <g transform="translate(100, 100)">
+    <!-- Health status -->
+    <g fill="#10B981">
+      <circle cx="-80" cy="-60" r="4"/>
+      <circle cx="-70" cy="-60" r="4"/>
+      <circle cx="-60" cy="-60" r="4"/>
+    </g>
+    
+    <!-- Warning status -->
+    <g fill="#F59E0B">
+      <circle cx="-50" cy="-60" r="4"/>
+      <circle cx="-40" cy="-60" r="4"/>
+    </g>
+    
+    <!-- Error status -->
+    <g fill="#EF4444">
+      <circle cx="-30" cy="-60" r="4"/>
+    </g>
+  </g>
+</svg>

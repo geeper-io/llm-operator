@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240">
+  <!-- Background circle -->
+  <circle cx="120" cy="120" r="110" fill="#3B82F6" opacity="0.1"/>
+
+  <!-- Chat window -->
+  <g transform="translate(120 120)" font-family="system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+    <!-- Card -->
+    <rect x="-88" y="-60" width="176" height="120" rx="14" fill="#3B82F6" opacity="0.10"/>
+    <rect x="-84" y="-56" width="168" height="112" rx="10" fill="#fff"/>
+
+    <!-- Header -->
+    <rect x="-84" y="-56" width="168" height="28" rx="10" fill="#3B82F6"/>
+    <circle cx="-66" cy="-42" r="7" fill="#fff"/>
+    <text x="-52" y="-38" font-size="12" font-weight="700" fill="#fff">AI Assistant</text>
+
+    <!-- USER question (right-aligned bubble) -->
+    <!-- Content area inside white card is [-84..84]x[-28..56] -->
+    <!-- Right bubble: 10px padding from right edge -->
+    <rect x="-16" y="-16" width="90" height="26" rx="13" fill="#E5E7EB"/>
+    <text x="0" y="1" font-size="11" fill="#374151">What is …?</text>
+
+    <!-- ASSISTANT thinking (left bubble with animated dots) -->
+    <!-- Left bubble: 10px padding from left edge -->
+    <rect x="-74" y="18" width="72" height="26" rx="13" fill="#3B82F6"/>
+    <!-- Typing dots centered in the bubble -->
+    <g transform="translate(-38 31)" fill="#fff" opacity="0.85">
+      <circle cx="-12" r="3">
+        <animate attributeName="opacity" values="0.4;1;0.4" dur="1.2s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="0" r="3">
+        <animate attributeName="opacity" values="0.4;1;0.4" dur="1.2s" begin="0.2s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="12" r="3">
+        <animate attributeName="opacity" values="0.4;1;0.4" dur="1.2s" begin="0.4s" repeatCount="indefinite"/>
+      </circle>
+    </g>
+    <!-- Text fallback for environments without SMIL animation -->
+    <text x="-51" y="34" font-size="14" fill="#ffffff" opacity="0.001">…</text>
+  </g>
+</svg>
