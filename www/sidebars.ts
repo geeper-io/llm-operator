@@ -42,7 +42,6 @@ const sidebars: SidebarsConfig = {
       label: 'Guides',
       items: ['guides/deployment', 'guides/configuration'],
     },
-    'search-and-versioning',
   ],
    */
 };

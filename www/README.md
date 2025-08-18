@@ -6,6 +6,13 @@ This directory contains the documentation website for Geeper.AI, built with Docu
 
 Geeper.AI is a powerful Kubernetes operator that simplifies the deployment and management of Large Language Models (LLMs) in Kubernetes clusters.
 
+## Features
+
+- **Local Search**: Powered by docusaurus-lunr-search for fast, offline-capable search
+- **Versioning**: Support for multiple documentation versions
+- **Responsive Design**: Mobile-friendly documentation interface
+- **Dark/Light Theme**: Automatic theme switching based on system preferences
+
 ## Development
 
 ### Prerequisites
@@ -46,6 +53,15 @@ make clean
 - `static/` - Static assets
 - `docusaurus.config.ts` - Main configuration
 - `sidebars.ts` - Sidebar configuration
+
+## Search Configuration
+
+The documentation uses `docusaurus-lunr-search` for local search functionality:
+
+- **Offline Search**: Search works without external services
+- **Fast Indexing**: Built-in search index generation
+- **Customizable**: Configurable search bar placement and styling
+- **No External Dependencies**: Self-contained search solution
 
 ## Contributing
 

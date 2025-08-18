@@ -47,12 +47,12 @@ const config: Config = {
           editUrl:
             'https://github.com/geeper-ai/llm-operator/tree/main/www/docs/',
           // Versioning
-          // versions: {
-          //   current: {
-          //     label: 'Next 🚀',
-          //     path: 'next',
-          //   },
-          // },
+          versions: {
+            current: {
+              label: 'HEAD',
+              path: 'head',
+            },
+          },
           // // Last updated
           // showLastUpdateTime: true,
           // // Last update author
@@ -80,42 +80,9 @@ const config: Config = {
     ],
   ],
 
-  // Search configuration
-  plugins: [
-  ],
-
   themeConfig: {
     // Replace with your project's social card
     image: 'img/docusaurus-social-card.jpg',
-    
-    // Search configuration
-    algolia: {
-      // The application ID provided by Algolia
-      appId: 'YOUR_APP_ID',
-      
-      // Public API key: it is safe to commit it
-      apiKey: 'YOUR_SEARCH_API_KEY',
-      
-      indexName: 'YOUR_INDEX_NAME',
-      
-      // Optional: see doc section below
-      contextualSearch: true,
-      
-      // Optional: Specify domains where the navigation should occur through window.location instead on history.push. Useful when our Algolia config crawls multiple documentation sites and we want to navigate with window.location.href to them.
-      externalUrlRegex: 'external\\.com|domain\\.com',
-      
-      // Optional: Replace parts of the item URLs from Algolia search results. Useful when using the same search index for multiple deployments using a different baseUrl. You can use regexp or string in the `from` param. For example: localhost:3000 vs myCompany.com/docs
-      replaceSearchResultPathname: {
-        from: '/docs/', // or as RegExp: /\/docs\//
-        to: '/',
-      },
-      
-      // Optional: Algolia search parameters
-      searchParameters: {},
-      
-      // Optional: path for search page that enabled by default (`false` to disable it)
-      searchPagePath: 'search',
-    },
     
     navbar: {
       title: 'Geeper.AI',
@@ -137,14 +104,14 @@ const config: Config = {
           position: 'right',
           dropdownActiveClassDisabled: true,
         },
-        // Search
-        {
-          type: 'search',
-          position: 'right',
-        },
         {
           href: 'https://github.com/geeper-ai/llm-operator',
-          label: 'GitHub',
+          className: "header-github-link",
+          position: 'right',
+          'aria-label': 'GitHub repository',
+        },
+        {
+          type: 'search',
           position: 'right',
         },
       ],
@@ -203,6 +170,7 @@ const config: Config = {
       darkTheme: prismThemes.dracula,
     },
   } satisfies Preset.ThemeConfig,
+  plugins: [require.resolve("docusaurus-lunr-search")],
 };
 
 export default config;
