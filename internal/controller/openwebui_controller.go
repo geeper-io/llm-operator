@@ -20,6 +20,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -330,6 +331,37 @@ func (r *LMDeploymentReconciler) buildPipelinesDeployment(deployment *llmgeeperi
 			Name:  "PIPELINES_URLS",
 			Value: pipelineURLs,
 		})
+	}
+
+	// Automatically add Langfuse monitoring pipeline if Langfuse is enabled
+	if deployment.Spec.OpenWebUI.Langfuse != nil && deployment.Spec.OpenWebUI.Langfuse.Enabled {
+		langfusePipelineURL := "https://github.com/open-webui/pipelines/blob/main/examples/monitoring/langfuse_monitor_pipeline.py"
+
+		// Check if Langfuse pipeline is already in the list
+		langfusePipelineExists := false
+		if len(pipelinesSpec.PipelineURLs) > 0 {
+			for _, url := range pipelinesSpec.PipelineURLs {
+				if url == langfusePipelineURL {
+					langfusePipelineExists = true
+					break
+				}
+			}
+		}
+
+		// Add Langfuse pipeline if not already present
+		if !langfusePipelineExists {
+			var pipelineURLs string
+			if len(pipelinesSpec.PipelineURLs) > 0 {
+				pipelineURLs = strings.Join(pipelinesSpec.PipelineURLs, ",") + "," + langfusePipelineURL
+			} else {
+				pipelineURLs = langfusePipelineURL
+			}
+
+			envVars = append(envVars, corev1.EnvVar{
+				Name:  "PIPELINES_URLS",
+				Value: pipelineURLs,
+			})
+		}
 	}
 
 	// Build container

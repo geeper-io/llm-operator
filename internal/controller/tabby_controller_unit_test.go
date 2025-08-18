@@ -28,10 +28,10 @@ import (
 
 func TestTabbyController_UnitTests(t *testing.T) {
 	t.Run("generateTabbyConfig", func(t *testing.T) {
-		reconciler := &DeploymentReconciler{}
+		reconciler := &LMDeploymentReconciler{}
 
 		t.Run("should generate correct TOML configuration with default model", func(t *testing.T) {
-			deployment := &llmgeeperiov1alpha1.Deployment{
+			deployment := &llmgeeperiov1alpha1.LMDeployment{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-deployment",
 					Namespace: "default",
@@ -74,7 +74,7 @@ func TestTabbyController_UnitTests(t *testing.T) {
 		})
 
 		t.Run("should generate correct TOML configuration with custom model name", func(t *testing.T) {
-			deployment := &llmgeeperiov1alpha1.Deployment{
+			deployment := &llmgeeperiov1alpha1.LMDeployment{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-deployment",
 					Namespace: "default",
@@ -119,7 +119,7 @@ func TestTabbyController_UnitTests(t *testing.T) {
 		})
 
 		t.Run("should use correct service name and port", func(t *testing.T) {
-			deployment := &llmgeeperiov1alpha1.Deployment{
+			deployment := &llmgeeperiov1alpha1.LMDeployment{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "my-app",
 					Namespace: "production",
@@ -163,10 +163,10 @@ func TestTabbyController_UnitTests(t *testing.T) {
 	})
 
 	t.Run("buildTabbyConfigMap", func(t *testing.T) {
-		reconciler := &DeploymentReconciler{}
+		reconciler := &LMDeploymentReconciler{}
 
 		t.Run("should create ConfigMap with correct metadata and data", func(t *testing.T) {
-			deployment := &llmgeeperiov1alpha1.Deployment{
+			deployment := &llmgeeperiov1alpha1.LMDeployment{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "test-deployment",
 					Namespace: "default",

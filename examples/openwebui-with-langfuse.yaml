@@ -63,9 +63,9 @@ spec:
       
       # Add monitoring and filtering pipelines
       pipelineUrls:
-        - "https://github.com/open-webui/pipelines/blob/main/examples/monitoring/langfuse_monitor_pipeline.py"
         - "https://github.com/open-webui/pipelines/blob/main/examples/filters/detoxify_filter_pipeline.py"
         - "https://github.com/open-webui/pipelines/blob/main/examples/filters/rate_limit_filter_pipeline.py"
+        # Note: Langfuse monitoring pipeline is automatically added when langfuse.enabled=true
       
       # Enable persistence for pipeline data
       persistence:

@@ -1,0 +1,65 @@
+{{/* Convert value to string and escape MDX/HTML-sensitive chars */}}
+{{- define "mdxSafe" -}}
+{{- if . -}}
+{{- $s := printf "%v" . -}}
+{{- $s | replace "<" "&lt;" | replace ">" "&gt;" | replace "{" "&#123;" | replace "}" "&#125;" | replace "|" "\\|" | replace "\n" "<br/>" -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "slugify" -}}
+{{- . | lower | replace "." "-" | replace "/" "-" | replace "[" "" | replace "]" "" -}}
+{{- end -}}
+
+# API Reference
+
+Packages:
+{{- range .Groups }}
+- [{{ .Group }}/{{ .Version }}](#{{ template "slugify" (printf "%s-%s" .Group .Version) }})
+{{- end }}
+
+{{- range .Groups }}
+{{- $group := . }}
+
+# {{ .Group }}/{{ .Version }}
+
+Resource Types:
+{{- range .Kinds }}
+- [{{ .Name }}](#{{ template "slugify" .Name }})
+{{- end }}
+
+{{- range .Kinds }}
+{{- $kind := . }}
+## {{ .Name }}
+
+{{- range .Types }}
+
+{{- if not .IsTopLevel }}
+### {{ .Name }}
+{{- end }}
+
+{{ template "mdxSafe" .Description }}
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+{{- if .IsTopLevel }}
+| apiVersion | string | {{ $group.Group }}/{{ $group.Version }} | true |
+| kind | string | {{ $kind.Name }} | true |
+| [metadata](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#objectmeta-v1-meta) | object | Refer to the Kubernetes API docs for the `metadata` field. | true |
+{{- end }}
+{{- range .Fields }}
+| {{ if .TypeKey }}[{{ .Name }}](#{{ template "slugify" .TypeKey }}){{ else }}{{ .Name }}{{ end }} | {{ .Type }} | {{ template "mdxSafe" .Description }}
+{{- if .Schema }}
+  {{- if or .Schema.XValidations .Schema.Format .Schema.Enum .Schema.Default .Schema.Minimum .Schema.Maximum }}<br/>{{- end }}
+  {{- if .Schema.XValidations }}
+*Validations*:<br/>{{- range .Schema.XValidations }}- {{ template "mdxSafe" .Rule }}: {{ template "mdxSafe" .Message }}<br/>{{- end }}
+  {{- end }}
+  {{- if .Schema.Format }}*Format*: {{ template "mdxSafe" .Schema.Format }}<br/>{{- end }}
+  {{- if .Schema.Enum }}*Enum*: {{ template "mdxSafe" ( .Schema.Enum | toStrings | join ", " ) }}<br/>{{- end }}
+  {{- if .Schema.Default }}*Default*: {{ template "mdxSafe" .Schema.Default }}<br/>{{- end }}
+  {{- if .Schema.Minimum }}*Minimum*: {{ template "mdxSafe" .Schema.Minimum }}<br/>{{- end }}
+  {{- if .Schema.Maximum }}*Maximum*: {{ template "mdxSafe" .Schema.Maximum }}<br/>{{- end }}
+{{- end }} | {{ .Required }} |
+{{- end }}
+{{- end }}{{/* range .Types */}}
+{{- end }}{{/* range .Kinds */}}
+{{- end }}{{/* range .Groups */}}

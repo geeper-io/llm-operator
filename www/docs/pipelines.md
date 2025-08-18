@@ -171,6 +171,8 @@ pipelineUrls:
   - "https://github.com/open-webui/pipelines/blob/main/examples/monitoring/langfuse_monitor_pipeline.py"
 ```
 
+**💡 Automatic Inclusion**: When you enable Langfuse monitoring, the Langfuse monitoring pipeline is automatically added to your pipelines configuration, even if you don't specify it manually. This ensures you get comprehensive monitoring without additional configuration.
+
 Langfuse provides:
 - **Request Tracking**: Monitor all LLM requests and responses
 - **Performance Metrics**: Track latency, token usage, and costs
@@ -210,7 +212,7 @@ spec:
       pipelineUrls:
         - "https://github.com/open-webui/pipelines/blob/main/examples/filters/detoxify_filter_pipeline.py"
         - "https://github.com/open-webui/pipelines/blob/main/examples/filters/rate_limit_filter_pipeline.py"
-        - "https://github.com/open-webui/pipelines/blob/main/examples/monitoring/langfuse_monitor_pipeline.py"
+        # Note: Langfuse monitoring pipeline is automatically added when langfuse.enabled=true
       
       # Enable persistence
       persistence:
