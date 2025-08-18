@@ -179,6 +179,36 @@ spec:
                             type: string
                         type: object
                     type: object
+                  langfuse:
+                    description: Langfuse defines the Langfuse monitoring configuration
+                      for OpenWebUI
+                    properties:
+                      debug:
+                        description: Debug enables debug logging for Langfuse
+                        type: boolean
+                      enabled:
+                        description: Enabled determines if Langfuse monitoring should
+                          be enabled
+                        type: boolean
+                      environment:
+                        description: Environment is the environment name (e.g., "production",
+                          "staging", "development")
+                        type: string
+                      projectName:
+                        description: ProjectName is the name of the project for Langfuse
+                        type: string
+                      publicKey:
+                        description: PublicKey is the Langfuse public key for authentication
+                        type: string
+                      secretKey:
+                        description: SecretKey is the Langfuse secret key for authentication
+                        type: string
+                      url:
+                        description: |-
+                          URL is the Langfuse server URL
+                          Format: https://cloud.langfuse.com or http://localhost:3000
+                        type: string
+                    type: object
                   pipelines:
                     description: Pipelines defines the OpenWebUI Pipelines configuration
                     properties:

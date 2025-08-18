@@ -101,6 +101,18 @@ kubectl logs -l app=pipelines -f
 | `persistence.size` | string | Size of persistent volume (default: "10Gi") |
 | `persistence.storageClass` | string | Storage class for persistent volumes |
 
+### Langfuse Monitoring
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `langfuse.enabled` | bool | Enable Langfuse monitoring |
+| `langfuse.url` | string | Langfuse server URL (cloud or self-hosted) |
+| `langfuse.publicKey` | string | Langfuse public key for authentication |
+| `langfuse.secretKey` | string | Langfuse secret key for authentication |
+| `langfuse.projectName` | string | Name of the Langfuse project |
+| `langfuse.environment` | string | Environment name (production, staging, development) |
+| `langfuse.debug` | bool | Enable debug logging for Langfuse |
+
 ## Example Use Cases
 
 ### 1. Message Filtering
@@ -138,6 +150,33 @@ Handle function calls with custom logic:
 pipelineUrls:
   - "https://github.com/open-webui/pipelines/blob/main/examples/function_calling/function_pipeline.py"
 ```
+
+### 5. Langfuse Monitoring
+
+Monitor and analyze your LLM interactions with Langfuse:
+
+```yaml
+# Enable Langfuse monitoring at OpenWebUI level
+langfuse:
+  enabled: true
+  url: "https://cloud.langfuse.com"  # or your self-hosted instance
+  publicKey: "your-langfuse-public-key"
+  secretKey: "your-langfuse-secret-key"
+  projectName: "my-ai-project"
+  environment: "production"
+  debug: false
+
+# Add Langfuse monitoring pipeline
+pipelineUrls:
+  - "https://github.com/open-webui/pipelines/blob/main/examples/monitoring/langfuse_monitor_pipeline.py"
+```
+
+Langfuse provides:
+- **Request Tracking**: Monitor all LLM requests and responses
+- **Performance Metrics**: Track latency, token usage, and costs
+- **Quality Analysis**: Evaluate response quality and relevance
+- **User Analytics**: Understand usage patterns and user behavior
+- **Cost Management**: Monitor and optimize AI spending
 
 ## Production Example
 
@@ -185,16 +224,16 @@ spec:
           value: "false"
         - name: PIPELINES_LOG_LEVEL
           value: "warn"
-        - name: LANGFUSE_PUBLIC_KEY
-          valueFrom:
-            secretKeyRef:
-              name: langfuse-secrets
-              key: public-key
-        - name: LANGFUSE_SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: langfuse-secrets
-              key: secret-key
+    
+    # Langfuse monitoring configuration
+    langfuse:
+      enabled: true
+      url: "https://cloud.langfuse.com"
+      publicKey: "your-langfuse-public-key"
+      secretKey: "your-langfuse-secret-key"
+      projectName: "production-ai-chat"
+      environment: "production"
+      debug: false
 ```
 
 ## How It Works

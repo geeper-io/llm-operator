@@ -88,6 +88,9 @@ type OpenWebUISpec struct {
 	// Image is the OpenWebUI container image to use (including tag)
 	Image string `json:"image,omitempty"`
 
+	// EnvVars defines environment variables for the Pipelines
+	EnvVars []corev1.EnvVar `json:"envVars,omitempty"`
+
 	// Resources defines the resource requirements for OpenWebUI pods
 	Resources ResourceRequirements `json:"resources,omitempty"`
 
@@ -105,6 +108,9 @@ type OpenWebUISpec struct {
 
 	// Pipelines defines the OpenWebUI Pipelines configuration
 	Pipelines *PipelinesSpec `json:"pipelines,omitempty"`
+
+	// Langfuse defines the Langfuse monitoring configuration for OpenWebUI
+	Langfuse *LangfuseSpec `json:"langfuse,omitempty"`
 }
 
 // TabbySpec defines the desired state of Tabby deployment
@@ -288,6 +294,31 @@ type PipelinesPersistenceSpec struct {
 
 	// Size is the size of the persistent volume
 	Size string `json:"size,omitempty"`
+}
+
+// LangfuseSpec defines the Langfuse monitoring configuration
+type LangfuseSpec struct {
+	// Enabled determines if Langfuse monitoring should be enabled
+	Enabled bool `json:"enabled,omitempty"`
+
+	// URL is the Langfuse server URL
+	// Format: https://cloud.langfuse.com or http://localhost:3000
+	URL string `json:"url,omitempty"`
+
+	// PublicKey is the Langfuse public key for authentication
+	PublicKey string `json:"publicKey,omitempty"`
+
+	// SecretKey is the Langfuse secret key for authentication
+	SecretKey string `json:"secretKey,omitempty"`
+
+	// ProjectName is the name of the project for Langfuse
+	ProjectName string `json:"projectName,omitempty"`
+
+	// Environment is the environment name (e.g., "production", "staging", "development")
+	Environment string `json:"environment,omitempty"`
+
+	// Debug enables debug logging for Langfuse
+	Debug bool `json:"debug,omitempty"`
 }
 
 // ResourceRequirements describes the compute resource requirements

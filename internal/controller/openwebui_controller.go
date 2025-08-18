@@ -149,29 +149,75 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 				Name:  "REDIS_URL",
 				Value: redisURL,
 			},
-			{
-				Name:  "WEBSOCKET_MANAGER",
-				Value: "redis",
-			},
-			{
-				Name:  "ENABLE_WEBSOCKET_SUPPORT",
-				Value: "true",
-			},
 		}...)
+	}
 
-		// Add Redis environment variables for multi-instance support
-		if deployment.Spec.OpenWebUI.Replicas > 1 {
-			envVars = append(envVars, []corev1.EnvVar{
-				{
-					Name:  "REDIS_SENTINEL_HOSTS",
-					Value: "", // Not using sentinel for now
-				},
-				{
-					Name:  "REDIS_KEY_PREFIX",
-					Value: fmt.Sprintf("open-webui-%s", deployment.Name),
-				},
-			}...)
+	// Add Langfuse environment variables if enabled
+	if deployment.Spec.OpenWebUI.Langfuse != nil && deployment.Spec.OpenWebUI.Langfuse.Enabled {
+		langfuseSpec := deployment.Spec.OpenWebUI.Langfuse
+
+		if langfuseSpec.URL != "" {
+			envVars = append(envVars, corev1.EnvVar{
+				Name:  "LANGFUSE_PUBLIC_KEY",
+				Value: langfuseSpec.PublicKey,
+			})
+			envVars = append(envVars, corev1.EnvVar{
+				Name:  "LANGFUSE_SECRET_KEY",
+				Value: langfuseSpec.SecretKey,
+			})
+			envVars = append(envVars, corev1.EnvVar{
+				Name:  "LANGFUSE_HOST",
+				Value: langfuseSpec.URL,
+			})
 		}
+
+		if langfuseSpec.ProjectName != "" {
+			envVars = append(envVars, corev1.EnvVar{
+				Name:  "LANGFUSE_PROJECT",
+				Value: langfuseSpec.ProjectName,
+			})
+		}
+
+		if langfuseSpec.Environment != "" {
+			envVars = append(envVars, corev1.EnvVar{
+				Name:  "LANGFUSE_ENVIRONMENT",
+				Value: langfuseSpec.Environment,
+			})
+		}
+
+		if langfuseSpec.Debug {
+			envVars = append(envVars, corev1.EnvVar{
+				Name:  "LANGFUSE_DEBUG",
+				Value: "true",
+			})
+		}
+	}
+
+	// Add custom environment variables if specified
+	if len(deployment.Spec.OpenWebUI.EnvVars) > 0 {
+		envVars = append(envVars, deployment.Spec.OpenWebUI.EnvVars...)
+	}
+
+	// Build container
+	container := corev1.Container{
+		Name:  "openwebui",
+		Image: deployment.Spec.OpenWebUI.Image,
+		Ports: []corev1.ContainerPort{
+			{
+				Name:          "http",
+				ContainerPort: deployment.Spec.OpenWebUI.Service.Port,
+				Protocol:      corev1.ProtocolTCP,
+			},
+		},
+		Resources: r.buildResourceRequirements(deployment.Spec.OpenWebUI.Resources),
+		Env:       envVars,
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				Name:      "openwebui-config",
+				MountPath: "/app/backend/data",
+				SubPath:   "config.json",
+			},
+		},
 	}
 
 	// Build volumes and volume mounts
@@ -216,23 +262,8 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 					Labels: labels,
 				},
 				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{
-						{
-							Name:  "openwebui",
-							Image: deployment.Spec.OpenWebUI.Image,
-							Ports: []corev1.ContainerPort{
-								{
-									Name:          "http",
-									ContainerPort: deployment.Spec.OpenWebUI.Service.Port,
-									Protocol:      corev1.ProtocolTCP,
-								},
-							},
-							Resources:    r.buildResourceRequirements(deployment.Spec.OpenWebUI.Resources),
-							Env:          envVars,
-							VolumeMounts: volumeMounts,
-						},
-					},
-					Volumes: volumes,
+					Containers: []corev1.Container{container},
+					Volumes:    volumes,
 				},
 			},
 		},

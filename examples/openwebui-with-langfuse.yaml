@@ -1,0 +1,106 @@
+apiVersion: llm.geeper.io/v1alpha1
+kind: LMDeployment
+metadata:
+  name: openwebui-with-langfuse
+  namespace: default
+  labels:
+    app: openwebui-with-langfuse
+    component: ai-chat-with-monitoring
+spec:
+  ollama:
+    models:
+      - "llama2:7b"
+      - "codellama:7b"
+    resources:
+      requests:
+        cpu: "2"
+        memory: "4Gi"
+      limits:
+        cpu: "4"
+        memory: "8Gi"
+    service:
+      type: ClusterIP
+      port: 11434
+  
+  openwebui:
+    enabled: true
+    replicas: 2
+    image: ghcr.io/open-webui/open-webui:main
+    resources:
+      requests:
+        cpu: "500m"
+        memory: "1Gi"
+      limits:
+        cpu: "1"
+        memory: "2Gi"
+    service:
+      type: ClusterIP
+      port: 8080
+    ingress:
+      enabled: true
+      host: "chat-with-monitoring.localhost"
+      annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: /
+        nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    
+    # Enable Pipelines with Langfuse monitoring
+    pipelines:
+      enabled: true
+      image: ghcr.io/open-webui/pipelines:main
+      replicas: 1
+      port: 9099
+      serviceType: ClusterIP
+      resources:
+        requests:
+          cpu: "500m"
+          memory: "1Gi"
+        limits:
+          cpu: "1"
+          memory: "2Gi"
+      
+      # Configure pipeline directory
+      pipelinesDir: "/app/pipelines"
+      
+      # Add monitoring and filtering pipelines
+      pipelineUrls:
+        - "https://github.com/open-webui/pipelines/blob/main/examples/monitoring/langfuse_monitor_pipeline.py"
+        - "https://github.com/open-webui/pipelines/blob/main/examples/filters/detoxify_filter_pipeline.py"
+        - "https://github.com/open-webui/pipelines/blob/main/examples/filters/rate_limit_filter_pipeline.py"
+      
+      # Enable persistence for pipeline data
+      persistence:
+        enabled: true
+        size: "20Gi"
+        storageClass: "fast-ssd"
+      
+      # Custom environment variables
+      envVars:
+        - name: PIPELINES_DEBUG
+          value: "false"
+        - name: PIPELINES_LOG_LEVEL
+          value: "info"
+    
+    # Langfuse monitoring configuration
+    langfuse:
+      enabled: true
+      url: "https://cloud.langfuse.com"  # or your self-hosted instance
+      publicKey: "your-langfuse-public-key"
+      secretKey: "your-langfuse-secret-key"
+      projectName: "geeper-ai-chat"
+      environment: "production"
+      debug: false
+    
+    # Redis for session management
+    redis:
+      enabled: true
+      image: redis:7-alpine
+      resources:
+        requests:
+          cpu: "100m"
+          memory: "256Mi"
+        limits:
+          cpu: "200m"
+          memory: "512Mi"
+      persistence:
+        enabled: true
+        size: "5Gi"
