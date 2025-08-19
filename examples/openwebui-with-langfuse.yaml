@@ -106,7 +106,6 @@ spec:
       enabled: true
       debug: false
       deploy:
-        image: langfuse/langfuse:3.75.2
         envVars:
           - name: LANGFUSE_PROJECT_NAME
             value: "openwebui-project"

@@ -27,7 +27,20 @@ Langfuse is an open-source LLM observability platform that helps you:
 3. **Generate API keys** (Public Key and Secret Key)
 4. **Note your project name** and environment
 
-### 2. Enable Langfuse in Your LMDeployment
+### 2. Setup Database Infrastructure (Required for Self-Hosted)
+
+Before deploying Langfuse, you need to set up the required databases:
+
+```bash
+# Apply the database infrastructure
+kubectl apply -f examples/langfuse-databases.yaml
+
+# Wait for databases to be ready
+kubectl wait --for=condition=ready pod -l app=postgres --timeout=300s
+kubectl wait --for=condition=ready pod -l app=clickhouse --timeout=300s
+```
+
+### 3. Enable Langfuse in Your LMDeployment
 
 ```yaml
 apiVersion: llm.geeper.io/v1alpha1
@@ -41,41 +54,83 @@ spec:
     # Enable Langfuse monitoring
     langfuse:
       enabled: true
-      url: "https://cloud.langfuse.com"  # or your self-hosted URL
-      publicKey: "your-public-key"
-      secretKey: "your-secret-key"
       projectName: "my-ai-project"
       environment: "production"
       debug: false
-    
-    # Enable Pipelines (optional, for additional functionality)
-    pipelines:
-      enabled: true
-      image: ghcr.io/open-webui/pipelines:main
       
-      # Add Langfuse monitoring pipeline
-      pipelineUrls:
-        - "https://github.com/open-webui/pipelines/blob/main/examples/monitoring/langfuse_monitor_pipeline.py"
-```
+      # Self-hosted configuration
+      deploy:
+        image: langfuse/langfuse:3.75.2
+        replicas: 1
+        port: 3000
+        serviceType: ClusterIP
+        resources:
+          limits:
+            cpu: "1"
+            memory: "2Gi"
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+        persistence:
+          enabled: true
+          size: "10Gi"
+        ingress:
+          host: "langfuse.yourdomain.com"
+        envVars:
+          # Database configuration
+          - name: DATABASE_URL
+            value: "postgres://langfuse:langfuse@postgres:5432/langfuse"
+          - name: CLICKHOUSE_URL
+            value: "http://clickhouse:8123"
+          - name: CLICKHOUSE_MIGRATION_URL
+            value: "clickhouse://clickhouse:9000"
+          - name: CLICKHOUSE_USER
+            value: "default"
+          - name: CLICKHOUSE_PASSWORD
+            value: "langfuse-clickhouse-password"
+          # Authentication
+          - name: NEXTAUTH_SECRET
+            value: "your-nextauth-secret"
+          - name: SALT
+            value: "your-salt"
+          - name: ENCRYPTION_KEY
+            value: "your-encryption-key"
 
 **💡 Automatic Pipeline Inclusion**: When you enable Langfuse monitoring, the Langfuse monitoring pipeline is automatically added to your pipelines configuration. You don't need to manually specify it unless you want to customize the pipeline URL.
 
-### 3. Apply the Configuration
+**💡 Worker Mode**: The Langfuse worker automatically starts in worker mode when the `WORKER_MODE=true` environment variable is set. No additional command-line arguments are needed.
+
+### 4. Apply the Configuration
 
 ```bash
+# Apply the main deployment
 kubectl apply -f deployment-with-langfuse.yaml
+
+# Wait for Langfuse to be ready
+kubectl wait --for=condition=ready pod -l app=langfuse --timeout=300s
+kubectl wait --for=condition=ready pod -l app=langfuse-worker --timeout=300s
 ```
 
-### 4. Verify Integration
+### 5. Verify Integration
 
 ```bash
-# Check pipeline deployment
-kubectl get deployment -l app=pipelines
+# Check Langfuse deployments
+kubectl get deployment -l app=langfuse
+kubectl get deployment -l app=langfuse-worker
 
-# Check pipeline logs for Langfuse connection
-kubectl logs -l app=pipelines -f
+# Check Langfuse services
+kubectl get service -l app=langfuse
 
-# Look for Langfuse connection messages
+# Check Langfuse pods
+kubectl get pods -l app=langfuse
+kubectl get pods -l app=langfuse-worker
+
+# Check Langfuse logs
+kubectl logs -l app=langfuse -f
+kubectl logs -l app=langfuse-worker -f
+
+# Look for successful startup messages
+# The worker should start automatically when WORKER_MODE=true is set
 ```
 
 ## Configuration Options
@@ -266,6 +321,12 @@ Click on individual requests to see:
    - Monitor pipeline resource usage
    - Check Langfuse server performance
    - Consider using self-hosted instance for better performance
+
+4. **Worker Startup Issues**
+   - Ensure `WORKER_MODE=true` environment variable is set
+   - Check that all required environment variables are configured
+   - Verify database connectivity (PostgreSQL and ClickHouse)
+   - Check worker logs for specific error messages
 
 ### Debug Commands
 

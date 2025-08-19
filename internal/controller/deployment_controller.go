@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"time"
 
@@ -576,25 +577,21 @@ func (r *LMDeploymentReconciler) createOrUpdatePVC(ctx context.Context, pvc *cor
 	return nil
 }
 
-// createOrUpdateSecret creates or updates a Secret
-func (r *LMDeploymentReconciler) createOrUpdateSecret(ctx context.Context, secret *corev1.Secret) error {
-	existing := &corev1.Secret{}
-	err := r.Get(ctx, types.NamespacedName{Name: secret.Name, Namespace: secret.Namespace}, existing)
-	if err != nil && errors.IsNotFound(err) {
-		// Create new Secret
-		if err := r.Create(ctx, secret); err != nil {
-			return err
-		}
-	} else if err == nil {
-		// Update existing Secret
-		if !reflect.DeepEqual(existing.Data, secret.Data) {
-			existing.Data = secret.Data
-			if err := r.Update(ctx, existing); err != nil {
-				return err
+// createSecretIfNotExists creates a Kubernetes secret only if it doesn't already exist
+func (r *LMDeploymentReconciler) createSecretIfNotExists(ctx context.Context, secret *corev1.Secret) error {
+	logger := log.FromContext(ctx)
+	existingSecret := &corev1.Secret{}
+	err := r.Get(ctx, client.ObjectKeyFromObject(secret), existingSecret)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// Secret doesn't exist, create it
+			if err := r.Create(ctx, secret); err != nil {
+				return fmt.Errorf("failed to create secret %s: %w", secret.Name, err)
 			}
+			logger.Info("Created Langfuse secret", "name", secret.Name, "namespace", secret.Namespace)
+		} else {
+			return fmt.Errorf("failed to get secret %s: %w", secret.Name, err)
 		}
-	} else {
-		return err
 	}
 	return nil
 }

@@ -288,7 +288,7 @@ spec:
                         properties:
                           envVars:
                             description: EnvVars defines environment variables for
-                              the Pipelines
+                              Langfuse
                             items:
                               description: EnvVar represents an environment variable
                                 present in a Container.

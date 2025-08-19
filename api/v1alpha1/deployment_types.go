@@ -299,7 +299,7 @@ type LangfuseDeploySpec struct {
 	// Ingress defines the ingress configuration for Langfuse
 	Ingress *IngressSpec `json:"ingress,omitempty"`
 
-	// EnvVars defines environment variables for the Pipelines
+	// EnvVars defines environment variables for Langfuse
 	EnvVars []corev1.EnvVar `json:"envVars,omitempty"`
 }
 
@@ -508,6 +508,21 @@ func (d *LMDeployment) GetLangfuseDeploymentName() string {
 
 // GetLangfusePVCName returns the name of the Langfuse PVC for this deployment
 func (d *LMDeployment) GetLangfusePVCName() string {
+	return fmt.Sprintf("%s-langfuse", d.Name)
+}
+
+// GetLangfuseWorkerDeploymentName returns the name of the Langfuse worker deployment for this deployment
+func (d *LMDeployment) GetLangfuseWorkerDeploymentName() string {
+	return fmt.Sprintf("%s-langfuse-worker", d.Name)
+}
+
+// GetLangfuseServiceAccountName returns the name of the Langfuse service account for this deployment
+func (d *LMDeployment) GetLangfuseServiceAccountName() string {
+	return fmt.Sprintf("%s-langfuse", d.Name)
+}
+
+// GetLangfuseSecretName returns the name of the Langfuse secret for this deployment
+func (d *LMDeployment) GetLangfuseSecretName() string {
 	return fmt.Sprintf("%s-langfuse", d.Name)
 }
 

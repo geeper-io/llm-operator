@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -31,39 +32,87 @@ import (
 	llmgeeperiov1alpha1 "github.com/geeper-io/llm-operator/api/v1alpha1"
 )
 
+// Essential Langfuse environment variables
+const (
+	ENV_NEXTAUTH_URL        = "NEXTAUTH_URL"
+	ENV_NEXT_PUBLIC_API_URL = "NEXT_PUBLIC_API_URL"
+	ENV_NEXTAUTH_SECRET     = "NEXTAUTH_SECRET"
+	ENV_SALT                = "SALT"
+	ENV_ENCRYPTION_KEY      = "ENCRYPTION_KEY"
+	ENV_NODE_ENV            = "NODE_ENV"
+	ENV_PORT                = "PORT"
+	ENV_HOSTNAME            = "HOSTNAME"
+)
+
+// Default values
+const (
+	DefaultLangfuseImage       = "langfuse/langfuse:latest"
+	DefaultLangfuseWorkerImage = "langfuse/langfuse-worker:latest"
+	DefaultLangfusePort        = 3000
+	DEFAULT_NODE_ENV           = "production"
+	DEFAULT_HOSTNAME           = "0.0.0.0"
+)
+
+// generateSecureSecret generates a cryptographically secure random secret
+func generateSecureSecret(length int) (string, error) {
+	bytes := make([]byte, length)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", fmt.Errorf("failed to generate random bytes: %w", err)
+	}
+	return string(bytes), nil
+}
+
 // reconcileLangfuse reconciles the Langfuse deployment
 func (r *LMDeploymentReconciler) reconcileLangfuse(ctx context.Context, deployment *llmgeeperiov1alpha1.LMDeployment) error {
+	langfuseSpec := deployment.Spec.OpenWebUI.Langfuse
+
 	// If URL is provided, no need to deploy self-hosted Langfuse
-	if deployment.Spec.OpenWebUI.Langfuse.URL != "" {
+	if langfuseSpec.URL != "" {
 		return nil
 	}
 
+	// Create or update Langfuse secrets
+	langfuseSecret, err := r.buildLangfuseSecrets(deployment)
+	if err != nil {
+		return fmt.Errorf("failed to build Langfuse secrets: %w", err)
+	}
+
+	if err := r.createSecretIfNotExists(ctx, langfuseSecret); err != nil {
+		return fmt.Errorf("failed to create Langfuse secrets: %w", err)
+	}
+
 	// Create or update PVC if persistence is enabled
-	if deployment.Spec.OpenWebUI.Langfuse.Deploy != nil &&
-		deployment.Spec.OpenWebUI.Langfuse.Deploy.Persistence != nil &&
-		deployment.Spec.OpenWebUI.Langfuse.Deploy.Persistence.Enabled {
+	if langfuseSpec.Deploy != nil &&
+		langfuseSpec.Deploy.Persistence != nil &&
+		langfuseSpec.Deploy.Persistence.Enabled {
 		pvc := r.buildLangfusePVC(deployment)
 		if err := r.createOrUpdatePVC(ctx, pvc); err != nil {
 			return err
 		}
 	}
 
-	// Create or update Langfuse deployment
-	langfuseDeployment := r.buildLangfuseDeployment(deployment)
-	if err := r.createOrUpdateDeployment(ctx, langfuseDeployment); err != nil {
+	// Create or update Langfuse web deployment
+	webDeployment := r.buildLangfuseWebDeployment(deployment)
+	if err := r.createOrUpdateDeployment(ctx, webDeployment); err != nil {
 		return err
 	}
 
-	// Create or update Langfuse service
-	langfuseService := r.buildLangfuseService(deployment)
-	if err := r.createOrUpdateService(ctx, langfuseService); err != nil {
+	// Create or update Langfuse worker deployment
+	workerDeployment := r.buildLangfuseWorkerDeployment(deployment)
+	if err := r.createOrUpdateDeployment(ctx, workerDeployment); err != nil {
+		return err
+	}
+
+	// Create or update Langfuse web service
+	webService := r.buildLangfuseWebService(deployment)
+	if err := r.createOrUpdateService(ctx, webService); err != nil {
 		return err
 	}
 
 	// Create or update Ingress if enabled
-	if deployment.Spec.OpenWebUI.Langfuse.Deploy != nil &&
-		deployment.Spec.OpenWebUI.Langfuse.Deploy.Ingress != nil &&
-		deployment.Spec.OpenWebUI.Langfuse.Deploy.Ingress.Host != "" {
+	if langfuseSpec.Deploy != nil &&
+		langfuseSpec.Deploy.Ingress != nil &&
+		langfuseSpec.Deploy.Ingress.Host != "" {
 		ingress := r.buildLangfuseIngress(deployment)
 		if err := r.createOrUpdateIngress(ctx, ingress); err != nil {
 			return err
@@ -73,43 +122,82 @@ func (r *LMDeploymentReconciler) reconcileLangfuse(ctx context.Context, deployme
 	return nil
 }
 
-// buildLangfuseDeployment builds the Langfuse deployment
-func (r *LMDeploymentReconciler) buildLangfuseDeployment(deployment *llmgeeperiov1alpha1.LMDeployment) *appsv1.Deployment {
+// buildLangfuseSecrets creates the necessary Kubernetes secrets for Langfuse
+func (r *LMDeploymentReconciler) buildLangfuseSecrets(deployment *llmgeeperiov1alpha1.LMDeployment) (*corev1.Secret, error) {
+	// Generate cryptographically secure secrets
+	nextAuthSecret, err := generateSecureSecret(32)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate next auth secret: %w", err)
+	}
+
+	salt, err := generateSecureSecret(16)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate salt: %w", err)
+	}
+
+	encryptionKey, err := generateSecureSecret(32)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate encryption key: %w", err)
+	}
+
+	// Main Langfuse secret containing authentication keys
+	langfuseSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      deployment.GetLangfuseSecretName(),
+			Namespace: deployment.Namespace,
+			Labels: map[string]string{
+				"app":            "langfuse",
+				"llm-deployment": deployment.Name,
+			},
+		},
+		Type: corev1.SecretTypeOpaque,
+		StringData: map[string]string{
+			"nextauth-secret": nextAuthSecret,
+			"salt":            salt,
+			"encryption-key":  encryptionKey,
+		},
+	}
+	controllerutil.SetControllerReference(deployment, langfuseSecret, r.Scheme)
+	return langfuseSecret, nil
+}
+
+// buildLangfuseWebDeployment builds the Langfuse web deployment
+func (r *LMDeploymentReconciler) buildLangfuseWebDeployment(deployment *llmgeeperiov1alpha1.LMDeployment) *appsv1.Deployment {
+	langfuseSpec := deployment.Spec.OpenWebUI.Langfuse
 	labels := map[string]string{
-		"app":            "langfuse",
-		"llm-deployment": deployment.Name,
+		"app.kubernetes.io/name":     "langfuse",
+		"app.kubernetes.io/instance": deployment.Name,
+		"app":                        "web",
 	}
 
 	// Set default values
-	image := "langfuse/langfuse:latest"
-	replicas := int32(1)
-	port := int32(3000)
+	image := DefaultLangfuseImage
 
-	if deployment.Spec.OpenWebUI.Langfuse.Deploy != nil {
-		if deployment.Spec.OpenWebUI.Langfuse.Deploy.Image != "" {
-			image = deployment.Spec.OpenWebUI.Langfuse.Deploy.Image
+	if langfuseSpec.Deploy != nil {
+		if langfuseSpec.Deploy.Image != "" {
+			image = langfuseSpec.Deploy.Image
 		}
-		if deployment.Spec.OpenWebUI.Langfuse.Deploy.Replicas > 0 {
-			replicas = deployment.Spec.OpenWebUI.Langfuse.Deploy.Replicas
+		if langfuseSpec.Deploy.Replicas > 0 {
+			langfuseSpec.Deploy.Replicas = 1
 		}
-		if deployment.Spec.OpenWebUI.Langfuse.Deploy.Port > 0 {
-			port = deployment.Spec.OpenWebUI.Langfuse.Deploy.Port
+		if langfuseSpec.Deploy.Port > 0 {
+			langfuseSpec.Deploy.Port = DefaultLangfusePort
 		}
 	}
 
 	// Build resource requirements
 	var resources corev1.ResourceRequirements
-	if deployment.Spec.OpenWebUI.Langfuse.Deploy != nil {
-		resources = r.buildResourceRequirements(deployment.Spec.OpenWebUI.Langfuse.Deploy.Resources)
+	if langfuseSpec.Deploy != nil {
+		resources = r.buildResourceRequirements(langfuseSpec.Deploy.Resources)
 	}
 
 	// Build volume mounts and volumes for persistence
 	var volumeMounts []corev1.VolumeMount
 	var volumes []corev1.Volume
 
-	if deployment.Spec.OpenWebUI.Langfuse.Deploy != nil &&
-		deployment.Spec.OpenWebUI.Langfuse.Deploy.Persistence != nil &&
-		deployment.Spec.OpenWebUI.Langfuse.Deploy.Persistence.Enabled {
+	if langfuseSpec.Deploy != nil &&
+		langfuseSpec.Deploy.Persistence != nil &&
+		langfuseSpec.Deploy.Persistence.Enabled {
 		volumeMounts = append(volumeMounts, corev1.VolumeMount{
 			Name:      "langfuse-data",
 			MountPath: "/app/data",
@@ -124,30 +212,13 @@ func (r *LMDeploymentReconciler) buildLangfuseDeployment(deployment *llmgeeperio
 		})
 	}
 
-	// Build environment variables
-	envVars := []corev1.EnvVar{
-		{
-			Name:  "LANGFUSE_SECRET",
-			Value: deployment.Spec.OpenWebUI.Langfuse.SecretKey,
-		},
-		{
-			Name:  "LANGFUSE_PUBLIC_KEY",
-			Value: deployment.Spec.OpenWebUI.Langfuse.PublicKey,
-		},
-		{
-			Name:  "LANGFUSE_PROJECT_NAME",
-			Value: deployment.Spec.OpenWebUI.Langfuse.ProjectName,
-		},
-		{
-			Name:  "LANGFUSE_ENVIRONMENT",
-			Value: deployment.Spec.OpenWebUI.Langfuse.Environment,
-		},
-	}
+	// Build essential environment variables
+	envVars := r.buildLangfuseWebEnvVars(deployment)
 
 	// Add custom environment variables if specified
-	if deployment.Spec.OpenWebUI.Langfuse.Deploy != nil &&
-		len(deployment.Spec.OpenWebUI.Langfuse.Deploy.EnvVars) > 0 {
-		envVars = append(envVars, deployment.Spec.OpenWebUI.Langfuse.Deploy.EnvVars...)
+	if langfuseSpec.Deploy != nil &&
+		len(langfuseSpec.Deploy.EnvVars) > 0 {
+		envVars = append(envVars, langfuseSpec.Deploy.EnvVars...)
 	}
 
 	langfuseDeployment := &appsv1.Deployment{
@@ -157,7 +228,7 @@ func (r *LMDeploymentReconciler) buildLangfuseDeployment(deployment *llmgeeperio
 			Labels:    labels,
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: &replicas,
+			Replicas: &langfuseSpec.Deploy.Replicas,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},
@@ -168,11 +239,13 @@ func (r *LMDeploymentReconciler) buildLangfuseDeployment(deployment *llmgeeperio
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
-							Name:  "langfuse",
-							Image: image,
+							Name:            "langfuse-web",
+							Image:           image,
+							SecurityContext: &corev1.SecurityContext{},
 							Ports: []corev1.ContainerPort{
 								{
-									ContainerPort: port,
+									Name:          "http",
+									ContainerPort: langfuseSpec.Deploy.Port,
 									Protocol:      corev1.ProtocolTCP,
 								},
 							},
@@ -190,31 +263,206 @@ func (r *LMDeploymentReconciler) buildLangfuseDeployment(deployment *llmgeeperio
 	return langfuseDeployment
 }
 
-// buildLangfuseService builds the Langfuse service
-func (r *LMDeploymentReconciler) buildLangfuseService(deployment *llmgeeperiov1alpha1.LMDeployment) *corev1.Service {
+// buildLangfuseWorkerDeployment builds the Langfuse worker deployment
+func (r *LMDeploymentReconciler) buildLangfuseWorkerDeployment(deployment *llmgeeperiov1alpha1.LMDeployment) *appsv1.Deployment {
+	langfuseSpec := deployment.Spec.OpenWebUI.Langfuse
 	labels := map[string]string{
-		"app":            "langfuse",
-		"llm-deployment": deployment.Name,
+		"app.kubernetes.io/name":     "langfuse",
+		"app.kubernetes.io/instance": deployment.Name,
+		"app":                        "worker",
 	}
 
 	// Set default values
-	port := int32(3000)
-	serviceType := corev1.ServiceTypeClusterIP
+	image := DefaultLangfuseWorkerImage
 
-	if deployment.Spec.OpenWebUI.Langfuse.Deploy != nil {
-		if deployment.Spec.OpenWebUI.Langfuse.Deploy.Port > 0 {
-			port = deployment.Spec.OpenWebUI.Langfuse.Deploy.Port
+	if langfuseSpec.Deploy != nil {
+		if langfuseSpec.Deploy.Image != "" {
+			image = langfuseSpec.Deploy.Image
 		}
-		if deployment.Spec.OpenWebUI.Langfuse.Deploy.ServiceType != "" {
-			switch deployment.Spec.OpenWebUI.Langfuse.Deploy.ServiceType {
-			case "NodePort":
-				serviceType = corev1.ServiceTypeNodePort
-			case "LoadBalancer":
-				serviceType = corev1.ServiceTypeLoadBalancer
-			default:
-				serviceType = corev1.ServiceTypeClusterIP
-			}
+		if langfuseSpec.Deploy.Replicas > 0 {
+			langfuseSpec.Deploy.Replicas = 1
 		}
+	}
+
+	// Build resource requirements
+	var resources corev1.ResourceRequirements
+	if langfuseSpec.Deploy != nil {
+		resources = r.buildResourceRequirements(langfuseSpec.Deploy.Resources)
+	}
+
+	// Build essential environment variables for worker
+	envVars := r.buildLangfuseWorkerEnvVars(deployment)
+
+	// Add custom environment variables if specified
+	if langfuseSpec.Deploy != nil && len(langfuseSpec.Deploy.EnvVars) > 0 {
+		envVars = append(envVars, langfuseSpec.Deploy.EnvVars...)
+	}
+
+	workerDeployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      deployment.GetLangfuseWorkerDeploymentName(),
+			Namespace: deployment.Namespace,
+			Labels:    labels,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &langfuseSpec.Deploy.Replicas,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: labels,
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: labels,
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:            "langfuse-worker",
+							Image:           image,
+							SecurityContext: &corev1.SecurityContext{},
+							Resources:       resources,
+							Env:             envVars,
+						},
+					},
+				},
+			},
+		},
+	}
+	controllerutil.SetControllerReference(deployment, workerDeployment, r.Scheme)
+	return workerDeployment
+}
+
+// buildLangfuseWebEnvVars builds essential environment variables for web deployment
+func (r *LMDeploymentReconciler) buildLangfuseWebEnvVars(deployment *llmgeeperiov1alpha1.LMDeployment) []corev1.EnvVar {
+	langfuseSpec := deployment.Spec.OpenWebUI.Langfuse
+
+	// Get the host from ingress configuration
+	host := "localhost"
+	if langfuseSpec.Deploy != nil &&
+		langfuseSpec.Deploy.Ingress != nil &&
+		langfuseSpec.Deploy.Ingress.Host != "" {
+		host = langfuseSpec.Deploy.Ingress.Host
+	}
+
+	envVars := []corev1.EnvVar{
+		// Essential configuration
+		{Name: ENV_NODE_ENV, Value: DEFAULT_NODE_ENV},
+		{Name: ENV_HOSTNAME, Value: DEFAULT_HOSTNAME},
+
+		// URLs from ingress host
+		{Name: ENV_NEXTAUTH_URL, Value: fmt.Sprintf("http://%s", host)},
+		{Name: ENV_NEXT_PUBLIC_API_URL, Value: fmt.Sprintf("http://%s", host)},
+
+		// Secrets mounted from Kubernetes secrets
+		{
+			Name: ENV_NEXTAUTH_SECRET,
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: deployment.GetLangfuseSecretName(),
+					},
+					Key: "nextauth-secret",
+				},
+			},
+		},
+		{
+			Name: ENV_SALT,
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: deployment.GetLangfuseSecretName(),
+					},
+					Key: "salt",
+				},
+			},
+		},
+		{
+			Name: ENV_ENCRYPTION_KEY,
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: deployment.GetLangfuseSecretName(),
+					},
+					Key: "encryption-key",
+				},
+			},
+		},
+	}
+
+	return envVars
+}
+
+// buildLangfuseWorkerEnvVars builds essential environment variables for worker deployment
+func (r *LMDeploymentReconciler) buildLangfuseWorkerEnvVars(deployment *llmgeeperiov1alpha1.LMDeployment) []corev1.EnvVar {
+	langfuseSpec := deployment.Spec.OpenWebUI.Langfuse
+
+	// Get the host from ingress configuration
+	host := "localhost"
+	if langfuseSpec.Deploy != nil &&
+		langfuseSpec.Deploy.Ingress != nil &&
+		langfuseSpec.Deploy.Ingress.Host != "" {
+		host = langfuseSpec.Deploy.Ingress.Host
+	}
+
+	envVars := []corev1.EnvVar{
+		// Essential configuration
+		{Name: ENV_NODE_ENV, Value: DEFAULT_NODE_ENV},
+
+		// URLs from ingress host
+		{Name: ENV_NEXTAUTH_URL, Value: fmt.Sprintf("http://%s", host)},
+
+		// Secrets mounted from Kubernetes secrets
+		{
+			Name: ENV_NEXTAUTH_SECRET,
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: deployment.GetLangfuseSecretName(),
+					},
+					Key: "nextauth-secret",
+				},
+			},
+		},
+		{
+			Name: ENV_SALT,
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: deployment.GetLangfuseSecretName(),
+					},
+					Key: "salt",
+				},
+			},
+		},
+		{
+			Name: ENV_ENCRYPTION_KEY,
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: deployment.GetLangfuseSecretName(),
+					},
+					Key: "encryption-key",
+				},
+			},
+		},
+	}
+
+	return envVars
+}
+
+// buildLangfuseWebService builds the Langfuse web service
+func (r *LMDeploymentReconciler) buildLangfuseWebService(deployment *llmgeeperiov1alpha1.LMDeployment) *corev1.Service {
+	labels := map[string]string{
+		"helm.sh/chart":                "langfuse-1.4.1",
+		"app.kubernetes.io/name":       "langfuse",
+		"app.kubernetes.io/instance":   deployment.Name,
+		"app.kubernetes.io/version":    "3.98.2",
+		"app.kubernetes.io/managed-by": "Helm",
+	}
+
+	port := int32(DefaultLangfusePort)
+	if deployment.Spec.OpenWebUI.Langfuse.Deploy != nil &&
+		deployment.Spec.OpenWebUI.Langfuse.Deploy.Port > 0 {
+		port = deployment.Spec.OpenWebUI.Langfuse.Deploy.Port
 	}
 
 	langfuseService := &corev1.Service{
@@ -224,15 +472,19 @@ func (r *LMDeploymentReconciler) buildLangfuseService(deployment *llmgeeperiov1a
 			Labels:    labels,
 		},
 		Spec: corev1.ServiceSpec{
-			Type:     serviceType,
-			Selector: labels,
+			Type: corev1.ServiceTypeClusterIP,
 			Ports: []corev1.ServicePort{
 				{
-					Name:       "http",
 					Port:       port,
-					TargetPort: intstr.FromInt32(port),
+					TargetPort: intstr.FromString("http"),
 					Protocol:   corev1.ProtocolTCP,
+					Name:       "http",
 				},
+			},
+			Selector: map[string]string{
+				"app.kubernetes.io/name":     "langfuse",
+				"app.kubernetes.io/instance": deployment.Name,
+				"app":                        "web",
 			},
 		},
 	}
@@ -294,7 +546,7 @@ func (r *LMDeploymentReconciler) buildLangfuseIngress(deployment *llmgeeperiov1a
 		"llm-deployment": deployment.Name,
 	}
 
-	port := int32(3000)
+	port := int32(DefaultLangfusePort)
 	if deployment.Spec.OpenWebUI.Langfuse.Deploy != nil &&
 		deployment.Spec.OpenWebUI.Langfuse.Deploy.Port > 0 {
 		port = deployment.Spec.OpenWebUI.Langfuse.Deploy.Port

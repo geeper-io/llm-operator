@@ -18,7 +18,6 @@ package controller
 
 import (
 	"context"
-	"crypto/rand"
 	"fmt"
 	"strings"
 
@@ -59,7 +58,7 @@ func (r *LMDeploymentReconciler) reconcileOpenWebUI(ctx context.Context, deploym
 	if err != nil {
 		return err
 	}
-	if err := r.createOrUpdateSecret(ctx, openwebuiSecret); err != nil {
+	if err := r.createSecretIfNotExists(ctx, openwebuiSecret); err != nil {
 		return err
 	}
 
@@ -122,14 +121,9 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 
 	// Build environment variables
 	envVars := []corev1.EnvVar{
-		{
-			Name:  "OLLAMA_BASE_URL",
-			Value: fmt.Sprintf("http://%s:%d", ollamaServiceName, deployment.GetOllamaServicePort()),
-		},
-		{
-			Name:  "ENABLE_VERSION_UPDATE_CHECK",
-			Value: "False",
-		},
+		{Name: "OLLAMA_BASE_URL", Value: fmt.Sprintf("http://%s:%d", ollamaServiceName, deployment.GetOllamaServicePort())},
+		{Name: "ENABLE_PERSISTENT_CONFIG", Value: "False"},
+		{Name: "ENABLE_VERSION_UPDATE_CHECK", Value: "False"},
 		{
 			Name: "WEBUI_SECRET_KEY",
 			ValueFrom: &corev1.EnvVarSource{
@@ -142,12 +136,12 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 			},
 		},
 	}
-
 	if deployment.Spec.OpenWebUI.Ingress.Host != "" {
-		envVars = append(envVars, corev1.EnvVar{
-			Name:  "CORS_ALLOW_ORIGIN",
-			Value: fmt.Sprintf("http://%s;https://%s", deployment.Spec.OpenWebUI.Ingress.Host, deployment.Spec.OpenWebUI.Ingress.Host),
-		})
+		envVars = append(envVars, []corev1.EnvVar{
+			// TODO: Use the correct protocol based on deployment type
+			{Name: "WEBUI_HOST", Value: fmt.Sprintf("http://%s", deployment.Spec.OpenWebUI.Ingress.Host)},
+			{Name: "CORS_ALLOW_ORIGIN", Value: fmt.Sprintf("http://%s;https://%s", deployment.Spec.OpenWebUI.Ingress.Host, deployment.Spec.OpenWebUI.Ingress.Host)},
+		}...)
 	}
 
 	// Add Redis environment variables if Redis is enabled
@@ -166,10 +160,7 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 
 		// Add Redis environment variables for OpenWebUI
 		envVars = append(envVars, []corev1.EnvVar{
-			{
-				Name:  "REDIS_URL",
-				Value: redisURL,
-			},
+			{Name: "REDIS_URL", Value: redisURL},
 		}...)
 	}
 
@@ -327,7 +318,7 @@ func (r *LMDeploymentReconciler) buildPipelinesDeployment(deployment *llmgeeperi
 
 	// Automatically add Langfuse monitoring pipeline if Langfuse is enabled
 	if deployment.Spec.OpenWebUI.Langfuse != nil && deployment.Spec.OpenWebUI.Langfuse.Enabled {
-		langfusePipelineURL := "https://github.com/open-webui/pipelines/blob/main/examples/monitoring/langfuse_monitor_pipeline.py"
+		langfusePipelineURL := "https://github.com/open-webui/pipelines/blob/main/examples/filters/langfuse_filter_pipeline.py"
 
 		// Check if Langfuse pipeline is already in the list
 		langfusePipelineExists := false
@@ -479,7 +470,7 @@ func (r *LMDeploymentReconciler) buildPipelinesService(deployment *llmgeeperiov1
 			Ports: []corev1.ServicePort{
 				{
 					Port:       port,
-					TargetPort: intstr.FromInt(int(port)),
+					TargetPort: intstr.FromInt32(port),
 					Protocol:   corev1.ProtocolTCP,
 				},
 			},
@@ -620,7 +611,7 @@ func (r *LMDeploymentReconciler) buildOpenWebUIIngress(deployment *llmgeeperiov1
 // buildOpenWebUISecret builds the OpenWebUI secret for WEBUI_SECRET_KEY
 func (r *LMDeploymentReconciler) buildOpenWebUISecret(deployment *llmgeeperiov1alpha1.LMDeployment) (*corev1.Secret, error) {
 	// Generate a secure random secret key
-	secretKey, err := r.generateSecureSecretKey()
+	secretKey, err := generateSecureSecret(32)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate secure secret key: %w", err)
 	}
@@ -639,17 +630,4 @@ func (r *LMDeploymentReconciler) buildOpenWebUISecret(deployment *llmgeeperiov1a
 			"WEBUI_SECRET_KEY": []byte(secretKey),
 		},
 	}, nil
-}
-
-// generateSecureSecretKey generates a cryptographically secure random secret key
-func (r *LMDeploymentReconciler) generateSecureSecretKey() (string, error) {
-	// Generate 32 random bytes (256 bits) for a strong secret
-	bytes := make([]byte, 32)
-	_, err := rand.Read(bytes)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate random bytes: %w", err)
-	}
-
-	// Return the raw bytes as a string
-	return string(bytes), nil
 }
