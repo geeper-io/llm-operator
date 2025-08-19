@@ -1,4 +1,4 @@
-  apiVersion: llm.geeper.io/v1alpha1
+apiVersion: llm.geeper.io/v1alpha1
 kind: LMDeployment
 metadata:
   name: openwebui-with-pipelines
@@ -9,64 +9,37 @@ metadata:
 spec:
   ollama:
     models:
-      - "llama2:7b"
-      - "codellama:7b"
-
-    service:
-      type: ClusterIP
-      port: 11434
-  
+      - "gemma3:270m"
   openwebui:
     enabled: true
-    replicas: 2
+    replicas: 1
     image: ghcr.io/open-webui/open-webui:main
-
-    service:
-      type: ClusterIP
-      port: 8080
     ingress:
-      enabled: true
-      host: "chat-with-pipelines.localhost"
-      annotations:
-        nginx.ingress.kubernetes.io/rewrite-target: /
-        nginx.ingress.kubernetes.io/ssl-redirect: "false"
-    
-    # Enable Pipelines for advanced functionality
+      host: openwebui.localhost
+    # Enable pipelines integration
     pipelines:
       enabled: true
       image: ghcr.io/open-webui/pipelines:main
-      replicas: 1
       port: 9099
+      replicas: 1
       serviceType: ClusterIP
-
-      
-      # Configure pipeline directory
       pipelinesDir: "/app/pipelines"
-      
-      # Add some example pipeline URLs
-      pipelineUrls:
-        - "https://github.com/open-webui/pipelines/blob/main/examples/filters/detoxify_filter_pipeline.py"
-        - "https://github.com/open-webui/pipelines/blob/main/examples/filters/rate_limit_filter_pipeline.py"
-      
-      # Enable persistence for pipeline data
-      persistence:
-        enabled: true
-        size: "20Gi"
-        storageClass: "fast-ssd"
-      
-      # Custom environment variables
-      envVars:
-        - name: PIPELINES_DEBUG
-          value: "true"
-        - name: PIPELINES_LOG_LEVEL
-          value: "info"
-    
-    # Redis for session management
-    redis:
-      enabled: true
-      image: redis:7-alpine
-
       persistence:
         enabled: true
         size: "5Gi"
+    langfuse:
+      enabled: true
+      debug: false
+      projectName: "openwebui-pipelines-project"
+      environment: "development"
+    service:
+      type: ClusterIP
+      port: 8080
+    resources:
+      limits:
+        cpu: "1"
+        memory: "2Gi"
+      requests:
+        cpu: "500m"
+        memory: "1Gi"
 

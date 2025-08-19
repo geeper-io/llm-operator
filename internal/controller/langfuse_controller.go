@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -59,7 +60,7 @@ func generateSecureSecret(length int) (string, error) {
 	if _, err := rand.Read(bytes); err != nil {
 		return "", fmt.Errorf("failed to generate random bytes: %w", err)
 	}
-	return string(bytes), nil
+	return base64.StdEncoding.EncodeToString(bytes), nil
 }
 
 // reconcileLangfuse reconciles the Langfuse deployment

@@ -163,6 +163,14 @@ func (r *LMDeploymentReconciler) setDefaults(deployment *llmgeeperiov1alpha1.LMD
 		deployment.Spec.OpenWebUI.Service.Port = 8080
 	}
 
+	// Set OpenWebUI persistence defaults
+	if deployment.Spec.OpenWebUI.Persistence == nil {
+		deployment.Spec.OpenWebUI.Persistence = &llmgeeperiov1alpha1.OpenWebUIPersistenceSpec{}
+	}
+	if deployment.Spec.OpenWebUI.Persistence.Size == "" {
+		deployment.Spec.OpenWebUI.Persistence.Size = "1Gi"
+	}
+
 	// Set OpenWebUI Redis defaults
 	if deployment.Spec.OpenWebUI.Redis.Image == "" {
 		deployment.Spec.OpenWebUI.Redis.Image = "redis:7-alpine"

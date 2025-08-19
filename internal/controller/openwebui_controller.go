@@ -18,19 +18,76 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	llmgeeperiov1alpha1 "github.com/geeper-io/llm-operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
+
+// ensurePipelineSecret ensures the pipelines secret exists and returns the API key
+func (r *LMDeploymentReconciler) ensurePipelineSecret(ctx context.Context, deployment *llmgeeperiov1alpha1.LMDeployment) (string, error) {
+	secretName := fmt.Sprintf("%s-pipelines-secret", deployment.Name)
+	existingSecret := &corev1.Secret{}
+
+	err := r.Get(ctx, client.ObjectKey{
+		Name:      secretName,
+		Namespace: deployment.Namespace,
+	}, existingSecret)
+
+	if err == nil {
+		// Secret exists, check if it has PIPELINES_API_KEY
+		if apiKeyBytes, exists := existingSecret.Data["PIPELINES_API_KEY"]; exists {
+			apiKey := string(apiKeyBytes)
+			if apiKey != "" {
+				return apiKey, nil
+			}
+		}
+	} else if !errors.IsNotFound(err) {
+		// Error other than not found
+		return "", fmt.Errorf("failed to get pipelines secret: %w", err)
+	}
+
+	// Generate new API key and create secret
+	apiKey, err := generateSecureSecret(32)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate API key: %w", err)
+	}
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: deployment.Namespace,
+			Labels: map[string]string{
+				"app":            "pipelines",
+				"llm-deployment": deployment.Name,
+			},
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"PIPELINES_API_KEY": []byte(apiKey),
+		},
+	}
+
+	controllerutil.SetControllerReference(deployment, secret, r.Scheme)
+
+	if err := r.createOrUpdateSecret(ctx, secret); err != nil {
+		return "", fmt.Errorf("failed to create pipelines secret: %w", err)
+	}
+
+	return apiKey, nil
+}
 
 // reconcileOpenWebUI reconciles the OpenWebUI deployment
 func (r *LMDeploymentReconciler) reconcileOpenWebUI(ctx context.Context, deployment *llmgeeperiov1alpha1.LMDeployment) error {
@@ -53,6 +110,14 @@ func (r *LMDeploymentReconciler) reconcileOpenWebUI(ctx context.Context, deploym
 		}
 	}
 
+	// Create or update OpenWebUI PVC if persistence is enabled
+	if deployment.Spec.OpenWebUI.Persistence != nil && deployment.Spec.OpenWebUI.Persistence.Enabled {
+		pvc := r.buildOpenWebUIPVC(deployment)
+		if err := r.createOrUpdatePVC(ctx, pvc); err != nil {
+			return fmt.Errorf("failed to create or update OpenWebUI PVC: %w", err)
+		}
+	}
+
 	// Create or update OpenWebUI secret for WEBUI_SECRET_KEY
 	openwebuiSecret, err := r.buildOpenWebUISecret(deployment)
 	if err != nil {
@@ -60,6 +125,16 @@ func (r *LMDeploymentReconciler) reconcileOpenWebUI(ctx context.Context, deploym
 	}
 	if err := r.createSecretIfNotExists(ctx, openwebuiSecret); err != nil {
 		return err
+	}
+
+	// Create or update OpenWebUI config Secret
+	openwebuiConfig, err := r.buildOpenWebUIConfig(ctx, deployment)
+	if err != nil {
+		return fmt.Errorf("failed to build OpenWebUI config: %w", err)
+	}
+
+	if err := r.createOrUpdateSecret(ctx, openwebuiConfig); err != nil {
+		return fmt.Errorf("failed to create or update OpenWebUI config secret: %w", err)
 	}
 
 	// Create or update OpenWebUI deployment
@@ -87,6 +162,12 @@ func (r *LMDeploymentReconciler) reconcileOpenWebUI(ctx context.Context, deploym
 
 // reconcilePipelines reconciles the OpenWebUI Pipelines deployment
 func (r *LMDeploymentReconciler) reconcilePipelines(ctx context.Context, deployment *llmgeeperiov1alpha1.LMDeployment) error {
+	// Ensure pipeline secret exists and get API key
+	_, err := r.ensurePipelineSecret(ctx, deployment)
+	if err != nil {
+		return fmt.Errorf("failed to ensure pipeline secret: %w", err)
+	}
+
 	// Create or update PVC if persistence is enabled
 	if deployment.Spec.OpenWebUI.Pipelines.Persistence != nil && deployment.Spec.OpenWebUI.Pipelines.Persistence.Enabled {
 		pvc := r.buildPipelinesPVC(deployment)
@@ -110,6 +191,46 @@ func (r *LMDeploymentReconciler) reconcilePipelines(ctx context.Context, deploym
 	return nil
 }
 
+// buildOpenWebUIPVC builds the OpenWebUI PVC object
+func (r *LMDeploymentReconciler) buildOpenWebUIPVC(deployment *llmgeeperiov1alpha1.LMDeployment) *corev1.PersistentVolumeClaim {
+	labels := map[string]string{
+		"app":            "openwebui",
+		"llm-deployment": deployment.Name,
+	}
+
+	// Set default size if not specified
+	size := "1Gi"
+	if deployment.Spec.OpenWebUI.Persistence != nil && deployment.Spec.OpenWebUI.Persistence.Size != "" {
+		size = deployment.Spec.OpenWebUI.Persistence.Size
+	}
+
+	pvc := &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      deployment.GetOpenWebUIPVCName(),
+			Namespace: deployment.Namespace,
+			Labels:    labels,
+		},
+		Spec: corev1.PersistentVolumeClaimSpec{
+			AccessModes: []corev1.PersistentVolumeAccessMode{
+				corev1.ReadWriteOnce,
+			},
+			Resources: corev1.VolumeResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceStorage: resource.MustParse(size),
+				},
+			},
+		},
+	}
+
+	// Add storage class if specified
+	if deployment.Spec.OpenWebUI.Persistence != nil && deployment.Spec.OpenWebUI.Persistence.StorageClass != "" {
+		pvc.Spec.StorageClassName = &deployment.Spec.OpenWebUI.Persistence.StorageClass
+	}
+
+	controllerutil.SetControllerReference(deployment, pvc, r.Scheme)
+	return pvc
+}
+
 // buildOpenWebUIDeployment builds the OpenWebUI deployment object
 func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperiov1alpha1.LMDeployment) *appsv1.Deployment {
 	labels := map[string]string{
@@ -122,7 +243,7 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 	// Build environment variables
 	envVars := []corev1.EnvVar{
 		{Name: "OLLAMA_BASE_URL", Value: fmt.Sprintf("http://%s:%d", ollamaServiceName, deployment.GetOllamaServicePort())},
-		{Name: "ENABLE_PERSISTENT_CONFIG", Value: "False"},
+		//{Name: "ENABLE_PERSISTENT_CONFIG", Value: "False"},
 		{Name: "ENABLE_VERSION_UPDATE_CHECK", Value: "False"},
 		{
 			Name: "WEBUI_SECRET_KEY",
@@ -174,53 +295,76 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 			langfuseURL = fmt.Sprintf("http://%s:%d", deployment.GetLangfuseServiceName(), langfuseSpec.Deploy.Port)
 		}
 
-		// Add Langfuse environment variables
-		if langfuseURL != "" {
-			envVars = append(envVars, corev1.EnvVar{
-				Name:  "LANGFUSE_HOST",
-				Value: langfuseURL,
-			})
-		}
-
-		if langfuseSpec.PublicKey != "" {
-			envVars = append(envVars, corev1.EnvVar{
-				Name:  "LANGFUSE_PUBLIC_KEY",
-				Value: langfuseSpec.PublicKey,
-			})
-		}
-
-		if langfuseSpec.SecretKey != "" {
-			envVars = append(envVars, corev1.EnvVar{
-				Name:  "LANGFUSE_SECRET_KEY",
-				Value: langfuseSpec.SecretKey,
-			})
-		}
-
-		if langfuseSpec.ProjectName != "" {
-			envVars = append(envVars, corev1.EnvVar{
-				Name:  "LANGFUSE_PROJECT",
-				Value: langfuseSpec.ProjectName,
-			})
-		}
-
-		if langfuseSpec.Environment != "" {
-			envVars = append(envVars, corev1.EnvVar{
-				Name:  "LANGFUSE_ENVIRONMENT",
-				Value: langfuseSpec.Environment,
-			})
-		}
-
-		if langfuseSpec.Debug {
-			envVars = append(envVars, corev1.EnvVar{
-				Name:  "LANGFUSE_DEBUG",
-				Value: "true",
-			})
-		}
+		// Langfuse environment variables are now set in the pipeline deployment
 	}
 
 	// Add custom environment variables if specified
 	if len(deployment.Spec.OpenWebUI.EnvVars) > 0 {
 		envVars = append(envVars, deployment.Spec.OpenWebUI.EnvVars...)
+	}
+
+	// Build volume mounts and volumes for config
+	var volumeMounts []corev1.VolumeMount
+	var volumes []corev1.Volume
+
+	// Mount config file to temporary directory
+	volumeMounts = append(volumeMounts, []corev1.VolumeMount{
+		{
+			Name:      "openwebui-config",
+			MountPath: "/tmp/config",
+			ReadOnly:  true,
+		},
+		{
+			Name:      "openwebui-data",
+			MountPath: "/app/backend/data",
+		},
+	}...)
+	volumes = append(volumes, corev1.Volume{
+		Name: "openwebui-config",
+		VolumeSource: corev1.VolumeSource{
+			Secret: &corev1.SecretVolumeSource{
+				SecretName: deployment.GetOpenWebUIConfigName(),
+				Items: []corev1.KeyToPath{
+					{
+						Key:  "config.json",
+						Path: "config.json",
+					},
+				},
+			},
+		},
+	})
+
+	// Always add data volume mount and volume
+	// If persistence is enabled, use PVC; otherwise use emptyDir
+	if deployment.Spec.OpenWebUI.Persistence != nil && deployment.Spec.OpenWebUI.Persistence.Enabled {
+		// Use PVC for persistent storage
+		volumes = append(volumes, corev1.Volume{
+			Name: "openwebui-data",
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: deployment.GetOpenWebUIPVCName(),
+				},
+			},
+		})
+	} else {
+		// Use emptyDir for temporary storage when persistence is disabled
+		volumes = append(volumes, corev1.Volume{
+			Name: "openwebui-data",
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
+		})
+	}
+
+	// Build init container to copy config file
+	initContainer := corev1.Container{
+		Name:    "copy-config",
+		Image:   "busybox:1.35",
+		Command: []string{"/bin/sh", "-c"},
+		Args: []string{
+			"mkdir -p /app/backend/data && cp /tmp/config/config.json /app/backend/data/config.json && echo 'Config file copied successfully'",
+		},
+		VolumeMounts: volumeMounts,
 	}
 
 	// Build container
@@ -234,8 +378,9 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 				Protocol:      corev1.ProtocolTCP,
 			},
 		},
-		Resources: r.buildResourceRequirements(deployment.Spec.OpenWebUI.Resources),
-		Env:       envVars,
+		Resources:    r.buildResourceRequirements(deployment.Spec.OpenWebUI.Resources),
+		Env:          envVars,
+		VolumeMounts: volumeMounts,
 	}
 
 	openwebuiDeployment := &appsv1.Deployment{
@@ -254,7 +399,9 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 					Labels: labels,
 				},
 				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{container},
+					InitContainers: []corev1.Container{initContainer},
+					Containers:     []corev1.Container{container},
+					Volumes:        volumes,
 				},
 			},
 		},
@@ -301,6 +448,77 @@ func (r *LMDeploymentReconciler) buildPipelinesDeployment(deployment *llmgeeperi
 			Name:  "PIPELINES_DIR",
 			Value: pipelinesSpec.PipelinesDir,
 		},
+	}
+
+	// Add PIPELINES_API_KEY if pipelines are enabled
+	if deployment.Spec.OpenWebUI.Pipelines != nil && deployment.Spec.OpenWebUI.Pipelines.Enabled {
+		// Read PIPELINES_API_KEY from the pipelines secret
+		secretName := fmt.Sprintf("%s-pipelines-secret", deployment.Name)
+		envVars = append(envVars, corev1.EnvVar{
+			Name: "PIPELINES_API_KEY",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: secretName,
+					},
+					Key: "PIPELINES_API_KEY",
+				},
+			},
+		})
+	}
+
+	// Add Langfuse environment variables if Langfuse is enabled
+	if deployment.Spec.OpenWebUI.Langfuse != nil && deployment.Spec.OpenWebUI.Langfuse.Enabled {
+		langfuseSpec := deployment.Spec.OpenWebUI.Langfuse
+
+		// Determine Langfuse URL - use self-hosted service if no external URL
+		langfuseURL := langfuseSpec.URL
+		if langfuseURL == "" && langfuseSpec.Deploy != nil {
+			langfuseURL = fmt.Sprintf("http://%s:%d", deployment.GetLangfuseServiceName(), langfuseSpec.Deploy.Port)
+		}
+
+		// Add Langfuse environment variables
+		if langfuseURL != "" {
+			envVars = append(envVars, corev1.EnvVar{
+				Name:  "LANGFUSE_HOST",
+				Value: langfuseURL,
+			})
+		}
+
+		if langfuseSpec.PublicKey != "" {
+			envVars = append(envVars, corev1.EnvVar{
+				Name:  "LANGFUSE_PUBLIC_KEY",
+				Value: langfuseSpec.PublicKey,
+			})
+		}
+
+		if langfuseSpec.SecretKey != "" {
+			envVars = append(envVars, corev1.EnvVar{
+				Name:  "LANGFUSE_SECRET_KEY",
+				Value: langfuseSpec.SecretKey,
+			})
+		}
+
+		//if langfuseSpec.ProjectName != "" {
+		//	envVars = append(envVars, corev1.EnvVar{
+		//		Name:  "LANGFUSE_PROJECT",
+		//		Value: langfuseSpec.ProjectName,
+		//	})
+		//}
+
+		//if langfuseSpec.Environment != "" {
+		//	envVars = append(envVars, corev1.EnvVar{
+		//		Name:  "LANGFUSE_ENVIRONMENT",
+		//		Value: langfuseSpec.Environment,
+		//	})
+		//}
+
+		if langfuseSpec.Debug {
+			envVars = append(envVars, corev1.EnvVar{
+				Name:  "LANGFUSE_DEBUG",
+				Value: "true",
+			})
+		}
 	}
 
 	// Add custom environment variables
@@ -604,7 +822,7 @@ func (r *LMDeploymentReconciler) buildOpenWebUIIngress(deployment *llmgeeperiov1
 	}
 
 	// Set owner reference
-	controllerutil.SetControllerReference(deployment, ingress, r.Scheme)
+	_ = controllerutil.SetControllerReference(deployment, ingress, r.Scheme)
 	return ingress
 }
 
@@ -616,7 +834,7 @@ func (r *LMDeploymentReconciler) buildOpenWebUISecret(deployment *llmgeeperiov1a
 		return nil, fmt.Errorf("failed to generate secure secret key: %w", err)
 	}
 
-	return &corev1.Secret{
+	secret := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-openwebui-secret", deployment.Name),
 			Namespace: deployment.Namespace,
@@ -629,5 +847,104 @@ func (r *LMDeploymentReconciler) buildOpenWebUISecret(deployment *llmgeeperiov1a
 		Data: map[string][]byte{
 			"WEBUI_SECRET_KEY": []byte(secretKey),
 		},
-	}, nil
+	}
+
+	_ = controllerutil.SetControllerReference(deployment, secret, r.Scheme)
+	return secret, nil
+}
+
+// buildOpenWebUIConfig creates the config.json Secret for OpenWebUI
+func (r *LMDeploymentReconciler) buildOpenWebUIConfig(ctx context.Context, deployment *llmgeeperiov1alpha1.LMDeployment) (*corev1.Secret, error) {
+	// Base configuration based on the provided config file
+	config := map[string]interface{}{
+		"version": 0,
+		"ui": map[string]interface{}{
+			"enable_signup": true,
+		},
+		"openai": map[string]interface{}{
+			"enable":        true,
+			"api_base_urls": []string{},
+			"api_keys":      []string{},
+			"api_configs":   map[string]interface{}{},
+		},
+	}
+
+	// Add pipeline configuration if enabled
+	if deployment.Spec.OpenWebUI.Pipelines != nil && deployment.Spec.OpenWebUI.Pipelines.Enabled {
+		// Get API key from the existing pipelines secret
+		apiKey, err := r.ensurePipelineSecret(ctx, deployment)
+		if err != nil {
+			return nil, fmt.Errorf("failed to ensure pipeline secret: %w", err)
+		}
+
+		// Add pipeline to OpenAI api_base_urls and api_configs
+		openaiConfig := config["openai"].(map[string]interface{})
+		openaiConfig["api_base_urls"] = []string{
+			fmt.Sprintf("http://%s:9099", deployment.GetPipelinesServiceName()),
+		}
+		openaiConfig["api_configs"] = map[string]interface{}{
+			"0": map[string]interface{}{
+				"enable":          true,
+				"tags":            []string{},
+				"prefix_id":       "",
+				"model_ids":       []string{},
+				"connection_type": "local",
+			},
+		}
+		openaiConfig["api_keys"] = []string{
+			apiKey,
+		}
+		config["openai"] = openaiConfig
+	}
+
+	// Convert config to JSON
+	configJSON, err := json.Marshal(config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal config to JSON: %w", err)
+	}
+
+	openwebuiConfig := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      deployment.GetOpenWebUIConfigName(),
+			Namespace: deployment.Namespace,
+			Labels: map[string]string{
+				"app":            "openwebui",
+				"llm-deployment": deployment.Name,
+			},
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"config.json": configJSON,
+		},
+	}
+	controllerutil.SetControllerReference(deployment, openwebuiConfig, r.Scheme)
+	return openwebuiConfig, nil
+}
+
+// createOrUpdateConfigMap creates or updates a Kubernetes ConfigMap
+func (r *LMDeploymentReconciler) createOrUpdateSecret(ctx context.Context, secret *corev1.Secret) error {
+	logger := log.FromContext(ctx)
+	existingSecret := &corev1.Secret{}
+	err := r.Get(ctx, client.ObjectKeyFromObject(secret), existingSecret)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// ConfigMap doesn't exist, create it
+			if err := r.Create(ctx, secret); err != nil {
+				return fmt.Errorf("failed to create secret %s: %w", secret.Name, err)
+			}
+			logger.Info("Created OpenWebUI secret", "name", secret.Name, "namespace", secret.Namespace)
+		} else {
+			return fmt.Errorf("failed to get secret %s: %w", secret.Name, err)
+		}
+	} else {
+		// ConfigMap exists, update it
+		existingSecret.Data = secret.Data
+		existingSecret.Labels = secret.Labels
+
+		if err := r.Update(ctx, existingSecret); err != nil {
+			return fmt.Errorf("failed to update ConfigMap %s: %w", secret.Name, err)
+		}
+		logger.Info("Updated OpenWebUI config secret", "name", secret.Name, "namespace", secret.Namespace)
+	}
+	return nil
 }

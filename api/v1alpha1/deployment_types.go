@@ -101,6 +101,9 @@ type OpenWebUISpec struct {
 
 	// Langfuse defines the Langfuse monitoring configuration for OpenWebUI
 	Langfuse *LangfuseSpec `json:"langfuse,omitempty"`
+
+	// Persistence defines OpenWebUI persistence configuration
+	Persistence *OpenWebUIPersistenceSpec `json:"persistence,omitempty"`
 }
 
 // TabbySpec defines the desired state of Tabby deployment
@@ -229,6 +232,18 @@ type PipelinesSpec struct {
 // PipelinesPersistenceSpec defines Pipelines persistence configuration
 type PipelinesPersistenceSpec struct {
 	// Enabled determines if Pipelines data should be persisted
+	Enabled bool `json:"enabled,omitempty"`
+
+	// StorageClass is the storage class to use for persistent volumes
+	StorageClass string `json:"storageClass,omitempty"`
+
+	// Size is the size of the persistent volume
+	Size string `json:"size,omitempty"`
+}
+
+// OpenWebUIPersistenceSpec defines OpenWebUI persistence configuration
+type OpenWebUIPersistenceSpec struct {
+	// Enabled determines if OpenWebUI data should be persisted
 	Enabled bool `json:"enabled,omitempty"`
 
 	// StorageClass is the storage class to use for persistent volumes
@@ -474,6 +489,16 @@ func (d *LMDeployment) GetOllamaIngressName() string {
 // GetOpenWebUIIngressName returns the name of the OpenWebUI ingress for this deployment
 func (d *LMDeployment) GetOpenWebUIIngressName() string {
 	return fmt.Sprintf("%s-openwebui-ingress", d.Name)
+}
+
+// GetOpenWebUIConfigName returns the name of the OpenWebUI config Secret for this deployment
+func (d *LMDeployment) GetOpenWebUIConfigName() string {
+	return fmt.Sprintf("%s-openwebui-config", d.Name)
+}
+
+// GetOpenWebUIPVCName returns the name of the OpenWebUI PVC for this deployment
+func (d *LMDeployment) GetOpenWebUIPVCName() string {
+	return fmt.Sprintf("%s-openwebui-data", d.Name)
 }
 
 // GetTabbyIngressName returns the name of the Tabby ingress for this deployment

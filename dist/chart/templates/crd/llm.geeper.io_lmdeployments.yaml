@@ -539,6 +539,21 @@ spec:
                           If not provided, Langfuse will be deployed automatically
                         type: string
                     type: object
+                  persistence:
+                    description: Persistence defines OpenWebUI persistence configuration
+                    properties:
+                      enabled:
+                        description: Enabled determines if OpenWebUI data should be
+                          persisted
+                        type: boolean
+                      size:
+                        description: Size is the size of the persistent volume
+                        type: string
+                      storageClass:
+                        description: StorageClass is the storage class to use for
+                          persistent volumes
+                        type: string
+                    type: object
                   pipelines:
                     description: Pipelines defines the OpenWebUI Pipelines configuration
                     properties:
