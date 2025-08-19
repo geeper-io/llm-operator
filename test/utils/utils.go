@@ -8,7 +8,7 @@ You may obtain a copy of the License at
     http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
+distributed under the Apache License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
@@ -23,8 +23,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-
-	. "github.com/onsi/ginkgo/v2" // nolint:revive,staticcheck
+	"time"
 )
 
 const (
@@ -37,7 +36,7 @@ const (
 )
 
 func warnError(err error) {
-	_, _ = fmt.Fprintf(GinkgoWriter, "warning: %v\n", err)
+	fmt.Printf("warning: %v\n", err)
 }
 
 // Run executes the provided command within this context
@@ -46,12 +45,12 @@ func Run(cmd *exec.Cmd) (string, error) {
 	cmd.Dir = dir
 
 	if err := os.Chdir(cmd.Dir); err != nil {
-		_, _ = fmt.Fprintf(GinkgoWriter, "chdir dir: %q\n", err)
+		fmt.Printf("chdir dir: %q\n", err)
 	}
 
 	cmd.Env = append(os.Environ(), "GO111MODULE=on")
 	command := strings.Join(cmd.Args, " ")
-	_, _ = fmt.Fprintf(GinkgoWriter, "running: %q\n", command)
+	fmt.Printf("running: %q\n", command)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return string(output), fmt.Errorf("%q failed with error %q: %w", command, string(output), err)
@@ -104,7 +103,15 @@ func IsPrometheusCRDsInstalled() bool {
 	return false
 }
 
-// UninstallCertManager uninstalls the cert manager
+// InstallCertManager installs the cert-manager to be used to create the certificates.
+func InstallCertManager() error {
+	url := fmt.Sprintf(certmanagerURLTmpl, certmanagerVersion)
+	cmd := exec.Command("kubectl", "create", "-f", url)
+	_, err := Run(cmd)
+	return err
+}
+
+// UninstallCertManager uninstalls the cert-manager
 func UninstallCertManager() {
 	url := fmt.Sprintf(certmanagerURLTmpl, certmanagerVersion)
 	cmd := exec.Command("kubectl", "delete", "-f", url)
@@ -113,46 +120,21 @@ func UninstallCertManager() {
 	}
 }
 
-// InstallCertManager installs the cert manager bundle.
-func InstallCertManager() error {
-	url := fmt.Sprintf(certmanagerURLTmpl, certmanagerVersion)
-	cmd := exec.Command("kubectl", "apply", "-f", url)
-	if _, err := Run(cmd); err != nil {
-		return err
-	}
-	// Wait for cert-manager-webhook to be ready, which can take time if cert-manager
-	// was re-installed after uninstalling on a cluster.
-	cmd = exec.Command("kubectl", "wait", "deployment.apps/cert-manager-webhook",
-		"--for", "condition=Available",
-		"--namespace", "cert-manager",
-		"--timeout", "5m",
-	)
-
-	_, err := Run(cmd)
-	return err
-}
-
-// IsCertManagerCRDsInstalled checks if any Cert Manager CRDs are installed
-// by verifying the existence of key CRDs related to Cert Manager.
+// IsCertManagerCRDsInstalled checks if any CertManager CRDs are installed
+// by verifying the existence of key CRDs related to CertManager.
 func IsCertManagerCRDsInstalled() bool {
-	// List of common Cert Manager CRDs
+	// List of common CertManager CRDs
 	certManagerCRDs := []string{
 		"certificates.cert-manager.io",
 		"issuers.cert-manager.io",
 		"clusterissuers.cert-manager.io",
-		"certificaterequests.cert-manager.io",
-		"orders.acme.cert-manager.io",
-		"challenges.acme.cert-manager.io",
 	}
 
-	// Execute the kubectl command to get all CRDs
-	cmd := exec.Command("kubectl", "get", "crds")
+	cmd := exec.Command("kubectl", "get", "crds", "-o", "custom-columns=NAME:.metadata.name")
 	output, err := Run(cmd)
 	if err != nil {
 		return false
 	}
-
-	// Check if any of the Cert Manager CRDs are present
 	crdList := GetNonEmptyLines(output)
 	for _, crd := range certManagerCRDs {
 		for _, line := range crdList {
@@ -167,7 +149,7 @@ func IsCertManagerCRDsInstalled() bool {
 
 // LoadImageToKindClusterWithName loads a local docker image to the kind cluster
 func LoadImageToKindClusterWithName(name string) error {
-	cluster := "kind"
+	cluster := "llm-operator-test-e2e"
 	if v, ok := os.LookupEnv("KIND_CLUSTER"); ok {
 		cluster = v
 	}
@@ -251,4 +233,130 @@ func UncommentCode(filename, target, prefix string) error {
 	}
 
 	return nil
+}
+
+// WaitForLMDeploymentReady waits for an LMDeployment to be ready
+func WaitForLMDeploymentReady(name, namespace string, timeout time.Duration) error {
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		cmd := exec.Command("kubectl", "get", "lmdeployment", name,
+			"-n", namespace, "-o", "jsonpath={.status.phase}")
+		output, err := Run(cmd)
+		if err == nil && strings.TrimSpace(output) == "Ready" {
+			return nil
+		}
+		time.Sleep(10 * time.Second)
+	}
+	return fmt.Errorf("LMDeployment %s in namespace %s not ready within %v", name, namespace, timeout)
+}
+
+// GetLMDeploymentStatus returns the status of an LMDeployment
+func GetLMDeploymentStatus(name, namespace string) (map[string]string, error) {
+	cmd := exec.Command("kubectl", "get", "lmdeployment", name,
+		"-n", namespace, "-o", "jsonpath={.status}")
+	output, err := Run(cmd)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get LMDeployment status: %w", err)
+	}
+
+	// Parse the status output into a map
+	status := make(map[string]string)
+	// This is a simplified parser - in production you might want to use proper JSON parsing
+	lines := strings.Split(output, " ")
+	for _, line := range lines {
+		if strings.Contains(line, ":") {
+			parts := strings.SplitN(line, ":", 2)
+			if len(parts) == 2 {
+				status[parts[0]] = parts[1]
+			}
+		}
+	}
+
+	return status, nil
+}
+
+// VerifyDeploymentReady checks if a Kubernetes deployment is ready
+func VerifyDeploymentReady(name, namespace string) error {
+	cmd := exec.Command("kubectl", "get", "deployment", name,
+		"-n", namespace, "-o", "jsonpath={.status.readyReplicas}")
+	output, err := Run(cmd)
+	if err != nil {
+		return fmt.Errorf("failed to get deployment %s status: %w", name, err)
+	}
+
+	if strings.TrimSpace(output) == "0" {
+		return fmt.Errorf("deployment %s has 0 ready replicas", name)
+	}
+
+	return nil
+}
+
+// VerifyServiceExists checks if a Kubernetes service exists
+func VerifyServiceExists(name, namespace string) error {
+	cmd := exec.Command("kubectl", "get", "service", name, "-n", namespace)
+	_, err := Run(cmd)
+	if err != nil {
+		return fmt.Errorf("service %s not found in namespace %s: %w", name, namespace, err)
+	}
+	return nil
+}
+
+// VerifyPVCExists checks if a Kubernetes PVC exists
+func VerifyPVCExists(name, namespace string) error {
+	cmd := exec.Command("kubectl", "get", "pvc", name, "-n", namespace)
+	_, err := Run(cmd)
+	if err != nil {
+		return fmt.Errorf("PVC %s not found in namespace %s: %w", name, namespace, err)
+	}
+	return nil
+}
+
+// VerifySecretExists checks if a Kubernetes secret exists
+func VerifySecretExists(name, namespace string) error {
+	cmd := exec.Command("kubectl", "get", "secret", name, "-n", namespace)
+	_, err := Run(cmd)
+	if err != nil {
+		return fmt.Errorf("secret %s not found in namespace %s: %w", name, namespace, err)
+	}
+	return nil
+}
+
+// GetPodStatus returns the status of pods with specific labels
+func GetPodStatus(labels, namespace string) ([]string, error) {
+	cmd := exec.Command("kubectl", "get", "pods", "-l", labels,
+		"-n", namespace, "-o", "jsonpath={.items[*].status.phase}")
+	output, err := Run(cmd)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get pod status: %w", err)
+	}
+
+	if strings.TrimSpace(output) == "" {
+		return []string{}, nil
+	}
+
+	return strings.Split(output, " "), nil
+}
+
+// CleanupLMDeployment removes an LMDeployment and waits for cleanup
+func CleanupLMDeployment(name, namespace string) error {
+	fmt.Printf("cleaning up LMDeployment %s\n", name)
+	cmd := exec.Command("kubectl", "delete", "lmdeployment", name, "-n", namespace)
+	_, err := Run(cmd)
+	if err != nil {
+		return fmt.Errorf("failed to delete LMDeployment: %w", err)
+	}
+
+	// Wait for the deployment to be fully deleted
+	deadline := time.Now().Add(2 * time.Minute)
+	for time.Now().Before(deadline) {
+		cmd := exec.Command("kubectl", "get", "lmdeployment", name, "-n", namespace)
+		_, err := Run(cmd)
+		if err != nil {
+			// Deployment is deleted
+			return nil
+		}
+		time.Sleep(5 * time.Second)
+	}
+
+	return fmt.Errorf("LMDeployment %s not deleted within timeout", name)
 }

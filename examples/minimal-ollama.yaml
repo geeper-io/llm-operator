@@ -7,7 +7,8 @@ spec:
   ollama:
     models:
 #      - "llama3.2:1b"
-      - "gemma3:270m"
+#      - "gemma3:270m"
+      - "smollm2:135m"
 #      - "qwen2.5-coder:0.5b"
 #      - "qwen3:0.6b"
   openwebui:
@@ -18,12 +19,4 @@ spec:
       - name: WEB_SEARCH_ENGINE
         value: "duckduckgo"
     ingress:
-      enabled: true
       host: "openwebui.localhost"
-
-#  tabby:
-#    enabled: true
-#    image: registry.tabbyml.com/tabbyml/tabby
-#    ingress:
-#      enabled: true
-#      host: "tabby.localhost"

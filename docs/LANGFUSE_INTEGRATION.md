@@ -136,7 +136,7 @@ spec:
       enabled: true
       image: ghcr.io/open-webui/pipelines:main
       pipelineUrls:
-        - "https://github.com/open-webui/pipelines/blob/main/examples/monitoring/langfuse_monitor_pipeline.py"
+        - "https://github.com/open-webui/pipelines/blob/main/examples/filters/langfuse_filter_pipeline.py"
 ```
 
 ### Multi-Environment Setup

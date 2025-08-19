@@ -22,8 +22,8 @@ import (
 	"os/exec"
 	"testing"
 
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/geeper-io/llm-operator/test/utils"
 )
@@ -42,48 +42,79 @@ var (
 	projectImage = "example.com/llm-operator:v0.0.1"
 )
 
-// TestE2E runs the end-to-end (e2e) test suite for the project. These tests execute in an isolated,
-// temporary environment to validate project changes with the purposed to be used in CI jobs.
-// The default setup requires Kind, builds/loads the Manager Docker image locally, and installs
-// CertManager.
-func TestE2E(t *testing.T) {
-	RegisterFailHandler(Fail)
-	_, _ = fmt.Fprintf(GinkgoWriter, "Starting llm-operator integration test suite\n")
-	RunSpecs(t, "e2e suite")
+// GlobalE2ESuite handles global setup and teardown for all e2e tests
+type GlobalE2ESuite struct {
+	suite.Suite
+	testNamespace string
 }
 
-var _ = BeforeSuite(func() {
-	By("building the manager(Operator) image")
-	cmd := exec.Command("make", "docker-build", fmt.Sprintf("IMG=%s", projectImage))
+// SetupSuite runs once before all test suites
+func (suite *GlobalE2ESuite) SetupSuite() {
+	suite.T().Log("Starting llm-operator integration test suite")
+
+	suite.T().Log("Building the manager(Operator) image")
+	//cmd := exec.Command("make", "docker-build", fmt.Sprintf("IMG=%s", projectImage))
+	cmd := exec.Command("make", "docker-build")
 	_, err := utils.Run(cmd)
-	ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Failed to build the manager(Operator) image")
+	suite.Require().NoError(err, "Failed to build the manager(Operator) image")
 
 	// TODO(user): If you want to change the e2e test vendor from Kind, ensure the image is
 	// built and available before running the tests. Also, remove the following block.
-	By("loading the manager(Operator) image on Kind")
+	suite.T().Log("Loading the manager(Operator) image on Kind")
 	err = utils.LoadImageToKindClusterWithName(projectImage)
-	ExpectWithOffset(1, err).NotTo(HaveOccurred(), "Failed to load the manager(Operator) image into Kind")
+	suite.Require().NoError(err, "Failed to load the manager(Operator) image into Kind")
+
+	cmd = exec.Command("make", "install.yaml", fmt.Sprintf("IMG=%s", projectImage))
+	_, err = utils.Run(cmd)
+	suite.Require().NoError(err, "Failed to build the install.yaml file")
+
+	cmd = exec.Command("kubectl", "apply", "-f", "install.yaml")
+	_, err = utils.Run(cmd)
+	suite.Require().NoError(err, "Failed to apply the install.yaml file")
 
 	// The tests-e2e are intended to run on a temporary cluster that is created and destroyed for testing.
 	// To prevent errors when tests run in environments with CertManager already installed,
 	// we check for its presence before execution.
 	// Setup CertManager before the suite if not skipped and if not already installed
 	if !skipCertManagerInstall {
-		By("checking if cert manager is installed already")
+		suite.T().Log("Checking if cert manager is installed already")
 		isCertManagerAlreadyInstalled = utils.IsCertManagerCRDsInstalled()
 		if !isCertManagerAlreadyInstalled {
-			_, _ = fmt.Fprintf(GinkgoWriter, "Installing CertManager...\n")
-			Expect(utils.InstallCertManager()).To(Succeed(), "Failed to install CertManager")
+			suite.T().Log("Installing CertManager...")
+			suite.Require().NoError(utils.InstallCertManager(), "Failed to install CertManager")
 		} else {
-			_, _ = fmt.Fprintf(GinkgoWriter, "WARNING: CertManager is already installed. Skipping installation...\n")
+			suite.T().Log("WARNING: CertManager is already installed. Skipping installation...")
 		}
 	}
-})
 
-var _ = AfterSuite(func() {
+	suite.T().Log("Creating test namespace")
+	cmd = exec.Command("kubectl", "create", "ns", suite.testNamespace)
+	_, err = utils.Run(cmd)
+	require.NoError(suite.T(), err, "Failed to create test namespace")
+
+	//suite.T().Log("Labeling the namespace to enforce the restricted security policy")
+	//cmd = exec.Command("kubectl", "label", "--overwrite", "ns", suite.testNamespace,
+	//	"pod-security.kubernetes.io/enforce=restricted")
+	//_, err = utils.Run(cmd)
+	//require.NoError(suite.T(), err, "Failed to label namespace with restricted policy")
+}
+
+// TearDownSuite runs once after all test suites
+func (suite *GlobalE2ESuite) TearDownSuite() {
 	// Teardown CertManager after the suite if not skipped and if it was not already installed
 	if !skipCertManagerInstall && !isCertManagerAlreadyInstalled {
-		_, _ = fmt.Fprintf(GinkgoWriter, "Uninstalling CertManager...\n")
+		suite.T().Log("Uninstalling CertManager...")
 		utils.UninstallCertManager()
 	}
-})
+	suite.T().Log("Cleaning up test namespace")
+	cmd := exec.Command("kubectl", "delete", "ns", suite.testNamespace)
+	_, _ = utils.Run(cmd)
+}
+
+// TestE2E runs the end-to-end (e2e) test suite for the project. These tests execute in an isolated,
+// temporary environment to validate project changes with the purposed to be used in CI jobs.
+// The default setup requires Kind, builds/loads the Manager Docker image locally, and installs
+// CertManager.
+func TestE2E(t *testing.T) {
+	suite.Run(t, new(GlobalE2ESuite))
+}
