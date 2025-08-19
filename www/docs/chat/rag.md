@@ -391,7 +391,8 @@ kubectl logs -f deployment/rag-system-rag-api
 
 ## Next Steps
 
-- [Tool System](/docs/chat/tools) - Extend RAG with custom tools
+- [Advanced Configuration](/docs/advanced/) - Pipelines, observability, and more
+- [OpenWebUI Integration](/docs/chat/openwebui) - Learn about OpenWebUI deployment
 - [Advanced RAG Patterns](/docs/chat/advanced-rag) - Advanced RAG architectures
 - [Performance Tuning](/docs/chat/performance) - Optimize RAG performance
 - [API Reference](/docs/api/rag) - Complete RAG API documentation

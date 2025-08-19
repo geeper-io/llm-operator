@@ -6,10 +6,11 @@ The LLM Operator controller has been refactored into a modular architecture with
 
 ```
 internal/controller/
-├── deployment_controller.go    # Main orchestrator controller for LMDeployments
+├── deployment_controller.go    # Main reconciliation logic
 ├── ollama_controller.go        # Ollama-specific operations
 ├── openwebui_controller.go     # OpenWebUI-specific operations
-└── tool_controller.go        # Tool management operations
+├── tabby_controller.go         # Tabby-specific operations
+└── suite_test.go              # Test suite setup
 ```
 
 ## Controller Responsibilities
@@ -66,20 +67,20 @@ internal/controller/
 - `buildOpenWebUIIngress()` - Build OpenWebUI ingress spec
 - `buildOpenWebUIConfigMap()` - Generate OpenWebUI configuration
 
-### 4. Tool Controller (`tool_controller.go`)
+### 4. Tabby Controller (`tabby_controller.go`)
 
-**Purpose**: Handle all tool management operations
+**Purpose**: Handle all Tabby-specific operations
 
 **Responsibilities**:
-- Tool LMDeployment creation and management
-- Tool service creation and management
-- Tool configuration and credential management
-- Environment variable setup for tools
+- Tabby LMDeployment creation and management
+- Tabby service creation and management
+- Tabby configuration and credential management
+- Environment variable setup for Tabby
 
 **Key Functions**:
-- `ReconcileTools()` - Main tool reconciliation
-- `buildToolDeployment()` - Build tool LMDeployment spec
-- `buildToolService()` - Build tool service spec
+- `ReconcileTabby()` - Main Tabby reconciliation
+- `buildTabbyDeployment()` - Build Tabby LMDeployment spec
+- `buildTabbyService()` - Build Tabby service spec
 
 ## Benefits of This Architecture
 
@@ -116,7 +117,7 @@ func (r *OllamaDeploymentReconciler) SetupWithManager(mgr ctrl.Manager) error {
     // Initialize specialized controllers
     r.ollamaController = NewOllamaController()
     r.openwebuiController = NewOpenWebUIController()
-    		r.toolController = NewToolController()
+    		r.tabbyController = NewTabbyController()
     
     // ... rest of setup
 }
@@ -132,19 +133,10 @@ func (r *OllamaDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Req
         return ctrl.Result{RequeueAfter: time.Minute}, err
     }
     
-    if deployment.Spec.OpenWebUI.Enabled {
-        if err := r.openwebuiController.ReconcileOpenWebUI(ctx, deployment, r); err != nil {
-            return ctrl.Result{RequeueAfter: time.Minute}, err
-        }
-        
-        		if len(deployment.Spec.OpenWebUI.Tools) > 0 {
-            		if err := r.toolController.ReconcileTools(ctx, deployment, r); err != nil {
-                return ctrl.Result{RequeueAfter: time.Minute}, err
-            }
-        }
+    // Reconcile OpenWebUI deployment if enabled
+    if err := r.reconcileOpenWebUI(ctx, deployment); err != nil {
+        return ctrl.Result{RequeueAfter: time.Minute}, err
     }
-    
-    // ... status update ...
 }
 ```
 
@@ -227,7 +219,6 @@ This architecture provides a solid foundation for future enhancements:
 - **Metrics and Monitoring**: Each controller can expose its own metrics
 - **Health Checks**: Individual controller health can be monitored
 - **Configuration Validation**: Each controller can validate its own configuration
-- **Tool System**: Easy to add new types of components
 - **Multi-version Support**: Different API versions can be handled by different controllers
 
 

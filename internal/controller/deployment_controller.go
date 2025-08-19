@@ -18,7 +18,6 @@ package controller
 
 import (
 	"context"
-	"encoding/json"
 	"reflect"
 	"time"
 
@@ -53,6 +52,7 @@ type LMDeploymentReconciler struct {
 // +kubebuilder:rbac:groups=llm.geeper.io,resources=lmdeployments/finalizers,verbs=update
 // +kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=configmaps,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=persistentvolumes,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
@@ -112,14 +112,6 @@ func (r *LMDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		if err := r.reconcileOpenWebUI(ctx, deployment); err != nil {
 			logger.Error(err, "Failed to reconcile OpenWebUI")
 			return ctrl.Result{RequeueAfter: time.Minute}, err
-		}
-
-		// Reconcile tools if any are defined
-		if len(deployment.Spec.OpenWebUI.Tools) > 0 {
-			if err := r.reconcileTools(ctx, deployment); err != nil {
-				logger.Error(err, "Failed to reconcile tools")
-				return ctrl.Result{RequeueAfter: time.Minute}, err
-			}
 		}
 	}
 
@@ -484,34 +476,6 @@ func (r *LMDeploymentReconciler) updateStatus(ctx context.Context, deployment *l
 				deployment.Status.OpenWebUIStatus.Conditions = append(deployment.Status.OpenWebUIStatus.Conditions, metaCond)
 			}
 		}
-
-		// Get tool deployment statuses
-		toolStatuses := make(map[string]llmgeeperiov1alpha1.LMDeploymentComponentStatus)
-		for _, tool := range deployment.Spec.OpenWebUI.Tools {
-			if !tool.Enabled {
-				continue
-			}
-
-			toolDeployment := &appsv1.Deployment{}
-			err := r.Get(ctx, types.NamespacedName{
-				Name:      deployment.GetToolDeploymentName(tool.Name),
-				Namespace: deployment.Namespace,
-			}, toolDeployment)
-
-			if err == nil {
-				toolStatuses[tool.Name] = llmgeeperiov1alpha1.LMDeploymentComponentStatus{
-					AvailableReplicas: toolDeployment.Status.AvailableReplicas,
-					ReadyReplicas:     toolDeployment.Status.ReadyReplicas,
-					UpdatedReplicas:   toolDeployment.Status.UpdatedReplicas,
-				}
-			}
-		}
-
-		// Store tool statuses in annotations for now (you can extend the status struct if needed)
-		if len(toolStatuses) > 0 {
-			toolStatusJSON, _ := json.Marshal(toolStatuses)
-			deployment.Annotations["llm.geeper.io/tool-statuses"] = string(toolStatusJSON)
-		}
 	}
 
 	// Get Tabby deployment status if enabled
@@ -544,17 +508,6 @@ func (r *LMDeploymentReconciler) updateStatus(ctx context.Context, deployment *l
 	deployment.Status.TotalReplicas = deployment.Spec.Ollama.Replicas
 	if deployment.Spec.OpenWebUI.Enabled {
 		deployment.Status.TotalReplicas += deployment.Spec.OpenWebUI.Replicas
-
-		// Add tool replicas
-		for _, tool := range deployment.Spec.OpenWebUI.Tools {
-			if tool.Enabled {
-				replicas := tool.Replicas
-				if replicas == 0 {
-					replicas = 1
-				}
-				deployment.Status.TotalReplicas += replicas
-			}
-		}
 	}
 
 	// Add Tabby replicas
@@ -565,21 +518,6 @@ func (r *LMDeploymentReconciler) updateStatus(ctx context.Context, deployment *l
 	deployment.Status.ReadyReplicas = deployment.Status.OllamaStatus.ReadyReplicas
 	if deployment.Spec.OpenWebUI.Enabled {
 		deployment.Status.ReadyReplicas += deployment.Status.OpenWebUIStatus.ReadyReplicas
-
-		// Add tool ready replicas
-		for _, tool := range deployment.Spec.OpenWebUI.Tools {
-			if tool.Enabled {
-				toolDeployment := &appsv1.Deployment{}
-				err := r.Get(ctx, types.NamespacedName{
-					Name:      deployment.GetToolDeploymentName(tool.Name),
-					Namespace: deployment.Namespace,
-				}, toolDeployment)
-
-				if err == nil {
-					deployment.Status.ReadyReplicas += toolDeployment.Status.ReadyReplicas
-				}
-			}
-		}
 	}
 
 	// Add Tabby ready replicas
@@ -608,6 +546,7 @@ func (r *LMDeploymentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&appsv1.Deployment{}).
 		Owns(&corev1.Service{}).
 		Owns(&corev1.ConfigMap{}).
+		Owns(&corev1.Secret{}).
 		Owns(&networkingv1.Ingress{}).
 		Owns(&corev1.PersistentVolumeClaim{}).
 		Named("lmdeployment").
@@ -627,6 +566,29 @@ func (r *LMDeploymentReconciler) createOrUpdatePVC(ctx context.Context, pvc *cor
 		// Update existing PVC
 		if !reflect.DeepEqual(existing.Spec, pvc.Spec) {
 			existing.Spec = pvc.Spec
+			if err := r.Update(ctx, existing); err != nil {
+				return err
+			}
+		}
+	} else {
+		return err
+	}
+	return nil
+}
+
+// createOrUpdateSecret creates or updates a Secret
+func (r *LMDeploymentReconciler) createOrUpdateSecret(ctx context.Context, secret *corev1.Secret) error {
+	existing := &corev1.Secret{}
+	err := r.Get(ctx, types.NamespacedName{Name: secret.Name, Namespace: secret.Namespace}, existing)
+	if err != nil && errors.IsNotFound(err) {
+		// Create new Secret
+		if err := r.Create(ctx, secret); err != nil {
+			return err
+		}
+	} else if err == nil {
+		// Update existing Secret
+		if !reflect.DeepEqual(existing.Data, secret.Data) {
+			existing.Data = secret.Data
 			if err := r.Update(ctx, existing); err != nil {
 				return err
 			}

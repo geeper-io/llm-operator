@@ -9,7 +9,7 @@ description: Complete reference for Geeper.AI Custom Resource Definitions
 
 ## Overview
 
-The Geeper.AI operator provides a unified `LMDeployment` CRD that allows you to declaratively deploy Ollama instances with specified models and optionally connect them to OpenWebUI, Tabby, and custom tools. The operator automatically manages the underlying Kubernetes resources including Deployments, Services, and Ingresses.
+The LLM Operator provides a Custom Resource Definition (CRD) called `LMDeployment` that allows you to declaratively deploy Ollama instances with specified models and optionally connect them to OpenWebUI for a web-based interface, Tabby for code completion, and custom components. The operator automatically manages the underlying Kubernetes resources including Deployments, Services, and Ingresses.
 
 ## LMDeployment
 

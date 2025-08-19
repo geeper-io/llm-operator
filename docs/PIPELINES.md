@@ -10,6 +10,8 @@ Pipelines bring modular, customizable workflows to any UI client supporting Open
 - **Create Custom Workflows**: Build sophisticated Retrieval-Augmented Generation (RAG) pipelines
 - **Add Filters**: Implement rate limiting, toxic message detection, and more
 - **Integrate External Services**: Connect with home automation APIs, monitoring tools, and more
+- **Custom Workflows**: Create specialized processing pipelines for your use case
+- **Extend Functionality**: Add new capabilities without modifying OpenWebUI core
 
 ## Key Features
 
@@ -197,12 +199,10 @@ kubectl run test --rm -i --tty --image=curlimages/curl -- \
   curl http://<pipelines-service>:9099/health
 ```
 
-## Next Steps
+## Related Documentation
 
-- [Example Configuration](../examples/openwebui-with-pipelines.yaml) - Complete pipeline setup
-- [OpenWebUI Documentation](https://docs.openwebui.com/pipelines/) - Official pipeline documentation
-- [Pipeline Examples](https://github.com/open-webui/pipelines/tree/main/examples) - Community pipeline examples
-- [Tool System](TOOL_SYSTEM.md) - Learn about OpenWebUI tools
+- [OpenWebUI Integration](/docs/chat/openwebui) - Learn about OpenWebUI deployment
+- [Observability](/docs/advanced/observability) - Monitor your pipelines with Langfuse
 
 ---
 

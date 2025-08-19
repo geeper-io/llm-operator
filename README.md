@@ -11,8 +11,8 @@ The LLM Operator provides a Custom Resource Definition (CRD) called `LMDeploymen
 - **🚀 Easy Deployment**: Deploy LLM services with simple YAML configurations
 - **🔧 Multi-Model Support**: Support for various LLM frameworks (Ollama, OpenWebUI, Tabby, etc.)
 - **⚡ Auto-scaling**: Automatic scaling based on demand and resource usage
-- **🔧 Tool System**: Extensible architecture with tool support
 - **🔒 Security**: Built-in security features and RBAC integration
+- **🔐 Automatic Secret Management**: Automatically generates and manages secure secrets for OpenWebUI
 - **📊 Monitoring**: Comprehensive metrics and observability
 - **🌐 Multi-cluster**: Support for multi-cluster LMDeployments
 - **⚡ Pipelines**: OpenWebUI Pipelines for custom workflows and integrations
@@ -24,9 +24,23 @@ The operator creates and manages several Kubernetes resources:
 
 - **Services**: For Ollama, OpenWebUI (if enabled), and Tabby (if enabled)
 - **LMDeployments**: For Ollama, OpenWebUI (if enabled), and Tabby (if enabled)
-- **ConfigMaps**: For configuration and tool settings
+- **ConfigMaps**: For configuration settings
 - **Secrets**: For sensitive configuration data
 - **PersistentVolumeClaims**: For persistent storage (if enabled)
+
+## Security Features
+
+### Automatic Secret Management
+
+The operator automatically generates and manages secure secrets for OpenWebUI deployments:
+
+- **WEBUI_SECRET_KEY**: A cryptographically secure random key (256-bit) is automatically generated
+- **Secret Storage**: Secrets are stored as Kubernetes Secret resources with proper RBAC controls
+- **Automatic Rotation**: Each deployment gets a unique secret key
+- **Secure Generation**: Uses crypto/rand for cryptographically secure random key generation
+- **Error Handling**: Returns errors if secret generation fails, ensuring no insecure fallbacks
+
+The secret is automatically created with the name pattern: `{deployment-name}-openwebui-secret` and contains the `WEBUI_SECRET_KEY` environment variable that OpenWebUI requires for secure operation.
 
 ## Installation
 
@@ -147,20 +161,50 @@ Tabby provides AI-powered code completion by connecting to your Ollama models. I
 - Can be accessed via ingress for external integration
 - Mounts configuration to `~/.tabby/config.toml` for easy customization
 - Includes local embedding model (Nomic-Embed-Text) by default
-    image: ghcr.io/open-webui/open-webui
-    imageTag: main
-    serviceType: ClusterIP
-    servicePort: 8080
-    ingressEnabled: true
-    ingressHost: "ai.example.com"
-    resources:
-      requests:
-        cpu: "200m"
-        memory: "512Mi"
-      limits:
-        cpu: "1"
-        memory: "1Gi"
+
+### OpenWebUI with Automatic Secret Management
+
+OpenWebUI deployments automatically include secure secret management:
+
+```yaml
+apiVersion: llm.geeper.io/v1alpha1
+kind: LMDeployment
+metadata:
+  name: openwebui-secure
+  namespace: default
+spec:
+  ollama:
+    enabled: true
+    replicas: 1
+    image: ollama/ollama:latest
+  
+  openwebui:
+    enabled: true
+    replicas: 1
+    image: ghcr.io/open-webui/open-webui:main
+    service:
+      type: ClusterIP
+      port: 8080
+    
+    # The WEBUI_SECRET_KEY is automatically generated and managed
+    # No need to specify it manually - the operator handles everything
+    
+    ingress:
+      host: openwebui.example.com
+    
+    # Optional: Enable Redis for multi-replica deployments
+    redis:
+      enabled: true
+      image: redis:7-alpine
+      password: "your-redis-password"
 ```
+
+**Automatic Features:**
+- 🔐 **WEBUI_SECRET_KEY**: Automatically generated as a 256-bit secure random key
+- 🔒 **Secret Storage**: Stored as Kubernetes Secret with proper RBAC controls
+- 🔄 **Unique Keys**: Each deployment gets its own unique secret key
+- 🛡️ **Secure Generation**: Uses cryptographically secure random number generation
+- ❌ **No Fallbacks**: Returns errors if generation fails, ensuring security
 
 ## API Reference
 

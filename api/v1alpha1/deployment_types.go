@@ -93,9 +93,6 @@ type OpenWebUISpec struct {
 	// Ingress defines the ingress configuration for OpenWebUI
 	Ingress IngressSpec `json:"ingress,omitempty"`
 
-	// Tools defines the list of tools to deploy and configure
-	Tools []OpenWebUITool `json:"tools,omitempty"`
-
 	// Redis defines the Redis configuration for OpenWebUI
 	Redis RedisSpec `json:"redis,omitempty"`
 
@@ -181,54 +178,6 @@ type RedisPersistenceSpec struct {
 
 	// Size is the size of the persistent volume
 	Size string `json:"size,omitempty"`
-}
-
-// OpenWebUITool defines a tool for OpenWebUI
-type OpenWebUITool struct {
-	// Name is the unique name of the tool
-	Name string `json:"name"`
-
-	// Enabled determines if this tool should be deployed
-	Enabled bool `json:"enabled,omitempty"`
-
-	// Type is the type of tool (e.g., "openapi", "custom")
-	// +kubebuilder:validation:Enum=openapi;custom
-	Type string `json:"type"`
-
-	// Image is the container image for the tool (including tag)
-	Image string `json:"image"`
-
-	// Replicas is the number of tool pods to run
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=3
-	Replicas int32 `json:"replicas,omitempty"`
-
-	// Port is the port the tool service exposes
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=65535
-	Port int32 `json:"port"`
-
-	// Resources defines the resource requirements for tool pods
-	Resources ResourceRequirements `json:"resources,omitempty"`
-
-	// ServiceType is the type of service to expose the tool
-	// +kubebuilder:validation:Enum=ClusterIP;NodePort;LoadBalancer
-	ServiceType string `json:"serviceType,omitempty"`
-
-	// EnvVars defines environment variables for the tool
-	EnvVars []corev1.EnvVar `json:"envVars,omitempty"`
-
-	// VolumeMounts defines volume mounts for the tool
-	VolumeMounts []corev1.VolumeMount `json:"volumeMounts,omitempty"`
-
-	// Volumes defines volumes for the tool
-	Volumes []corev1.Volume `json:"volumes,omitempty"`
-
-	// ConfigMapName is the name of the ConfigMap containing tool configuration
-	ConfigMapName string `json:"configMapName,omitempty"`
-
-	// SecretName is the name of the Secret containing tool credentials
-	SecretName string `json:"secretName,omitempty"`
 }
 
 // PipelinesSpec defines the OpenWebUI Pipelines configuration
@@ -487,11 +436,6 @@ func (d *LMDeployment) GetTabbyServiceName() string {
 	return fmt.Sprintf("%s-tabby", d.Name)
 }
 
-// GetToolServiceName returns the name of a tool service for this deployment
-func (d *LMDeployment) GetToolServiceName(toolName string) string {
-	return fmt.Sprintf("%s-tool-%s", d.Name, toolName)
-}
-
 // GetRedisServiceName returns the name of the Redis service for this deployment
 func (d *LMDeployment) GetRedisServiceName() string {
 	return fmt.Sprintf("%s-redis", d.Name)
@@ -520,11 +464,6 @@ func (d *LMDeployment) GetOpenWebUIDeploymentName() string {
 // GetTabbyDeploymentName returns the name of the Tabby deployment for this deployment
 func (d *LMDeployment) GetTabbyDeploymentName() string {
 	return fmt.Sprintf("%s-tabby", d.Name)
-}
-
-// GetToolDeploymentName returns the name of a tool deployment for this deployment
-func (d *LMDeployment) GetToolDeploymentName(toolName string) string {
-	return fmt.Sprintf("%s-tool-%s", d.Name, toolName)
 }
 
 // GetOllamaIngressName returns the name of the Ollama ingress for this deployment

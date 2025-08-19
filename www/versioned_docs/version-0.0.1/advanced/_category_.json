@@ -1,9 +1,0 @@
-{
-  "label": "Advanced Configuration",
-  "position": 5,
-  "link": {
-    "type": "generated-index",
-    "description": "Advanced configuration options, pipelines, monitoring, and observability"
-  }
-}
-

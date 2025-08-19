@@ -18,7 +18,7 @@ package controller
 
 import (
 	"context"
-	"encoding/json"
+	"crypto/rand"
 	"fmt"
 	"strings"
 
@@ -54,12 +54,13 @@ func (r *LMDeploymentReconciler) reconcileOpenWebUI(ctx context.Context, deploym
 		}
 	}
 
-	// Create or update OpenWebUI configuration ConfigMap if tools are defined
-	if len(deployment.Spec.OpenWebUI.Tools) > 0 {
-		openwebuiConfig := r.buildOpenWebUIConfigMap(deployment)
-		if err := r.createOrUpdateConfigMap(ctx, openwebuiConfig); err != nil {
-			return err
-		}
+	// Create or update OpenWebUI secret for WEBUI_SECRET_KEY
+	openwebuiSecret, err := r.buildOpenWebUISecret(deployment)
+	if err != nil {
+		return err
+	}
+	if err := r.createOrUpdateSecret(ctx, openwebuiSecret); err != nil {
+		return err
 	}
 
 	// Create or update OpenWebUI deployment
@@ -107,12 +108,6 @@ func (r *LMDeploymentReconciler) reconcilePipelines(ctx context.Context, deploym
 		return err
 	}
 
-	// Create or update OpenWebUI configuration to include Pipelines connection
-	openwebuiConfig := r.buildOpenWebUIConfigMap(deployment)
-	if err := r.createOrUpdateConfigMap(ctx, openwebuiConfig); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -136,8 +131,15 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 			Value: "False",
 		},
 		{
-			Name:  "WEBUI_SECRET_KEY",
-			Value: "your-secret-key-here",
+			Name: "WEBUI_SECRET_KEY",
+			ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: fmt.Sprintf("%s-openwebui-secret", deployment.Name),
+					},
+					Key: "WEBUI_SECRET_KEY",
+				},
+			},
 		},
 	}
 
@@ -244,41 +246,6 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 		Resources: r.buildResourceRequirements(deployment.Spec.OpenWebUI.Resources),
 		Env:       envVars,
 	}
-	if len(deployment.Spec.OpenWebUI.Tools) > 0 {
-		container.VolumeMounts = []corev1.VolumeMount{
-			{
-				Name:      "openwebui-config",
-				MountPath: "/app/backend/data",
-				SubPath:   "config.json",
-			},
-		}
-	}
-
-	// Build volumes and volume mounts
-	volumes := []corev1.Volume{}
-	volumeMounts := []corev1.VolumeMount{}
-
-	// Add tool configuration volume if tools are defined
-	if len(deployment.Spec.OpenWebUI.Tools) > 0 {
-		// Add config volume
-		volumes = append(volumes, corev1.Volume{
-			Name: "openwebui-config",
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: fmt.Sprintf("%s-openwebui-config", deployment.Name),
-					},
-				},
-			},
-		})
-
-		// Add config volume mount
-		volumeMounts = append(volumeMounts, corev1.VolumeMount{
-			Name:      "openwebui-config",
-			MountPath: "/app/backend/data",
-			SubPath:   "config.json",
-		})
-	}
 
 	openwebuiDeployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -297,7 +264,6 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 				},
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{container},
-					Volumes:    volumes,
 				},
 			},
 		},
@@ -651,134 +617,41 @@ func (r *LMDeploymentReconciler) buildOpenWebUIIngress(deployment *llmgeeperiov1
 	return ingress
 }
 
-// buildOpenWebUIConfigMap builds the OpenWebUI configuration ConfigMap
-func (r *LMDeploymentReconciler) buildOpenWebUIConfigMap(deployment *llmgeeperiov1alpha1.LMDeployment) *corev1.ConfigMap {
-	// Start with base configuration
-	config := map[string]interface{}{
-		"version": 0,
-		"ui": map[string]interface{}{
-			"enable_signup": false,
-		},
-		"openai": map[string]interface{}{
-			"enable":        false,
-			"api_base_urls": []string{"https://api.openai.com/v1"},
-			"api_keys":      []string{""},
-			"api_configs": map[string]interface{}{
-				"0": map[string]interface{}{},
-			},
-		},
-		"tool_server": map[string]interface{}{
-			"connections": []map[string]interface{}{},
-		},
+// buildOpenWebUISecret builds the OpenWebUI secret for WEBUI_SECRET_KEY
+func (r *LMDeploymentReconciler) buildOpenWebUISecret(deployment *llmgeeperiov1alpha1.LMDeployment) (*corev1.Secret, error) {
+	// Generate a secure random secret key
+	secretKey, err := r.generateSecureSecretKey()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate secure secret key: %w", err)
 	}
 
-	// Add tool server connections for each tool
-	if len(deployment.Spec.OpenWebUI.Tools) > 0 {
-		connections := []map[string]interface{}{}
-
-		for _, tool := range deployment.Spec.OpenWebUI.Tools {
-			if !tool.Enabled {
-				continue
-			}
-
-			// Build connection configuration
-			connection := map[string]interface{}{
-				"url":       fmt.Sprintf("http://%s:%d", deployment.GetToolServiceName(tool.Name), tool.Port),
-				"path":      "openapi.json", // Default OpenAPI path
-				"auth_type": "none",         // Default auth type
-				"key":       "",             // Default empty key
-				"config": map[string]interface{}{
-					"enable": true,
-					"access_control": map[string]interface{}{
-						"read": map[string]interface{}{
-							"group_ids": []string{},
-							"user_ids":  []string{},
-						},
-						"write": map[string]interface{}{
-							"group_ids": []string{},
-							"user_ids":  []string{},
-						},
-					},
-				},
-				"info": map[string]interface{}{
-					"name":        tool.Name,
-					"description": fmt.Sprintf("%s tool for %s", tool.Type, deployment.Name),
-				},
-			}
-
-			// Override defaults if ConfigMap is specified
-			if tool.ConfigMapName != "" {
-				connection["path"] = "openapi.json" // Could be made configurable
-			}
-
-			// Override auth type if Secret is specified
-			if tool.SecretName != "" {
-				connection["auth_type"] = "bearer" // Default to bearer when credentials are provided
-			}
-
-			connections = append(connections, connection)
-		}
-
-		config["tool_server"].(map[string]interface{})["connections"] = connections
-	}
-
-	// Add Pipelines connection if enabled
-	if deployment.Spec.OpenWebUI.Pipelines != nil && deployment.Spec.OpenWebUI.Pipelines.Enabled {
-		pipelinesConnections := []map[string]interface{}{}
-
-		// Add Pipelines connection
-		pipelinesConnection := map[string]interface{}{
-			"url":       fmt.Sprintf("http://%s:%d", deployment.GetPipelinesServiceName(), deployment.Spec.OpenWebUI.Pipelines.Port),
-			"path":      "openapi.json",
-			"auth_type": "none",
-			"key":       "",
-			"config": map[string]interface{}{
-				"enable": true,
-				"access_control": map[string]interface{}{
-					"read": map[string]interface{}{
-						"group_ids": []string{},
-						"user_ids":  []string{},
-					},
-					"write": map[string]interface{}{
-						"group_ids": []string{},
-						"user_ids":  []string{},
-					},
-				},
-			},
-			"info": map[string]interface{}{
-				"name":        "pipelines",
-				"description": fmt.Sprintf("OpenWebUI Pipelines for %s", deployment.Name),
-			},
-		}
-
-		pipelinesConnections = append(pipelinesConnections, pipelinesConnection)
-
-		// Add existing tool server connections if any
-		if existingConnections, exists := config["tool_server"].(map[string]interface{})["connections"]; exists {
-			if connections, ok := existingConnections.([]map[string]interface{}); ok {
-				pipelinesConnections = append(pipelinesConnections, connections...)
-			}
-		}
-
-		config["tool_server"].(map[string]interface{})["connections"] = pipelinesConnections
-	}
-
-	// Convert to JSON
-	configJSON, _ := json.MarshalIndent(config, "", "  ")
-
-	return &corev1.ConfigMap{
+	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("%s-openwebui-config", deployment.Name),
+			Name:      fmt.Sprintf("%s-openwebui-secret", deployment.Name),
 			Namespace: deployment.Namespace,
 			Labels: map[string]string{
 				"app":            "openwebui",
 				"llm-deployment": deployment.Name,
 			},
 		},
-		Data: map[string]string{
-			"config.json": string(configJSON),
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"WEBUI_SECRET_KEY": []byte(secretKey),
 		},
+	}, nil
+}
+
+// generateSecureSecretKey generates a cryptographically secure random secret key
+func (r *LMDeploymentReconciler) generateSecureSecretKey() (string, error) {
+	// Generate 32 random bytes (256 bits) for a strong secret
+	bytes := make([]byte, 32)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate random bytes: %w", err)
 	}
+
+	// Return the raw bytes as a string
+	return string(bytes), nil
 }
 
 // reconcileLangfuse reconciles the Langfuse deployment

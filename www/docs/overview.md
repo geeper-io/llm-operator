@@ -19,11 +19,9 @@ Geeper.AI is an open-source Kubernetes operator that extends Kubernetes with cus
 - **🚀 Easy LMDeployment**: Deploy LLM services with simple YAML configurations
 - **🔧 Multi-Model Support**: Support for various LLM frameworks (Ollama, OpenWebUI, Tabby, etc.)
 - **⚡ Auto-scaling**: Automatic scaling based on demand and resource usage
-- **🔄 Lifecycle Management**: Automated updates, rollbacks, and health monitoring
 - **🔒 Security**: Built-in security features and RBAC integration
 - **📊 Monitoring**: Comprehensive metrics and observability
 - **🌐 Multi-cluster**: Support for multi-cluster LMDeployments
-- **🔧 Tool System**: Extensible architecture with tool support
 - **⚡ Pipelines**: OpenWebUI Pipelines for custom workflows and integrations
 - **🔄 Redis Integration**: Automatic Redis deployment for multi-replica OpenWebUI
 
@@ -124,8 +122,8 @@ The operator watches for changes to custom resources and automatically:
 ## Next Steps
 
 - [Chat & Interaction](/docs/chat/openwebui) - Chat with LLMs using OpenWebUI
-- [RAG Integration](/docs/chat/rag) - Add Retrieval-Augmented Generation
-- [Tool System](/docs/chat/tools) - Extend functionality with tools
+- [RAG Integration](/docs/chat/rag) - Connect to external data sources
+- [Advanced Configuration](/docs/advanced/) - Pipelines, observability, and more
 - [Coding Assistants](/docs/coding-assistants/continue-dev) - AI-powered coding with Continue.dev and Tabby
 - [Installation Guide](/docs/installation) - Detailed installation instructions
 - [User Guide](/docs/usage) - Learn how to use Geeper.AI
