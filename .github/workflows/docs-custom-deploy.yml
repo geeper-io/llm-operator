@@ -9,17 +9,6 @@ on:
       - 'docs/**'
       - 'examples/**'
   workflow_dispatch:
-    inputs:
-      deploy_target:
-        description: 'Deployment target'
-        required: true
-        default: 'netlify'
-        type: choice
-        options:
-          - netlify
-          - vercel
-          - s3
-          - custom
 
 jobs:
   build:
