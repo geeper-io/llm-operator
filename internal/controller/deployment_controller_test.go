@@ -53,9 +53,7 @@ var _ = Describe("Deployment Controller", func() {
 					},
 					Spec: llmgeeperiov1alpha1.LMDeploymentSpec{
 						Ollama: llmgeeperiov1alpha1.OllamaSpec{
-							Models: []llmgeeperiov1alpha1.OllamaModel{
-								"llama2:7b",
-							},
+							Models: []string{"llama2:7b"},
 						},
 					},
 				}

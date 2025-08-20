@@ -284,18 +284,6 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 		}...)
 	}
 
-	// Set Langfuse URL for pipelines
-	if deployment.Spec.OpenWebUI.Langfuse != nil && deployment.Spec.OpenWebUI.Langfuse.Enabled {
-		langfuseSpec := deployment.Spec.OpenWebUI.Langfuse
-
-		// Use the external URL from the spec
-		if langfuseSpec.URL != "" {
-			langfuseURL = langfuseSpec.URL
-		}
-
-		// Langfuse environment variables are now set in the pipeline deployment
-	}
-
 	// Add custom environment variables if specified
 	if len(deployment.Spec.OpenWebUI.EnvVars) > 0 {
 		envVars = append(envVars, deployment.Spec.OpenWebUI.EnvVars...)
@@ -497,7 +485,7 @@ func (r *LMDeploymentReconciler) buildPipelinesDeployment(deployment *llmgeeperi
 			envVars = append(envVars, corev1.EnvVar{
 				Name: "LANGFUSE_SECRET_KEY",
 				ValueFrom: &corev1.EnvVarSource{
-					SecretKeySelector: &corev1.SecretKeySelector{
+					SecretKeyRef: &corev1.SecretKeySelector{
 						LocalObjectReference: corev1.LocalObjectReference{
 							Name: langfuseSpec.SecretRef.Name,
 						},

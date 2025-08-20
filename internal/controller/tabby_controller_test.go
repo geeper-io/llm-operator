@@ -38,15 +38,15 @@ func TestTabbyController_ConfigGeneration(t *testing.T) {
 				},
 				Spec: llmgeeperiov1alpha1.LMDeploymentSpec{
 					Ollama: llmgeeperiov1alpha1.OllamaSpec{
-						Models: []llmgeeperiov1alpha1.OllamaModel{
-							"codellama:7b",
-						},
+						Models: []string{"codellama:7b"},
 						Service: llmgeeperiov1alpha1.ServiceSpec{
 							Port: 11434,
 						},
 					},
 					Tabby: llmgeeperiov1alpha1.TabbySpec{
-						Enabled: true,
+						Enabled:         true,
+						ChatModel:       "codellama:7b",
+						CompletionModel: "codellama:7b",
 					},
 				},
 			}
@@ -81,7 +81,7 @@ func TestTabbyController_ConfigGeneration(t *testing.T) {
 				},
 				Spec: llmgeeperiov1alpha1.LMDeploymentSpec{
 					Ollama: llmgeeperiov1alpha1.OllamaSpec{
-						Models: []llmgeeperiov1alpha1.OllamaModel{
+						Models: []string{
 							"llama2:7b",
 							"codellama:13b",
 						},
@@ -90,8 +90,9 @@ func TestTabbyController_ConfigGeneration(t *testing.T) {
 						},
 					},
 					Tabby: llmgeeperiov1alpha1.TabbySpec{
-						Enabled:   true,
-						ModelName: "custom-model:latest",
+						Enabled:         true,
+						ChatModel:       "llama2:7b",
+						CompletionModel: "codellama:13b",
 					},
 				},
 			}
@@ -103,13 +104,13 @@ func TestTabbyController_ConfigGeneration(t *testing.T) {
   [model.completion]
     [model.completion.http]
       kind = "ollama/completion"
-      model_name = "custom-model:latest"
+      model_name = "codellama:13b"
       api_endpoint = "http://test-deployment-ollama.default:11434"
       prompt_template = "<PRE> {prefix} <SUF>{suffix} <MID>"
   [model.chat]
     [model.chat.http]
       kind = "ollama/chat"
-      model_name = "custom-model:latest"
+      model_name = "llama2:7b"
       api_endpoint = "http://test-deployment-ollama.default:11434"
   [model.embedding]
     [model.embedding.local]
@@ -126,15 +127,15 @@ func TestTabbyController_ConfigGeneration(t *testing.T) {
 				},
 				Spec: llmgeeperiov1alpha1.LMDeploymentSpec{
 					Ollama: llmgeeperiov1alpha1.OllamaSpec{
-						Models: []llmgeeperiov1alpha1.OllamaModel{
-							"llama2:7b",
-						},
+						Models: []string{"llama2:7b"},
 						Service: llmgeeperiov1alpha1.ServiceSpec{
 							Port: 8080,
 						},
 					},
 					Tabby: llmgeeperiov1alpha1.TabbySpec{
-						Enabled: true,
+						Enabled:         true,
+						ChatModel:       "llama2:7b",
+						CompletionModel: "llama2:7b",
 					},
 				},
 			}
@@ -173,15 +174,15 @@ func TestTabbyController_ConfigGeneration(t *testing.T) {
 				},
 				Spec: llmgeeperiov1alpha1.LMDeploymentSpec{
 					Ollama: llmgeeperiov1alpha1.OllamaSpec{
-						Models: []llmgeeperiov1alpha1.OllamaModel{
-							"test-model:1.0",
-						},
+						Models: []string{"test-model:1.0"},
 						Service: llmgeeperiov1alpha1.ServiceSpec{
 							Port: 11434,
 						},
 					},
 					Tabby: llmgeeperiov1alpha1.TabbySpec{
-						Enabled: true,
+						Enabled:         true,
+						ChatModel:       "test-model:1.0",
+						CompletionModel: "test-model:1.0",
 					},
 				},
 			}
