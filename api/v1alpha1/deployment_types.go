@@ -124,8 +124,13 @@ type TabbySpec struct {
 	// Ingress defines the ingress configuration for Tabby
 	Ingress IngressSpec `json:"ingress,omitempty"`
 
-	// ModelName is the name of the Ollama model to use for code completion
-	ModelName string `json:"modelName,omitempty"`
+	// ChatModel is the name of the Ollama model to use for chat functionality
+	// Must be one of the models specified in spec.ollama.models
+	ChatModel string `json:"chatModel"`
+
+	// CompletionModel is the name of the Ollama model to use for code completion
+	// Must be one of the models specified in spec.ollama.models
+	CompletionModel string `json:"completionModel"`
 
 	// EnvVars defines environment variables for Tabby
 	EnvVars []corev1.EnvVar `json:"envVars,omitempty"`

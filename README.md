@@ -295,9 +295,12 @@ spec:
 | `spec.tabby.replicas` | int32 | Number of Tabby pods | 1 |
 | `spec.tabby.image` | string | Tabby container image | `tabbyml/tabby` |
 | `spec.tabby.imageTag` | string | Tabby image tag | `latest` |
-| `spec.tabby.modelName` | string | Ollama model for code completion | First model from Ollama |
+| `spec.tabby.chatModel` | string | Ollama model for chat functionality | Required |
+| `spec.tabby.completionModel` | string | Ollama model for code completion | Required |
 | `spec.tabby.persistence.enabled` | bool | Enable data persistence | false |
 | `spec.tabby.persistence.size` | string | Storage size for persistence | "10Gi" |
+
+**Note**: Both `chatModel` and `completionModel` must be specified and must exist in `spec.ollama.models`.
 
 ### Langfuse Monitoring
 

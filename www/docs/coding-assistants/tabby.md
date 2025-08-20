@@ -42,8 +42,9 @@ spec:
   
   tabby:
     enabled: true
-    replicas: 2
     image: tabbyml/tabby:latest
+    chatModel: "llama2:7b"      # Must be in spec.ollama.models list
+    completionModel: "codellama:7b" # Must be in spec.ollama.models list
     resources:
       requests:
         cpu: "500m"
@@ -52,21 +53,17 @@ spec:
         cpu: "2"
         memory: "4Gi"
     ingress:
-      enabled: true
       host: "tabby.localhost"
+      annotations:
+        nginx.org/websocket-services: "tabby-with-ollama-tabby"
 ```
 
-## IDE Extension Support with Ingress
+## IDE extensions and Kubernetes Ingress
 
 For IDE extensions to work properly through ingress, you need to enable WebSocket support. Tabby uses WebSockets for streaming responses and real-time communication with IDE extensions.
+For detailed reverse proxy configuration, see the [official Tabby documentation](https://tabby.tabbyml.com/docs/administration/reverse-proxy/).
 
-### Service Naming Convention
-
-The operator automatically creates services with the pattern: `<deployment-name>-tabby`
-
-**Example**: For a deployment named `tabby-with-ollama`, the Tabby service will be `tabby-with-ollama-tabby`
-
-### WebSocket Annotations
+### Ingress Annotations
 
 #### HAProxy
 ```yaml
@@ -95,27 +92,11 @@ spec:
          nginx.org/websocket-services: "tabby-with-ollama-tabby"  # Use actual service name
 ```
 
-#### Custom NGINX Configuration
-```nginx
-location / {
-    proxy_pass       http://tabby-with-ollama-tabby:8080;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_http_version 1.1;
-    proxy_set_header Upgrade $http_upgrade;
-    proxy_set_header Connection "upgrade";
-}
-```
+#### Service naming convention
 
-### Why WebSocket Support is Important
+The operator automatically creates services with the pattern: `<deployment-name>-tabby`
 
-- **Real-time Communication**: IDE extensions need WebSockets for live code completion
-- **Streaming Responses**: Tabby streams completion suggestions as you type
-- **Low Latency**: WebSockets provide faster response times than HTTP polling
-- **IDE Integration**: Most modern IDEs expect WebSocket connections for AI assistants
-
-For detailed reverse proxy configuration, see the [official Tabby documentation](https://tabby.tabbyml.com/docs/administration/reverse-proxy/).
+**Example**: For a deployment named `tabby-with-ollama`, the Tabby service will be `tabby-with-ollama-tabby`
 
 ## Best Practices
 

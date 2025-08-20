@@ -372,16 +372,6 @@ func (r *LMDeploymentReconciler) buildTabbyPVC(deployment *llmgeeperiov1alpha1.L
 
 // generateTabbyConfig generates the Tabby TOML configuration
 func (r *LMDeploymentReconciler) generateTabbyConfig(deployment *llmgeeperiov1alpha1.LMDeployment) (string, error) {
-	// Determine the model to use for Tabby
-	var modelName string
-	if deployment.Spec.Tabby.ModelName != "" {
-		modelName = deployment.Spec.Tabby.ModelName
-	} else if len(deployment.Spec.Ollama.Models) > 0 {
-		modelName = string(deployment.Spec.Ollama.Models[0])
-	} else {
-		modelName = "codellama:7b" // fallback
-	}
-
 	// Build Ollama service host
 	ollamaHost := fmt.Sprintf("%s.%s:%d",
 		deployment.GetOllamaServiceName(),
@@ -394,17 +384,16 @@ func (r *LMDeploymentReconciler) generateTabbyConfig(deployment *llmgeeperiov1al
 			Completion: TabbyCompletionConfig{
 				HTTP: TabbyHTTPConfig{
 					Kind:           "ollama/completion",
-					ModelName:      modelName,
+					ModelName:      deployment.Spec.Tabby.CompletionModel,
 					APIEndpoint:    fmt.Sprintf("http://%s", ollamaHost),
 					PromptTemplate: "<PRE> {prefix} <SUF>{suffix} <MID>",
 				},
 			},
 			Chat: TabbyChatConfig{
 				HTTP: TabbyHTTPConfig{
-					Kind:            "openai/chat",
-					ModelName:       modelName,
-					SupportedModels: deployment.Spec.Ollama.Models,
-					APIEndpoint:     fmt.Sprintf("http://%s/v1", ollamaHost),
+					Kind:        "ollama/chat",
+					ModelName:   deployment.Spec.Tabby.ChatModel,
+					APIEndpoint: fmt.Sprintf("http://%s", ollamaHost),
 				},
 			},
 			Embedding: TabbyEmbeddingConfig{

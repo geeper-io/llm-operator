@@ -2569,6 +2569,16 @@ spec:
               tabby:
                 description: Tabby defines the Tabby deployment configuration
                 properties:
+                  chatModel:
+                    description: |-
+                      ChatModel is the name of the Ollama model to use for chat functionality
+                      Must be one of the models specified in spec.ollama.models
+                    type: string
+                  completionModel:
+                    description: |-
+                      CompletionModel is the name of the Ollama model to use for code completion
+                      Must be one of the models specified in spec.ollama.models
+                    type: string
                   configMapName:
                     description: ConfigMapName is the name of the ConfigMap containing
                       Tabby configuration
@@ -2712,10 +2722,6 @@ spec:
                         description: Host is the hostname for the Ingress
                         type: string
                     type: object
-                  modelName:
-                    description: ModelName is the name of the Ollama model to use
-                      for code completion
-                    type: string
                   persistence:
                     description: Persistence defines Tabby persistence configuration
                     properties:
@@ -4645,6 +4651,9 @@ spec:
                       - name
                       type: object
                     type: array
+                required:
+                - chatModel
+                - completionModel
                 type: object
             required:
             - ollama

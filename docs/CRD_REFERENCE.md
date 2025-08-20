@@ -100,20 +100,21 @@ The `LMDeploymentSpec` defines the desired state of the LMDeployment.
 
 ### TabbySpec
 
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `enabled` | bool | No | false | Enable Tabby LMDeployment |
-| `replicas` | int32 | No | 1 | Number of Tabby pods (1-5) |
-| `image` | string | No | `tabbyml/tabby` | Tabby container image |
-| `imageTag` | string | No | `latest` | Tabby image tag |
-| `resources` | [ResourceRequirements](#resourcerequirements) | No | None | Resource limits and requests |
-| `service` | [ServiceSpec](#servicespec) | No | Default service config | Service configuration |
-| `ingress` | [IngressSpec](#ingressspec) | No | Default ingress config | Ingress configuration |
-
-| `modelName` | string | No | Auto-detected | Ollama model to use for code completion |
-| `envVars` | [corev1.EnvVar](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#envvar-v1-core)[] | No | None | Custom environment variables |
-| `volumeMounts` | [corev1.VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#volumemount-v1-core)[] | No | None | Custom volume mounts |
-| `volumes` | [corev1.Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.33/#volume-v1-core)[] | No | None | Custom volumes |
+| Field | Required | Type | Default | Description |
+|-------|----------|------|---------|-------------|
+| `enabled` | No | bool | false | Enable Tabby LMDeployment |
+| `replicas` | No | int32 | 1 | Number of Tabby pods (1-5) |
+| `image` | No | string | `tabbyml/tabby` | Tabby container image |
+| `imageTag` | No | string | `latest` | Tabby image tag |
+| `chatModel` | **Yes** | string | - | Ollama model for chat functionality (must be in spec.ollama.models) |
+| `completionModel` | **Yes** | string | - | Ollama model for code completion (must be in spec.ollama.models) |
+| `resources` | No | ResourceRequirements | - | Resource limits and requests |
+| `service` | No | ServiceSpec | - | Service configuration |
+| `ingress` | No | IngressSpec | - | Ingress configuration |
+| `envVars` | No | []EnvVar | - | Environment variables |
+| `volumeMounts` | No | []VolumeMount | - | Volume mounts |
+| `volumes` | No | []Volume | - | Volumes |
+| `configMapName` | No | string | - | Custom ConfigMap for configuration |
 
 ### ResourceRequirements
 
@@ -277,26 +278,22 @@ spec:
     enabled: true
     replicas: 2
     image: "tabbyml/tabby"
-    imageTag: "latest"
+    chatModel: "codellama:7b"      # Must be in spec.ollama.models list
+    completionModel: "codellama:7b" # Must be in spec.ollama.models list
+    resources:
+      limits:
+        cpu: "2"
+        memory: "4Gi"
+      requests:
+        cpu: "500m"
+        memory: "1Gi"
     service:
       type: LoadBalancer
       port: 8080
     ingress:
-      enabled: true
       host: "tabby.example.com"
-    modelName: "codellama:13b"  # Use specific model
-    resources:
-      requests:
-        cpu: "500m"
-        memory: "1Gi"
-      limits:
-        cpu: "2000m"
-        memory: "2Gi"
-    envVars:
-      - name: "TABBY_LOG_LEVEL"
-        value: "debug"
-      - name: "TABBY_HOST"
-        value: "0.0.0.0"
+      annotations:
+        nginx.ingress.kubernetes.io/ssl-redirect: "true"
 ```
 
 ## Service Configuration

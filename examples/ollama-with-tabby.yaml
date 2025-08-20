@@ -23,6 +23,8 @@ spec:
   tabby:
     enabled: true
     image: makhov/tabby:0.0.3
+    chatModel: "smollm2:135m"      # Must be in spec.ollama.models list
+    completionModel: "smollm2:135m" # Must be in spec.ollama.models list
     ingress:
       host: "tabby.localhost"
       annotations:
