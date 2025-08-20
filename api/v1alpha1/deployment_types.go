@@ -23,10 +23,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// OllamaModel defines a model to be deployed with Ollama
-// Format: "modelname:tag" (e.g., "llama2:7b", "mistral:7b", "codellama:13b")
-type OllamaModel string
-
 // OllamaSpec defines the desired state of Ollama deployment
 type OllamaSpec struct {
 	// Replicas is the number of Ollama pods to run
@@ -41,7 +37,7 @@ type OllamaSpec struct {
 	Resources ResourceRequirements `json:"resources,omitempty"`
 
 	// Models is the list of models to deploy with Ollama
-	Models []OllamaModel `json:"models"`
+	Models []string `json:"models"`
 
 	// Service defines the service configuration for Ollama
 	Service ServiceSpec `json:"service,omitempty"`

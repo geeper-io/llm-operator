@@ -198,7 +198,7 @@ func (in *OllamaSpec) DeepCopyInto(out *OllamaSpec) {
 	in.Resources.DeepCopyInto(&out.Resources)
 	if in.Models != nil {
 		in, out := &in.Models, &out.Models
-		*out = make([]OllamaModel, len(*in))
+		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
 	out.Service = in.Service

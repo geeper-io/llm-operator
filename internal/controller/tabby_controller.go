@@ -401,9 +401,10 @@ func (r *LMDeploymentReconciler) generateTabbyConfig(deployment *llmgeeperiov1al
 			},
 			Chat: TabbyChatConfig{
 				HTTP: TabbyHTTPConfig{
-					Kind:        "openai/chat",
-					ModelName:   modelName,
-					APIEndpoint: fmt.Sprintf("http://%s/v1", ollamaHost),
+					Kind:            "openai/chat",
+					ModelName:       modelName,
+					SupportedModels: deployment.Spec.Ollama.Models,
+					APIEndpoint:     fmt.Sprintf("http://%s/v1", ollamaHost),
 				},
 			},
 			Embedding: TabbyEmbeddingConfig{
@@ -448,10 +449,11 @@ type TabbyEmbeddingConfig struct {
 }
 
 type TabbyHTTPConfig struct {
-	Kind           string `toml:"kind"`
-	ModelName      string `toml:"model_name"`
-	APIEndpoint    string `toml:"api_endpoint"`
-	PromptTemplate string `toml:"prompt_template,omitempty"`
+	Kind            string   `toml:"kind"`
+	ModelName       string   `toml:"model_name"`
+	APIEndpoint     string   `toml:"api_endpoint"`
+	SupportedModels []string `toml:"supported_models,omitempty"`
+	PromptTemplate  string   `toml:"prompt_template,omitempty"`
 }
 
 type TabbyLocalConfig struct {
