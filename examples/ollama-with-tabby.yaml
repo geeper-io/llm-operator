@@ -1,0 +1,29 @@
+apiVersion: llm.geeper.io/v1alpha1
+kind: LMDeployment
+metadata:
+  name: minimal-ollama
+  namespace: default
+spec:
+  ollama:
+    models:
+#      - "llama3.2:1b"
+#      - "gemma3:270m"
+      - "smollm2:135m"
+#      - "qwen2.5-coder:0.5b"
+#      - "qwen3:0.6b"
+  openwebui:
+    enabled: true
+    envVars:
+      - name: ENABLE_WEB_SEARCH
+        value: "True"
+      - name: WEB_SEARCH_ENGINE
+        value: "duckduckgo"
+    ingress:
+      host: "openwebui.localhost"
+  tabby:
+    enabled: true
+    image: makhov/tabby:0.0.3
+    ingress:
+      host: "tabby.localhost"
+      annotations:
+        haproxy.org/ssl-passthrough: "true"

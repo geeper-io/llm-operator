@@ -1,144 +1,38 @@
 ---
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: clickhouse
-  labels:
-    app: clickhouse
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: clickhouse
-  template:
-    metadata:
-      labels:
-        app: clickhouse
-    spec:
-      containers:
-        - name: clickhouse
-          image: clickhouse/clickhouse-server:24.1
-          env:
-            - name: CLICKHOUSE_PASSWORD
-              value: "langfuse-clickhouse-password"
-          ports:
-            - containerPort: 8123   # HTTP interface
-            - containerPort: 9000   # Native TCP interface
----
 apiVersion: v1
-kind: Service
+kind: Secret
 metadata:
-  name: clickhouse
-  labels:
-    app: clickhouse
-spec:
-  type: ClusterIP
-  ports:
-    - name: http
-      port: 8123
-      targetPort: 8123
-    - name: native
-      port: 9000
-      targetPort: 9000
-  selector:
-    app: clickhouse
----
-# PostgreSQL Deployment for Langfuse
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: postgres
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: postgres
-  template:
-    metadata:
-      labels:
-        app: postgres
-    spec:
-      containers:
-        - name: postgres
-          image: 'postgres:14'
-          imagePullPolicy: IfNotPresent
-          ports:
-            - containerPort: 5432
-          env:
-            - name: POSTGRES_USER
-              value: langfuse
-            - name: POSTGRES_PASSWORD
-              value: langfuse
-            - name: POSTGRES_DB
-              value: langfuse
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: postgres
-  labels:
-    app: postgres
-spec:
-  type: NodePort
-  ports:
-    - port: 5432
-  selector:
-    app: postgres
+  name: langfuse-credentials
+  namespace: default
+type: Opaque
+stringData:
+  LANGFUSE_PUBLIC_KEY: "your-langfuse-public-key"
+  LANGFUSE_SECRET_KEY: "your-langfuse-secret-key"
 ---
 apiVersion: llm.geeper.io/v1alpha1
 kind: LMDeployment
 metadata:
   name: openwebui-with-langfuse
   namespace: default
-  labels:
-    app: openwebui-with-langfuse
-    component: ai-chat-with-monitoring
 spec:
   ollama:
     models:
+      - "llama3.2:1b"
       - "gemma3:270m"
+  
   openwebui:
     enabled: true
+    image: ghcr.io/open-webui/open-webui:main
     replicas: 1
-    ingress:
-      host: openwebui.localhost
+    service:
+      type: ClusterIP
+      port: 8080
+
     langfuse:
       enabled: true
-      debug: false
-      deploy:
-        envVars:
-          - name: LANGFUSE_PROJECT_NAME
-            value: "openwebui-project"
-          - name: DATABASE_URL
-            value: "postgres://langfuse:langfuse@postgres:5432/langfuse"
-          - name: CLICKHOUSE_CLUSTER_ENABLED
-            value: "false"
-          - name: CLICKHOUSE_URL
-            value: http://clickhouse:8123
-          - name: CLICKHOUSE_MIGRATION_URL
-            value: clickhouse://clickhouse:9000
-          - name: CLICKHOUSE_USER
-            value: default
-          - name: CLICKHOUSE_PASSWORD
-            value: "langfuse-clickhouse-password"
-          - name: NEXTAUTH_URL
-            value: "http://langfuse.localhost"
-          - name: NEXT_PUBLIC_API_URL
-            value: "http://langfuse.localhost"
-          - name: HOSTNAME
-            value: "0.0.0.0"
-          - name:  NEXT_PUBLIC_BASE_PATH
-            value: ""
-          - name:  NEXT_RUNTIME
-            value: "nodejs"
-          - name:  NEXT_SHARP_PATH
-            value: "/app/node_modules/sharp"
-          - name: NEXTAUTH_SECRET
-            value: "langfuse-next-secret"
-          - name: SALT
-            value: "langfuse-next-salt"
-          - name: ENCRYPTION_KEY
-            value: "c696b2d7f26042011ae76cfe94bdae305faeed4ae0f172c0939d0d17a0789234"
-
-        ingress:
-          host: langfuse.localhost
+      url: "https://cloud.langfuse.com"  # External Langfuse instance
+      projectName: "my-openwebui-project"
+      environment: "production"
+      secretRef:
+        name: "langfuse-credentials"  # Reference to the secret above
+        namespace: "default"

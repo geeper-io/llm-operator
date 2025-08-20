@@ -19,37 +19,7 @@ Tabby is a self-hosted AI coding assistant that provides:
 - **Customizable**: Configurable completion behavior and models
 - **Enterprise Ready**: Built for production use
 
-## LMDeployment with Geeper.AI
-
-### Basic Tabby LMDeployment
-
-```yaml
-apiVersion: llm.geeper.io/v1alpha1
-kind: LMDeployment
-metadata:
-  name: tabby-server
-  namespace: default
-spec:
-  tabby:
-    enabled: true
-    replicas: 2
-    image: tabbyml/tabby:latest
-    resources:
-      requests:
-        cpu: "1"
-        memory: "2Gi"
-      limits:
-        cpu: "4"
-        memory: "8Gi"
-    service:
-      type: ClusterIP
-      port: 8080
-    ingress:
-      enabled: true
-      host: "tabby.example.com"
-```
-
-### Tabby with Ollama Backend
+## Example deployment with Tabby
 
 ```yaml
 apiVersion: llm.geeper.io/v1alpha1

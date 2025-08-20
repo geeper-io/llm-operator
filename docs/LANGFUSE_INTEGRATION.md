@@ -1,307 +1,253 @@
-# Langfuse Integration with Geeper.AI
+# Langfuse Integration Guide
 
-Langfuse is a powerful LLM observability and monitoring platform that provides comprehensive insights into your AI applications. This guide shows you how to integrate Langfuse with your Geeper.AI deployments using OpenWebUI Pipelines.
+Langfuse provides comprehensive monitoring and observability for your LLM applications. This guide covers how to integrate Langfuse with the LLM Operator.
 
-## What is Langfuse?
+## Overview
 
-Langfuse is an open-source LLM observability platform that helps you:
+Langfuse tracks and analyzes:
+- **LLM API calls** and responses
+- **Performance metrics** (latency, token usage, costs)
+- **Error monitoring** and debugging
+- **Usage patterns** and analytics
+- **Pipeline execution** tracking
 
-- **Track LLM Requests**: Monitor all interactions with your language models
-- **Analyze Performance**: Measure latency, token usage, and costs
-- **Evaluate Quality**: Assess response relevance and accuracy
-- **Optimize Costs**: Monitor and control AI spending
-- **Debug Issues**: Identify and resolve problems quickly
+## Deployment Options
 
-## Prerequisites
+### 1. Langfuse Cloud (Recommended)
 
-- Geeper.AI operator deployed in your cluster
-- Langfuse account (cloud or self-hosted)
-- OpenWebUI Pipelines enabled in your deployment
-
-## Quick Start
-
-### 1. Get Langfuse Credentials
-
-1. **Sign up** at [Langfuse Cloud](https://cloud.langfuse.com) or deploy self-hosted
-2. **Create a project** for your AI application
-3. **Generate API keys** (Public Key and Secret Key)
-4. **Note your project name** and environment
-
-### 2. Setup Database Infrastructure (Required for Self-Hosted)
-
-Before deploying Langfuse, you need to set up the required databases:
+**Best for**: Production environments, teams, enterprise use
+**Benefits**: Fully managed, automatic updates, enterprise features
 
 ```bash
-# Apply the database infrastructure
-kubectl apply -f examples/langfuse-databases.yaml
+# 1. Create account at https://langfuse.com
+# 2. Get your API keys from the dashboard
+# 3. Create Kubernetes secret
+kubectl create secret generic langfuse-credentials \
+  --from-literal=LANGFUSE_PUBLIC_KEY="your-public-key" \
+  --from-literal=LANGFUSE_SECRET_KEY="your-secret-key" \
+  -n default
 
-# Wait for databases to be ready
-kubectl wait --for=condition=ready pod -l app=postgres --timeout=300s
-kubectl wait --for=condition=ready pod -l app=clickhouse --timeout=300s
+# 4. Configure in your LMDeployment
 ```
 
-### 3. Enable Langfuse in Your LMDeployment
+**Configuration:**
+```yaml
+langfuse:
+  enabled: true
+  url: "https://cloud.langfuse.com"
+  projectName: "my-llm-project"
+  environment: "production"
+  secretRef:
+    name: "langfuse-credentials"
+    namespace: "default"
+```
+
+### 2. Self-Hosted Langfuse
+
+**Best for**: Data sovereignty, custom configurations, air-gapped environments
+
+#### Quick Start with Helm
+
+```bash
+# Add Helm repository
+helm repo add langfuse https://langfuse.github.io/langfuse-k8s
+helm repo update
+
+# Install with default configuration
+helm install langfuse langfuse/langfuse -n default
+
+# Get the service URL
+kubectl get svc langfuse-web -n default
+```
+
+#### Production Configuration
+
+Create `langfuse-values.yaml`:
+
+```yaml
+langfuse:
+  resources:
+    limits:
+      cpu: "2"
+      memory: "4Gi"
+    requests:
+      cpu: "2"
+      memory: "4Gi"
+  
+  ingress:
+    enabled: true
+    hosts:
+    - host: langfuse.your-domain.com
+      paths:
+      - path: /
+        pathType: Prefix
+
+postgresql:
+  primary:
+    persistence:
+      enabled: true
+      size: "20Gi"
+      storageClass: "fast-ssd"
+
+clickhouse:
+  persistence:
+    enabled: true
+    size: "50Gi"
+    storageClass: "fast-ssd"
+
+redis:
+  primary:
+    persistence:
+      enabled: true
+      size: "10Gi"
+      storageClass: "fast-ssd"
+```
+
+Install with custom values:
+```bash
+helm install langfuse langfuse/langfuse -f langfuse-values.yaml -n default
+```
+
+#### Self-Hosting Resources
+
+- [Official Helm Chart](https://github.com/langfuse/langfuse-k8s)
+- [Self-Hosting Documentation](https://langfuse.com/self-hosting)
+- [Production Sizing Guide](https://github.com/langfuse/langfuse-k8s#sizing)
+- [Troubleshooting Guide](https://github.com/langfuse/langfuse-k8s/blob/main/TROUBLESHOOTING.md)
+
+## Integration with LLM Operator
+
+### Automatic Pipeline Configuration
+
+When Langfuse is enabled, the operator automatically:
+1. **Configures OpenWebUI pipelines** with Langfuse monitoring
+2. **Sets environment variables** for Langfuse connection
+3. **Mounts credentials** from Kubernetes secrets
+4. **Enables request tracking** for all LLM interactions
+
+### Configuration Example
 
 ```yaml
 apiVersion: llm.geeper.io/v1alpha1
 kind: LMDeployment
 metadata:
-  name: my-ai-app
+  name: monitored-llm-app
+  namespace: default
 spec:
+  ollama:
+    models:
+      - "llama3.2:1b"
+      - "gemma3:270m"
+  
   openwebui:
     enabled: true
+    image: ghcr.io/open-webui/open-webui:main
     
-    # Enable Langfuse monitoring
+    # Langfuse monitoring
     langfuse:
       enabled: true
-      projectName: "my-ai-project"
-      environment: "production"
-      debug: false
-      
-      # Self-hosted configuration
-      deploy:
-        image: langfuse/langfuse:3.75.2
-        replicas: 1
-        port: 3000
-        serviceType: ClusterIP
-        resources:
-          limits:
-            cpu: "1"
-            memory: "2Gi"
-          requests:
-            cpu: "500m"
-            memory: "1Gi"
-        persistence:
-          enabled: true
-          size: "10Gi"
-        ingress:
-          host: "langfuse.yourdomain.com"
-        envVars:
-          # Database configuration
-          - name: DATABASE_URL
-            value: "postgres://langfuse:langfuse@postgres:5432/langfuse"
-          - name: CLICKHOUSE_URL
-            value: "http://clickhouse:8123"
-          - name: CLICKHOUSE_MIGRATION_URL
-            value: "clickhouse://clickhouse:9000"
-          - name: CLICKHOUSE_USER
-            value: "default"
-          - name: CLICKHOUSE_PASSWORD
-            value: "langfuse-clickhouse-password"
-          # Authentication
-          - name: NEXTAUTH_SECRET
-            value: "your-nextauth-secret"
-          - name: SALT
-            value: "your-salt"
-          - name: ENCRYPTION_KEY
-            value: "your-encryption-key"
-
-**💡 Automatic Pipeline Inclusion**: When you enable Langfuse monitoring, the Langfuse monitoring pipeline is automatically added to your pipelines configuration. You don't need to manually specify it unless you want to customize the pipeline URL.
-
-**💡 Worker Mode**: The Langfuse worker automatically starts in worker mode when the `WORKER_MODE=true` environment variable is set. No additional command-line arguments are needed.
-
-### 4. Apply the Configuration
-
-```bash
-# Apply the main deployment
-kubectl apply -f deployment-with-langfuse.yaml
-
-# Wait for Langfuse to be ready
-kubectl wait --for=condition=ready pod -l app=langfuse --timeout=300s
-kubectl wait --for=condition=ready pod -l app=langfuse-worker --timeout=300s
+      url: "https://langfuse.your-domain.com"  # Self-hosted
+      # url: "https://cloud.langfuse.com"      # Cloud
+      projectName: "llm-operator-demo"
+      environment: "staging"
+      secretRef:
+        name: "langfuse-credentials"
+        namespace: "default"
+      debug: true
+    
+    # Pipelines (auto-enabled with Langfuse)
+    pipelines:
+      enabled: true
+      image: ghcr.io/open-webui/pipelines:main
+      persistence:
+        enabled: true
+        size: "5Gi"
 ```
 
-### 5. Verify Integration
+### Secret Management
 
-```bash
-# Check Langfuse deployments
-kubectl get deployment -l app=langfuse
-kubectl get deployment -l app=langfuse-worker
-
-# Check Langfuse services
-kubectl get service -l app=langfuse
-
-# Check Langfuse pods
-kubectl get pods -l app=langfuse
-kubectl get pods -l app=langfuse-worker
-
-# Check Langfuse logs
-kubectl logs -l app=langfuse -f
-kubectl logs -l app=langfuse-worker -f
-
-# Look for successful startup messages
-# The worker should start automatically when WORKER_MODE=true is set
-```
-
-## Configuration Options
-
-### Basic Langfuse Configuration
-
-| Field | Required | Description |
-|-------|----------|-------------|
-| `enabled` | Yes | Set to `true` to enable Langfuse monitoring |
-| `url` | Yes | Langfuse server URL |
-| `publicKey` | Yes | Your Langfuse public key |
-| `secretKey` | Yes | Your Langfuse secret key |
-| `projectName` | Yes | Name of your Langfuse project |
-| `environment` | No | Environment name (default: "production") |
-| `debug` | No | Enable debug logging (default: false) |
-
-### Langfuse URL Options
-
-- **Langfuse Cloud**: `https://cloud.langfuse.com`
-- **Self-hosted**: `http://your-langfuse-instance:3000`
-- **Custom domain**: `https://langfuse.yourdomain.com`
-
-## Advanced Configuration
-
-### Production Setup with Secrets
-
-For production deployments, use Kubernetes secrets for sensitive data:
+The operator expects a Kubernetes secret with Langfuse credentials:
 
 ```yaml
 apiVersion: v1
 kind: Secret
 metadata:
   name: langfuse-credentials
+  namespace: default
 type: Opaque
-data:
-  public-key: <base64-encoded-public-key>
-  secret-key: <base64-encoded-secret-key>
----
-apiVersion: llm.geeper.io/v1alpha1
-kind: LMDeployment
-metadata:
-  name: production-ai-app
-spec:
-  openwebui:
-    enabled: true
-    
-    # Langfuse monitoring configuration
-    langfuse:
-      enabled: true
-      url: "https://cloud.langfuse.com"
-      publicKey: "your-public-key"  # Use secret in production
-      secretKey: "your-secret-key"  # Use secret in production
-      projectName: "production-ai"
-      environment: "production"
-    
-    # Enable pipelines for additional functionality
-    pipelines:
-      enabled: true
-      image: ghcr.io/open-webui/pipelines:main
-      pipelineUrls:
-        - "https://github.com/open-webui/pipelines/blob/main/examples/filters/langfuse_filter_pipeline.py"
+stringData:
+  LANGFUSE_PUBLIC_KEY: "your-public-key"
+  LANGFUSE_SECRET_KEY: "your-secret-key"
 ```
 
-### Multi-Environment Setup
+## Monitoring Features
 
-Configure different environments for development, staging, and production:
+### Request Tracking
+
+- **Input/Output**: Track all prompts and responses
+- **Metadata**: Model used, parameters, timestamps
+- **Performance**: Latency, token usage, costs
+- **Errors**: Failed requests and error details
+
+### Analytics Dashboard
+
+Access your Langfuse dashboard to view:
+- **Request Volume**: Number of API calls over time
+- **Performance Metrics**: Average latency, token usage
+- **Cost Analysis**: Token costs and usage patterns
+- **Error Rates**: Failed request percentages
+- **Model Usage**: Which models are used most
+
+### Pipeline Monitoring
+
+Track OpenWebUI pipeline execution:
+- **Pipeline Steps**: Monitor each step in your RAG workflows
+- **Execution Time**: Identify bottlenecks in your pipelines
+- **Success Rates**: Track pipeline completion rates
+- **Resource Usage**: Monitor pipeline resource consumption
+
+## Best Practices
+
+### 1. Environment Separation
 
 ```yaml
 # Development
 langfuse:
-  enabled: true
-  url: "https://cloud.langfuse.com"
-  publicKey: "dev-public-key"
-  secretKey: "dev-secret-key"
-  projectName: "ai-app-dev"
   environment: "development"
+  projectName: "llm-app-dev"
 
-# Staging
+# Staging  
 langfuse:
-  enabled: true
-  url: "https://cloud.langfuse.com"
-  publicKey: "staging-public-key"
-  secretKey: "staging-secret-key"
-  projectName: "ai-app-staging"
   environment: "staging"
+  projectName: "llm-app-staging"
 
 # Production
 langfuse:
-  enabled: true
-  url: "https://cloud.langfuse.com"
-  publicKey: "prod-public-key"
-  secretKey: "prod-secret-key"
-  projectName: "ai-app-prod"
   environment: "production"
+  projectName: "llm-app-prod"
 ```
 
-## What Gets Monitored
+### 2. Resource Planning
 
-When Langfuse is enabled, the following data is automatically tracked:
+**Self-Hosting Requirements:**
+- **Langfuse**: 2 CPU, 4Gi RAM minimum
+- **PostgreSQL**: 2 CPU, 8Gi RAM minimum
+- **ClickHouse**: 2 CPU, 8Gi RAM minimum
+- **Redis**: 1 CPU, 1.5Gi RAM minimum
 
-### Request Information
-- **User Input**: The original user message or prompt
-- **Model Used**: Which LLM model processed the request
-- **Timestamp**: When the request was made
-- **User ID**: Identifier for the user (if available)
+### 3. Security
 
-### Response Data
-- **Model Output**: The generated response
-- **Token Usage**: Number of input and output tokens
-- **Latency**: Time taken to generate the response
-- **Cost**: Estimated cost of the request
+- **Use Kubernetes secrets** for credential storage
+- **Enable RBAC** for secret access control
+- **Network policies** to restrict access
+- **TLS encryption** for external access
 
-### Metadata
-- **Pipeline Information**: Which pipelines processed the request
-- **Filter Results**: Content filtering and rate limiting outcomes
-- **Error Information**: Any errors that occurred during processing
+### 4. Monitoring
 
-## Viewing Your Data
-
-### 1. Langfuse Dashboard
-
-1. **Log into** your Langfuse account
-2. **Navigate to** your project
-3. **View the dashboard** showing:
-   - Request volume and trends
-   - Performance metrics
-   - Cost analysis
-   - Quality scores
-
-### 2. Key Metrics
-
-- **Request Volume**: Number of requests over time
-- **Latency**: Response time distribution
-- **Token Usage**: Input/output token consumption
-- **Costs**: Spending trends and breakdowns
-- **Quality**: Response relevance scores
-
-### 3. Request Details
-
-Click on individual requests to see:
-- **Full conversation context**
-- **Model parameters used**
-- **Pipeline processing steps**
-- **Performance metrics**
-- **Cost breakdown**
-
-## Best Practices
-
-### 1. Security
-- **Use secrets** for API keys in production
-- **Rotate keys** regularly
-- **Limit access** to Langfuse credentials
-- **Monitor usage** for unusual patterns
-
-### 2. Data Management
-- **Set retention policies** for old data
-- **Anonymize sensitive information** if needed
-- **Comply with data regulations** (GDPR, CCPA, etc.)
-- **Regular backups** of important data
-
-### 3. Performance
-- **Monitor pipeline latency** impact
-- **Optimize batch sizes** for high-volume deployments
-- **Use appropriate log levels** (avoid debug in production)
-- **Scale pipelines** based on monitoring needs
-
-### 4. Cost Optimization
-- **Track token usage** patterns
-- **Identify expensive models** and requests
-- **Optimize prompts** to reduce token consumption
-- **Set up alerts** for cost thresholds
+- **Health checks** for all components
+- **Resource monitoring** (CPU, memory, disk)
+- **Log aggregation** and analysis
+- **Alerting** for critical issues
 
 ## Troubleshooting
 
@@ -309,62 +255,42 @@ Click on individual requests to see:
 
 1. **Connection Failed**
    - Verify Langfuse URL is accessible
-   - Check API keys are correct
-   - Ensure network policies allow outbound connections
+   - Check secret credentials are correct
+   - Ensure network policies allow connection
 
-2. **No Data Appearing**
+2. **No Data in Dashboard**
+   - Verify Langfuse is enabled in configuration
    - Check pipeline logs for errors
-   - Verify project name matches exactly
-   - Ensure environment is set correctly
+   - Verify secret is properly mounted
 
-3. **High Latency**
-   - Monitor pipeline resource usage
-   - Check Langfuse server performance
-   - Consider using self-hosted instance for better performance
+3. **High Resource Usage**
+   - Adjust resource limits in Helm values
+   - Consider scaling up database resources
+   - Monitor ClickHouse performance
 
-4. **Worker Startup Issues**
-   - Ensure `WORKER_MODE=true` environment variable is set
-   - Check that all required environment variables are configured
-   - Verify database connectivity (PostgreSQL and ClickHouse)
-   - Check worker logs for specific error messages
+### Debug Mode
 
-### Debug Commands
+Enable debug logging to troubleshoot issues:
 
-```bash
-# Check pipeline status
-kubectl get pods -l app=pipelines
-
-# View pipeline logs
-kubectl logs -l app=pipelines -f
-
-# Check environment variables
-kubectl exec -it <pipeline-pod> -- env | grep LANGFUSE
-
-# Test Langfuse connectivity
-kubectl run test --rm -i --tty --image=curlimages/curl -- \
-  curl -H "Authorization: Bearer <your-secret-key>" \
-  https://cloud.langfuse.com/api/public/projects
+```yaml
+langfuse:
+  enabled: true
+  debug: true  # Enables verbose logging
 ```
 
-### Log Analysis
+### Getting Help
 
-Look for these messages in pipeline logs:
+- [Langfuse Documentation](https://langfuse.com/docs)
+- [Langfuse Community](https://github.com/langfuse/langfuse/discussions)
+- [Helm Chart Issues](https://github.com/langfuse/langfuse-k8s/issues)
 
-```
-✅ Langfuse connection established
-✅ Project "my-project" found
-✅ Monitoring enabled for environment "production"
-❌ Langfuse connection failed: Invalid API key
-❌ Project "invalid-project" not found
-```
+## Migration from Self-Hosted to Cloud
 
-## Next Steps
+If you want to migrate from self-hosted to Langfuse Cloud:
 
-- [OpenWebUI Pipelines](PIPELINES.md) - Learn more about pipeline capabilities
-- [Example Configurations](../examples/openwebui-with-langfuse.yaml) - Complete setup examples
-- [Langfuse Documentation](https://langfuse.com/docs) - Official Langfuse guides
-- [Monitoring Best Practices](MONITORING.md) - Production monitoring strategies
+1. **Export Data**: Use Langfuse export features
+2. **Update Configuration**: Change URL to cloud instance
+3. **Migrate Credentials**: Update secret with cloud API keys
+4. **Verify Integration**: Test monitoring functionality
 
----
-
-*Langfuse integration provides comprehensive observability into your AI applications, helping you optimize performance, control costs, and deliver better user experiences.*
+The operator handles the transition seamlessly - just update the URL and credentials!

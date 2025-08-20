@@ -247,12 +247,34 @@ spec:
 | `spec.tabby.replicas` | int32 | Number of Tabby pods | 1 |
 | `spec.tabby.image` | string | Tabby container image | `tabbyml/tabby` |
 | `spec.tabby.imageTag` | string | Tabby image tag | `latest` |
-| `spec.tabby.service.type` | string | Service type (ClusterIP, NodePort, LoadBalancer) | `ClusterIP` |
-| `spec.tabby.service.port` | int32 | Service port | `8080` |
-| `spec.tabby.ingress.enabled` | bool | Enable ingress | false |
-| `spec.tabby.ingress.host` | string | Ingress hostname | None |
-| `spec.tabby.modelName` | string | Ollama model to use | Auto-detected |
-| `spec.tabby.configMapName` | string | Custom ConfigMap for configuration | Auto-generated |
+| `spec.tabby.modelName` | string | Ollama model for code completion | First model from Ollama |
+| `spec.tabby.persistence.enabled` | bool | Enable data persistence | false |
+| `spec.tabby.persistence.size` | string | Storage size for persistence | "10Gi" |
+
+### Langfuse Monitoring
+
+Langfuse provides comprehensive monitoring and observability for your LLM applications:
+
+| Field | Type | Description | Default |
+|-------|------|-------------|---------|
+| `spec.openwebui.langfuse.enabled` | bool | Enable Langfuse monitoring | false |
+| `spec.openwebui.langfuse.url` | string | External Langfuse instance URL | Required |
+| `spec.openwebui.langfuse.projectName` | string | Langfuse project name | Deployment name |
+| `spec.openwebui.langfuse.environment` | string | Environment name | "development" |
+| `spec.openwebui.langfuse.secretRef.name` | string | Kubernetes secret name | Required |
+| `spec.openwebui.langfuse.secretRef.namespace` | string | Secret namespace | "default" |
+| `spec.openwebui.langfuse.debug` | bool | Enable debug logging | false |
+
+**Langfuse Options:**
+- **Langfuse Cloud**: Use managed service at `https://cloud.langfuse.com`
+- **Self-Hosted**: Deploy using [official Helm chart](https://github.com/langfuse/langfuse-k8s)
+
+**Features:**
+- 📊 **Request Tracking**: Monitor all LLM API calls and responses
+- 🔍 **Performance Analytics**: Track latency, token usage, and costs
+- 🚨 **Error Monitoring**: Identify and debug failed requests
+- 📈 **Usage Metrics**: Understand application usage patterns
+- 🔗 **Pipeline Integration**: Automatic OpenWebUI pipeline configuration
 
 ## Monitoring
 
@@ -332,4 +354,13 @@ kubectl get all -l ollama-deployment=ollama-example
 ## License
 
 This project is licensed under the Apache License 2.0.
+
+## Documentation
+
+- [Quick Start Guide](docs/QUICKSTART.md) - Get started with the operator
+- [CRD Reference](docs/CRD_REFERENCE.md) - Complete API documentation
+- [Controller Architecture](docs/CONTROLLER_ARCHITECTURE.md) - How the operator works
+- [Pipelines Guide](docs/PIPELINES.md) - OpenWebUI Pipelines integration
+- [Langfuse Integration](docs/LANGFUSE_INTEGRATION.md) - Monitoring and observability
+- [Security Guide](docs/SECURITY_IMPROVEMENTS.md) - Security best practices
 

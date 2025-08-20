@@ -24,22 +24,22 @@ Langfuse is an open-source LLM observability and monitoring platform that helps 
 
 ### 1. Set Up Langfuse
 
-#### Option A: Langfuse Cloud (Recommended for Production)
+#### Option A: Langfuse Cloud
 1. Go to [cloud.langfuse.com](https://cloud.langfuse.com)
 2. Create a new account and project
 3. Get your API keys from the project settings
 
-#### Option B: Self-Hosted Langfuse
+#### Option B: Self-Hosted Langfuse 
 ```bash
-# Using Docker Compose
-git clone https://github.com/langfuse/langfuse
-cd langfuse
-docker-compose up -d
+# Install Langfuse using Helm
+helm repo add langfuse https://langfuse.github.io/langfuse-k8s
+helm repo update
+helm install langfuse langfuse/langfuse -f values.yaml
 ```
 
-### 2. Enable Langfuse in Your LMDeployment
+See the Langfuse [documentation](https://docs.langfuse.com) and [Helm repo](https://github.com/langfuse/langfuse-k8s) for more details on self-hosting.
 
-#### Option A: Use External Langfuse (Cloud or Self-Hosted)
+### 2. Enable Langfuse in Your LMDeployment
 
 ```yaml
 apiVersion: llm.geeper.io/v1alpha1
@@ -62,38 +62,6 @@ spec:
     
     # Pipelines will be automatically enabled for Langfuse monitoring
     # No need to explicitly set pipelines.enabled = true
-```
-
-#### Option B: Auto-Deploy Self-Hosted Langfuse
-
-```yaml
-apiVersion: llm.geeper.io/v1alpha1
-kind: LMDeployment
-metadata:
-  name: my-ai-app
-spec:
-  openwebui:
-    enabled: true
-    
-    # Enable Langfuse monitoring with auto-deployment
-    langfuse:
-      enabled: true
-      # No URL provided - will deploy self-hosted Langfuse automatically
-      projectName: "my-ai-project"
-      environment: "production"
-      debug: false
-      
-      # Optional: Configure self-hosted deployment
-      deploy:
-        image: langfuse/langfuse:latest
-        replicas: 1
-        port: 3000
-        persistence:
-          enabled: true
-          size: "10Gi"
-    
-    # Pipelines will be automatically enabled for Langfuse monitoring
-    # Langfuse monitoring pipeline will be automatically added
 ```
 
 ### 3. Deploy and Monitor

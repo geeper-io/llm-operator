@@ -181,50 +181,16 @@ func (r *LMDeploymentReconciler) setDefaults(deployment *llmgeeperiov1alpha1.LMD
 		deployment.Spec.OpenWebUI.Redis.Password = "redis-password-123"
 	}
 
-	// Set OpenWebUI Langfuse defaults and auto-enable pipelines if needed
+	// Set default Langfuse configuration if enabled
 	if deployment.Spec.OpenWebUI.Langfuse != nil && deployment.Spec.OpenWebUI.Langfuse.Enabled {
-		// Auto-enable pipelines if Langfuse is enabled
-		if deployment.Spec.OpenWebUI.Pipelines == nil {
-			deployment.Spec.OpenWebUI.Pipelines = &llmgeeperiov1alpha1.PipelinesSpec{}
-		}
-		deployment.Spec.OpenWebUI.Pipelines.Enabled = true
-
-		// Set Langfuse defaults
+		// Set default project name if not provided
 		if deployment.Spec.OpenWebUI.Langfuse.ProjectName == "" {
 			deployment.Spec.OpenWebUI.Langfuse.ProjectName = deployment.Name
 		}
+
+		// Set default environment if not provided
 		if deployment.Spec.OpenWebUI.Langfuse.Environment == "" {
-			deployment.Spec.OpenWebUI.Langfuse.Environment = "production"
-		}
-
-		// If no URL is provided, set up self-hosted Langfuse defaults
-		if deployment.Spec.OpenWebUI.Langfuse.URL == "" {
-			if deployment.Spec.OpenWebUI.Langfuse.Deploy == nil {
-				deployment.Spec.OpenWebUI.Langfuse.Deploy = &llmgeeperiov1alpha1.LangfuseDeploySpec{}
-			}
-
-			// Set self-hosted defaults
-			if deployment.Spec.OpenWebUI.Langfuse.Deploy.Image == "" {
-				deployment.Spec.OpenWebUI.Langfuse.Deploy.Image = "langfuse/langfuse:latest"
-			}
-			if deployment.Spec.OpenWebUI.Langfuse.Deploy.Replicas == 0 {
-				deployment.Spec.OpenWebUI.Langfuse.Deploy.Replicas = 1
-			}
-			if deployment.Spec.OpenWebUI.Langfuse.Deploy.Port == 0 {
-				deployment.Spec.OpenWebUI.Langfuse.Deploy.Port = 3000
-			}
-			if deployment.Spec.OpenWebUI.Langfuse.Deploy.ServiceType == "" {
-				deployment.Spec.OpenWebUI.Langfuse.Deploy.ServiceType = "ClusterIP"
-			}
-
-			// Set persistence defaults
-			if deployment.Spec.OpenWebUI.Langfuse.Deploy.Persistence == nil {
-				deployment.Spec.OpenWebUI.Langfuse.Deploy.Persistence = &llmgeeperiov1alpha1.LangfusePersistenceSpec{}
-			}
-			if deployment.Spec.OpenWebUI.Langfuse.Deploy.Persistence.Size == "" {
-				deployment.Spec.OpenWebUI.Langfuse.Deploy.Persistence.Size = "10Gi"
-			}
-
+			deployment.Spec.OpenWebUI.Langfuse.Environment = "development"
 		}
 	}
 

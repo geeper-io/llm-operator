@@ -105,9 +105,8 @@ func (r *LMDeploymentReconciler) reconcileOpenWebUI(ctx context.Context, deploym
 
 	// Reconcile Langfuse if enabled
 	if deployment.Spec.OpenWebUI.Langfuse != nil && deployment.Spec.OpenWebUI.Langfuse.Enabled {
-		if err := r.reconcileLangfuse(ctx, deployment); err != nil {
-			return err
-		}
+		// Langfuse is now external-only, no deployment needed
+		// Configuration is handled via environment variables in pipelines
 	}
 
 	// Create or update OpenWebUI PVC if persistence is enabled
@@ -285,14 +284,13 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 		}...)
 	}
 
-	// Add Langfuse environment variables if enabled
+	// Set Langfuse URL for pipelines
 	if deployment.Spec.OpenWebUI.Langfuse != nil && deployment.Spec.OpenWebUI.Langfuse.Enabled {
 		langfuseSpec := deployment.Spec.OpenWebUI.Langfuse
 
-		// Determine Langfuse URL - use self-hosted service if no external URL
-		langfuseURL := langfuseSpec.URL
-		if langfuseURL == "" && langfuseSpec.Deploy != nil {
-			langfuseURL = fmt.Sprintf("http://%s:%d", deployment.GetLangfuseServiceName(), langfuseSpec.Deploy.Port)
+		// Use the external URL from the spec
+		if langfuseSpec.URL != "" {
+			langfuseURL = langfuseSpec.URL
 		}
 
 		// Langfuse environment variables are now set in the pipeline deployment
@@ -473,9 +471,6 @@ func (r *LMDeploymentReconciler) buildPipelinesDeployment(deployment *llmgeeperi
 
 		// Determine Langfuse URL - use self-hosted service if no external URL
 		langfuseURL := langfuseSpec.URL
-		if langfuseURL == "" && langfuseSpec.Deploy != nil {
-			langfuseURL = fmt.Sprintf("http://%s:%d", deployment.GetLangfuseServiceName(), langfuseSpec.Deploy.Port)
-		}
 
 		// Add Langfuse environment variables
 		if langfuseURL != "" {
@@ -485,17 +480,30 @@ func (r *LMDeploymentReconciler) buildPipelinesDeployment(deployment *llmgeeperi
 			})
 		}
 
-		if langfuseSpec.PublicKey != "" {
+		// Add Langfuse credentials from SecretRef if provided
+		if langfuseSpec.SecretRef != nil {
 			envVars = append(envVars, corev1.EnvVar{
-				Name:  "LANGFUSE_PUBLIC_KEY",
-				Value: langfuseSpec.PublicKey,
+				Name: "LANGFUSE_PUBLIC_KEY",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeyRef: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: langfuseSpec.SecretRef.Name,
+						},
+						Key: "LANGFUSE_PUBLIC_KEY",
+					},
+				},
 			})
-		}
 
-		if langfuseSpec.SecretKey != "" {
 			envVars = append(envVars, corev1.EnvVar{
-				Name:  "LANGFUSE_SECRET_KEY",
-				Value: langfuseSpec.SecretKey,
+				Name: "LANGFUSE_SECRET_KEY",
+				ValueFrom: &corev1.EnvVarSource{
+					SecretKeySelector: &corev1.SecretKeySelector{
+						LocalObjectReference: corev1.LocalObjectReference{
+							Name: langfuseSpec.SecretRef.Name,
+						},
+						Key: "LANGFUSE_SECRET_KEY",
+					},
+				},
 			})
 		}
 
