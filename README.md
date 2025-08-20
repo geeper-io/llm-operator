@@ -159,8 +159,56 @@ Tabby provides AI-powered code completion by connecting to your Ollama models. I
 - Provides a REST API for code completion
 - Supports multiple programming languages
 - Can be accessed via ingress for external integration
-- Mounts configuration to `~/.tabby/config.toml` for easy customization
+- Mounts configuration to `/data/config.toml` for easy customization
 - Includes local embedding model (Nomic-Embed-Text) by default
+
+#### IDE Extension Support with Ingress
+
+For IDE extensions to work properly through ingress, you need to enable WebSocket support. Tabby uses WebSockets for streaming responses and real-time communication.
+
+**Service Naming Convention:**
+The operator automatically creates services with the pattern: `<deployment-name>-tabby`
+
+**Example**: For a deployment named `minimal-ollama`, the Tabby service will be `minimal-ollama-tabby`
+
+**WebSocket Annotations:**
+
+**HAProxy:**
+```yaml
+tabby:
+  enabled: true
+  ingress:
+    host: "tabby.example.com"
+    annotations:
+      haproxy.org/ssl-passthrough: "true"
+      haproxy.org/websocket-services: "ws-svc"
+```
+
+**NGINX:**
+```yaml
+tabby:
+  enabled: true
+  ingress:
+    host: "tabby.example.com"
+    annotations:
+      nginx.org/websocket-services: "ws-svc"
+      nginx.org/websocket-services: "minimal-ollama-tabby"  # Use actual service name
+```
+
+**Custom NGINX Configuration:**
+```nginx
+location / {
+    proxy_pass       http://minimal-ollama-tabby:8080;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+}
+```
+
+For detailed reverse proxy configuration, see the [official Tabby documentation](https://tabby.tabbyml.com/docs/administration/reverse-proxy/).
 
 ### OpenWebUI with Automatic Secret Management
 
@@ -363,4 +411,3 @@ This project is licensed under the Apache License 2.0.
 - [Pipelines Guide](docs/PIPELINES.md) - OpenWebUI Pipelines integration
 - [Langfuse Integration](docs/LANGFUSE_INTEGRATION.md) - Monitoring and observability
 - [Security Guide](docs/SECURITY_IMPROVEMENTS.md) - Security best practices
-

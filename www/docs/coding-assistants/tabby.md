@@ -51,13 +51,71 @@ spec:
       limits:
         cpu: "2"
         memory: "4Gi"
-    service:
-      type: ClusterIP
-      port: 8080
     ingress:
       enabled: true
       host: "tabby.localhost"
 ```
+
+## IDE Extension Support with Ingress
+
+For IDE extensions to work properly through ingress, you need to enable WebSocket support. Tabby uses WebSockets for streaming responses and real-time communication with IDE extensions.
+
+### Service Naming Convention
+
+The operator automatically creates services with the pattern: `<deployment-name>-tabby`
+
+**Example**: For a deployment named `tabby-with-ollama`, the Tabby service will be `tabby-with-ollama-tabby`
+
+### WebSocket Annotations
+
+#### HAProxy
+```yaml
+tabby:
+  enabled: true
+  ingress:
+    host: "tabby.example.com"
+    annotations:
+      haproxy.org/ssl-passthrough: "true" # enables TCP mode
+```
+
+#### NGINX
+```yaml
+apiVersion: llm.geeper.io/v1alpha1
+kind: LMDeployment
+metadata:
+   name: tabby-with-ollama
+   namespace: default
+spec:
+   …
+   tabby:
+     enabled: true
+     ingress:
+       host: "tabby.example.com"
+       annotations:
+         nginx.org/websocket-services: "tabby-with-ollama-tabby"  # Use actual service name
+```
+
+#### Custom NGINX Configuration
+```nginx
+location / {
+    proxy_pass       http://tabby-with-ollama-tabby:8080;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+}
+```
+
+### Why WebSocket Support is Important
+
+- **Real-time Communication**: IDE extensions need WebSockets for live code completion
+- **Streaming Responses**: Tabby streams completion suggestions as you type
+- **Low Latency**: WebSockets provide faster response times than HTTP polling
+- **IDE Integration**: Most modern IDEs expect WebSocket connections for AI assistants
+
+For detailed reverse proxy configuration, see the [official Tabby documentation](https://tabby.tabbyml.com/docs/administration/reverse-proxy/).
 
 ## Best Practices
 
