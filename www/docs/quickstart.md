@@ -34,7 +34,7 @@ helm install llm-operator llm-operator/llm-operator \
 
 ```bash
 # Apply the operator manifests
-kubectl apply -f https://raw.githubusercontent.com/geeper-ai/llm-operator/main/install.yaml
+kubectl apply -f https://raw.githubusercontent.com/geeper-io/llm-operator/main/install.yaml
 ```
 
 ## 2. Deploy Your First LLM
@@ -116,7 +116,7 @@ curl -X POST http://llm.localhost:11434/api/generate \
 ## What's Next?
 
 - [Advanced Configuration](/docs/advanced/) - Learn about pipelines, observability, and more
-- [Examples](https://github.com/geeper-ai/llm-operator/tree/main/examples) - Explore production-ready configurations
+- [Examples](https://github.com/geeper-io/llm-operator/tree/main/examples) - Explore production-ready configurations
 - [API Reference](/docs/crd-reference) - Complete CRD documentation
 
 ## Troubleshooting
@@ -127,6 +127,6 @@ If you encounter issues:
 2. Verify operator status: `kubectl get pods -n llm-operator`
 3. Check events: `kubectl describe lmdeployment my-first-llm`
 
-For more help, visit our [GitHub Discussions](https://github.com/geeper-ai/llm-operator/discussions) or [Issues](https://github.com/geeper-ai/llm-operator/issues).
+For more help, visit our [GitHub Discussions](https://github.com/geeper-io/llm-operator/discussions) or [Issues](https://github.com/geeper-io/llm-operator/issues).
 
 

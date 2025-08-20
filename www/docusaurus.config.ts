@@ -15,14 +15,14 @@ const config: Config = {
   },
 
   // Set the production url of your site here
-  url: 'https://your-docusaurus-site.example.com',
+  url: 'https://geeper-io.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, this is often '/<projectName>/'
-  baseUrl: '/',
+  baseUrl: '/llm-operator/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'geeper-ai', // Usually your GitHub org/user name.
+  organizationName: 'geeper-io', // Usually your GitHub org/user name.
   projectName: 'llm-operator', // Usually your repo name.
 
   onBrokenLinks: 'warn',
@@ -45,7 +45,7 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/geeper-ai/llm-operator/tree/main/www/docs/',
+            'https://github.com/geeper-io/llm-operator/tree/main/www/docs/',
           // Versioning
           versions: {
             current: {
@@ -67,7 +67,7 @@ const config: Config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/geeper-ai/llm-operator/tree/main/www/blog/',
+            'https://github.com/geeper-io/llm-operator/tree/main/www/blog/',
           // Useful options to enforce blogging best practices
           onInlineTags: 'warn',
           onInlineAuthors: 'warn',
@@ -105,7 +105,7 @@ const config: Config = {
           dropdownActiveClassDisabled: true,
         },
         {
-          href: 'https://github.com/geeper-ai/llm-operator',
+          href: 'https://github.com/geeper-io/llm-operator',
           className: "header-github-link",
           position: 'right',
           'aria-label': 'GitHub repository',
@@ -133,15 +133,15 @@ const config: Config = {
           items: [
             {
               label: 'GitHub Discussions',
-              href: 'https://github.com/geeper-ai/llm-operator/discussions',
+              href: 'https://github.com/geeper-io/llm-operator/discussions',
             },
             {
               label: 'Issues',
-              href: 'https://github.com/geeper-ai/llm-operator/issues',
+              href: 'https://github.com/geeper-io/llm-operator/issues',
             },
             {
               label: 'Releases',
-              href: 'https://github.com/geeper-ai/llm-operator/releases',
+              href: 'https://github.com/geeper-io/llm-operator/releases',
             },
           ],
         },
@@ -154,11 +154,11 @@ const config: Config = {
             },
             {
               label: 'Examples',
-              href: 'https://github.com/geeper-ai/llm-operator/tree/main/examples',
+              href: 'https://github.com/geeper-io/llm-operator/tree/main/examples',
             },
             {
               label: 'Contributing',
-              href: 'https://github.com/geeper-ai/llm-operator/blob/main/CONTRIBUTING.md',
+              href: 'https://github.com/geeper-io/llm-operator/blob/main/CONTRIBUTING.md',
             },
           ],
         },
