@@ -14,10 +14,19 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	llmgeeperiov1alpha1 "github.com/geeper-io/llm-operator/api/v1alpha1"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 // reconcileTabby reconciles the Tabby deployment
 func (r *LMDeploymentReconciler) reconcileTabby(ctx context.Context, deployment *llmgeeperiov1alpha1.LMDeployment) error {
+	// Create or update Tabby PVC if persistence is enabled
+	if deployment.Spec.Tabby.Persistence.Enabled {
+		tabbyPVC := r.buildTabbyPVC(deployment)
+		if err := r.ensurePVC(ctx, tabbyPVC); err != nil {
+			return err
+		}
+	}
+
 	// Create or update Tabby ConfigMap
 	tabbyConfigMap := r.buildTabbyConfigMap(deployment)
 	if err := r.createOrUpdateConfigMap(ctx, tabbyConfigMap); err != nil {
@@ -80,12 +89,12 @@ func (r *LMDeploymentReconciler) buildTabbyDeployment(deployment *llmgeeperiov1a
 	// Build volume mounts
 	volumeMounts := []corev1.VolumeMount{
 		{
-			Name:      "tabby-data",
-			MountPath: "/data",
+			Name:      "tabby-config",
+			MountPath: "/tmp/config",
 		},
 		{
-			Name:      "tabby-config",
-			MountPath: "/root/.tabby",
+			Name:      "tabby-data",
+			MountPath: "/data",
 		},
 	}
 
@@ -96,12 +105,6 @@ func (r *LMDeploymentReconciler) buildTabbyDeployment(deployment *llmgeeperiov1a
 
 	// Build volumes
 	volumes := []corev1.Volume{
-		{
-			Name: "tabby-data",
-			VolumeSource: corev1.VolumeSource{
-				EmptyDir: &corev1.EmptyDirVolumeSource{},
-			},
-		},
 		{
 			Name: "tabby-config",
 			VolumeSource: corev1.VolumeSource{
@@ -118,6 +121,27 @@ func (r *LMDeploymentReconciler) buildTabbyDeployment(deployment *llmgeeperiov1a
 				},
 			},
 		},
+	}
+
+	// Add tabby-data volume based on persistence configuration
+	if deployment.Spec.Tabby.Persistence.Enabled {
+		// Use PVC for persistence
+		volumes = append(volumes, corev1.Volume{
+			Name: "tabby-data",
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: deployment.GetTabbyPVCName(),
+				},
+			},
+		})
+	} else {
+		// Use EmptyDir for non-persistent storage
+		volumes = append(volumes, corev1.Volume{
+			Name: "tabby-data",
+			VolumeSource: corev1.VolumeSource{
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
+			},
+		})
 	}
 
 	// Add custom volumes
@@ -141,10 +165,28 @@ func (r *LMDeploymentReconciler) buildTabbyDeployment(deployment *llmgeeperiov1a
 					Labels: labels,
 				},
 				Spec: corev1.PodSpec{
+					InitContainers: []corev1.Container{
+						{
+							Name:    "tabby-config-init",
+							Image:   "busybox:1.35",
+							Command: []string{"/bin/sh"},
+							Args: []string{
+								"-c",
+								"cp /tmp/config/config.toml /data/config.toml && echo 'Config file copied successfully'",
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "tabby-config",
+									MountPath: "/tmp/config",
+								},
+							},
+						},
+					},
 					Containers: []corev1.Container{
 						{
 							Name:  "tabby",
 							Image: image,
+							Args:  []string{"serve"},
 							Ports: []corev1.ContainerPort{
 								{
 									Name:          "http",
@@ -291,6 +333,43 @@ func (r *LMDeploymentReconciler) buildTabbyConfigMap(deployment *llmgeeperiov1al
 	}
 }
 
+// buildTabbyPVC builds the Tabby PVC object
+func (r *LMDeploymentReconciler) buildTabbyPVC(deployment *llmgeeperiov1alpha1.LMDeployment) *corev1.PersistentVolumeClaim {
+	labels := map[string]string{
+		"app":            "tabby",
+		"llm-deployment": deployment.Name,
+	}
+
+	// Set default values
+	var storageClass *string
+	if deployment.Spec.Tabby.Persistence.StorageClass != "" {
+		storageClass = &deployment.Spec.Tabby.Persistence.StorageClass
+	}
+	size := deployment.Spec.Tabby.Persistence.Size
+	if size == "" {
+		size = "10Gi" // Default size
+	}
+
+	return &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      deployment.GetTabbyPVCName(),
+			Namespace: deployment.Namespace,
+			Labels:    labels,
+		},
+		Spec: corev1.PersistentVolumeClaimSpec{
+			AccessModes: []corev1.PersistentVolumeAccessMode{
+				corev1.ReadWriteOnce,
+			},
+			StorageClassName: storageClass,
+			Resources: corev1.VolumeResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceStorage: resource.MustParse(size),
+				},
+			},
+		},
+	}
+}
+
 // generateTabbyConfig generates the Tabby TOML configuration
 func (r *LMDeploymentReconciler) generateTabbyConfig(deployment *llmgeeperiov1alpha1.LMDeployment) (string, error) {
 	// Determine the model to use for Tabby
@@ -307,7 +386,7 @@ func (r *LMDeploymentReconciler) generateTabbyConfig(deployment *llmgeeperiov1al
 	ollamaHost := fmt.Sprintf("%s.%s:%d",
 		deployment.GetOllamaServiceName(),
 		deployment.Namespace,
-		deployment.Spec.Ollama.Service.Port)
+		deployment.GetOllamaServicePort())
 
 	// Create Tabby configuration
 	config := &TabbyConfig{
@@ -322,9 +401,9 @@ func (r *LMDeploymentReconciler) generateTabbyConfig(deployment *llmgeeperiov1al
 			},
 			Chat: TabbyChatConfig{
 				HTTP: TabbyHTTPConfig{
-					Kind:        "ollama/chat",
+					Kind:        "openai/chat",
 					ModelName:   modelName,
-					APIEndpoint: fmt.Sprintf("http://%s", ollamaHost),
+					APIEndpoint: fmt.Sprintf("http://%s/v1", ollamaHost),
 				},
 			},
 			Embedding: TabbyEmbeddingConfig{

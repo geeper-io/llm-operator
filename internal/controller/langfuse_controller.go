@@ -82,12 +82,12 @@ func (r *LMDeploymentReconciler) reconcileLangfuse(ctx context.Context, deployme
 		return fmt.Errorf("failed to create Langfuse secrets: %w", err)
 	}
 
-	// Create or update PVC if persistence is enabled
+	// Create or update Langfuse PVC if persistence is enabled
 	if langfuseSpec.Deploy != nil &&
 		langfuseSpec.Deploy.Persistence != nil &&
 		langfuseSpec.Deploy.Persistence.Enabled {
 		pvc := r.buildLangfusePVC(deployment)
-		if err := r.createOrUpdatePVC(ctx, pvc); err != nil {
+		if err := r.ensurePVC(ctx, pvc); err != nil {
 			return err
 		}
 	}

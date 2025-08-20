@@ -55,7 +55,7 @@ func (r *LMDeploymentReconciler) reconcileRedis(ctx context.Context, deployment 
 	// Create or update Redis PVC if persistence is enabled
 	if deployment.Spec.OpenWebUI.Redis.Persistence.Enabled {
 		redisPVC := r.buildRedisPVC(deployment)
-		if err := r.createOrUpdatePVC(ctx, redisPVC); err != nil {
+		if err := r.ensurePVC(ctx, redisPVC); err != nil {
 			return err
 		}
 	}

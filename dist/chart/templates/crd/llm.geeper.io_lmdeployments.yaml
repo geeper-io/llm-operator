@@ -2943,6 +2943,20 @@ spec:
                     description: ModelName is the name of the Ollama model to use
                       for code completion
                     type: string
+                  persistence:
+                    description: Persistence defines Tabby persistence configuration
+                    properties:
+                      enabled:
+                        description: Enabled determines if Tabby data should be persisted
+                        type: boolean
+                      size:
+                        description: Size is the size of the persistent volume
+                        type: string
+                      storageClass:
+                        description: StorageClass is the storage class to use for
+                          persistent volumes
+                        type: string
+                    type: object
                   replicas:
                     description: Replicas is the number of Tabby pods to run
                     format: int32

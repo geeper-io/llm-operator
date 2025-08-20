@@ -111,10 +111,10 @@ func (r *LMDeploymentReconciler) reconcileOpenWebUI(ctx context.Context, deploym
 	}
 
 	// Create or update OpenWebUI PVC if persistence is enabled
-	if deployment.Spec.OpenWebUI.Persistence != nil && deployment.Spec.OpenWebUI.Persistence.Enabled {
+	if deployment.Spec.OpenWebUI.Persistence.Enabled {
 		pvc := r.buildOpenWebUIPVC(deployment)
-		if err := r.createOrUpdatePVC(ctx, pvc); err != nil {
-			return fmt.Errorf("failed to create or update OpenWebUI PVC: %w", err)
+		if err := r.ensurePVC(ctx, pvc); err != nil {
+			return err
 		}
 	}
 
@@ -168,10 +168,10 @@ func (r *LMDeploymentReconciler) reconcilePipelines(ctx context.Context, deploym
 		return fmt.Errorf("failed to ensure pipeline secret: %w", err)
 	}
 
-	// Create or update PVC if persistence is enabled
-	if deployment.Spec.OpenWebUI.Pipelines.Persistence != nil && deployment.Spec.OpenWebUI.Pipelines.Persistence.Enabled {
+	// Create or update Pipelines PVC if persistence is enabled
+	if deployment.Spec.OpenWebUI.Pipelines.Persistence.Enabled {
 		pvc := r.buildPipelinesPVC(deployment)
-		if err := r.createOrUpdatePVC(ctx, pvc); err != nil {
+		if err := r.ensurePVC(ctx, pvc); err != nil {
 			return err
 		}
 	}

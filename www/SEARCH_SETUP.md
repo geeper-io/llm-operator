@@ -209,3 +209,5 @@ algolia: {
 - **Admin API Key**: Never commit the admin API key
 - **Rate Limiting**: Algolia provides generous free tier limits
 - **Content Filtering**: Search results are based on your indexed content only
+
+

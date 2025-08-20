@@ -142,6 +142,9 @@ type TabbySpec struct {
 
 	// ConfigMapName is the name of the ConfigMap containing Tabby configuration
 	ConfigMapName string `json:"configMapName,omitempty"`
+
+	// Persistence defines Tabby persistence configuration
+	Persistence TabbyPersistenceSpec `json:"persistence,omitempty"`
 }
 
 // RedisSpec defines the Redis configuration for OpenWebUI
@@ -232,6 +235,18 @@ type PipelinesSpec struct {
 // PipelinesPersistenceSpec defines Pipelines persistence configuration
 type PipelinesPersistenceSpec struct {
 	// Enabled determines if Pipelines data should be persisted
+	Enabled bool `json:"enabled,omitempty"`
+
+	// StorageClass is the storage class to use for persistent volumes
+	StorageClass string `json:"storageClass,omitempty"`
+
+	// Size is the size of the persistent volume
+	Size string `json:"size,omitempty"`
+}
+
+// TabbyPersistenceSpec defines Tabby persistence configuration
+type TabbyPersistenceSpec struct {
+	// Enabled determines if Tabby data should be persisted
 	Enabled bool `json:"enabled,omitempty"`
 
 	// StorageClass is the storage class to use for persistent volumes
@@ -509,6 +524,11 @@ func (d *LMDeployment) GetTabbyIngressName() string {
 // GetTabbyConfigMapName returns the name of the Tabby ConfigMap for this deployment
 func (d *LMDeployment) GetTabbyConfigMapName() string {
 	return fmt.Sprintf("%s-tabby-config", d.Name)
+}
+
+// GetTabbyPVCName returns the name of the Tabby PVC for this deployment
+func (d *LMDeployment) GetTabbyPVCName() string {
+	return fmt.Sprintf("%s-tabby-data", d.Name)
 }
 
 // GetPipelinesServiceName returns the name of the Pipelines service for this deployment

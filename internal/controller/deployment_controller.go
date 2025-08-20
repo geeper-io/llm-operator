@@ -163,14 +163,6 @@ func (r *LMDeploymentReconciler) setDefaults(deployment *llmgeeperiov1alpha1.LMD
 		deployment.Spec.OpenWebUI.Service.Port = 8080
 	}
 
-	// Set OpenWebUI persistence defaults
-	if deployment.Spec.OpenWebUI.Persistence == nil {
-		deployment.Spec.OpenWebUI.Persistence = &llmgeeperiov1alpha1.OpenWebUIPersistenceSpec{}
-	}
-	if deployment.Spec.OpenWebUI.Persistence.Size == "" {
-		deployment.Spec.OpenWebUI.Persistence.Size = "1Gi"
-	}
-
 	// Set OpenWebUI Redis defaults
 	if deployment.Spec.OpenWebUI.Redis.Image == "" {
 		deployment.Spec.OpenWebUI.Redis.Image = "redis:7-alpine"
@@ -562,26 +554,20 @@ func (r *LMDeploymentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-// createOrUpdatePVC creates or updates a PersistentVolumeClaim
-func (r *LMDeploymentReconciler) createOrUpdatePVC(ctx context.Context, pvc *corev1.PersistentVolumeClaim) error {
+// ensurePVC creates a PersistentVolumeClaim only if it doesn't exist
+func (r *LMDeploymentReconciler) ensurePVC(ctx context.Context, pvc *corev1.PersistentVolumeClaim) error {
 	existing := &corev1.PersistentVolumeClaim{}
 	err := r.Get(ctx, types.NamespacedName{Name: pvc.Name, Namespace: pvc.Namespace}, existing)
 	if err != nil && errors.IsNotFound(err) {
-		// Create new PVC
+		// Create new PVC only if it doesn't exist
 		if err := r.Create(ctx, pvc); err != nil {
 			return err
 		}
-	} else if err == nil {
-		// Update existing PVC
-		if !reflect.DeepEqual(existing.Spec, pvc.Spec) {
-			existing.Spec = pvc.Spec
-			if err := r.Update(ctx, existing); err != nil {
-				return err
-			}
-		}
-	} else {
+	} else if err != nil {
+		// Return error if it's not a "not found" error
 		return err
 	}
+	// If PVC exists, do nothing (don't try to update immutable fields)
 	return nil
 }
 
