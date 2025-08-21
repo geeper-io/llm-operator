@@ -289,6 +289,7 @@ func (in *PipelinesPersistenceSpec) DeepCopy() *PipelinesPersistenceSpec {
 func (in *PipelinesSpec) DeepCopyInto(out *PipelinesSpec) {
 	*out = *in
 	in.Resources.DeepCopyInto(&out.Resources)
+	out.Service = in.Service
 	if in.PipelineURLs != nil {
 		in, out := &in.PipelineURLs, &out.PipelineURLs
 		*out = make([]string, len(*in))

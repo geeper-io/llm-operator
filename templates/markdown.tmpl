@@ -55,9 +55,9 @@ Resource Types:
   {{- end }}
   {{- if .Schema.Format }}*Format*: {{ template "mdxSafe" .Schema.Format }}<br/>{{- end }}
   {{- if .Schema.Enum }}*Enum*: {{ template "mdxSafe" ( .Schema.Enum | toStrings | join ", " ) }}<br/>{{- end }}
-  {{- if .Schema.Default }}*Default*: {{ template "mdxSafe" .Schema.Default }}<br/>{{- end }}
-  {{- if .Schema.Minimum }}*Minimum*: {{ template "mdxSafe" .Schema.Minimum }}<br/>{{- end }}
-  {{- if .Schema.Maximum }}*Maximum*: {{ template "mdxSafe" .Schema.Maximum }}<br/>{{- end }}
+  {{- if .Schema.Default }}*Default*: {{ .Schema.Default }}<br/>{{- end }}
+  {{- if .Schema.Minimum }}*Minimum*: {{ .Schema.Minimum }}<br/>{{- end }}
+  {{- if .Schema.Maximum }}*Maximum*: {{ .Schema.Maximum }}<br/>{{- end }}
 {{- end }} | {{ .Required }} |
 {{- end }}
 {{- end }}{{/* range .Types */}}

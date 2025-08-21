@@ -17,6 +17,9 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Check generated code to be consistent
+        run: make generate manifests generate-crd-docs && git diff --exit-code
+
       - name: Run linter
         uses: golangci/golangci-lint-action@v8
         with:

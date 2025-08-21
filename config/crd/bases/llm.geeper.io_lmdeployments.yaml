@@ -537,14 +537,27 @@ spec:
                                 type: string
                             type: object
                         type: object
-                      serviceType:
-                        description: ServiceType is the type of service to expose
-                          the Pipelines
+                      service:
+                        description: Service describes service to expose the Pipelines
                         enum:
                         - ClusterIP
                         - NodePort
                         - LoadBalancer
-                        type: string
+                        properties:
+                          port:
+                            description: Port is the port to expose the service
+                            format: int32
+                            maximum: 65535
+                            minimum: 1
+                            type: integer
+                          type:
+                            description: Type is the type of service to expose
+                            enum:
+                            - ClusterIP
+                            - NodePort
+                            - LoadBalancer
+                            type: string
+                        type: object
                       volumeMounts:
                         description: VolumeMounts defines volume mounts for the Pipelines
                         items:
@@ -2582,6 +2595,16 @@ spec:
                   configMapName:
                     description: ConfigMapName is the name of the ConfigMap containing
                       Tabby configuration
+                    type: string
+                  device:
+                    default: cpu
+                    description: Device specifies the device type for Tabby,
+                    enum:
+                    - cpu
+                    - cuda
+                    - rocm
+                    - metal
+                    - vulkan
                     type: string
                   enabled:
                     description: Enabled determines if Tabby should be deployed
