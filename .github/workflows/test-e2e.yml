@@ -6,8 +6,17 @@ on:
 
 jobs:
   test-e2e:
-    name: Run on Ubuntu
+    name: Run E2E Tests
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        e2e-suite:
+          - TestAdvancedLMDeploymentSuite
+          - TestBasicLMDeploymentSuite
+          - TestStatusLMDeploymentSuite
+          - TestOpenWebUILMDeploymentSuite
+          - TestTabbyLMDeploymentSuite
     steps:
       - name: Clone the code
         uses: actions/checkout@v4
@@ -29,4 +38,4 @@ jobs:
       - name: Running Test e2e
         run: |
           go mod tidy
-          make test-e2e
+          make test-e2e E2E_TEST=${{ matrix.e2e-suite }}
