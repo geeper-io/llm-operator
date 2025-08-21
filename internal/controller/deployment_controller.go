@@ -21,22 +21,19 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
-	"reflect"
-	"time"
-
+	llmgeeperiov1alpha1 "github.com/geeper-io/llm-operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"reflect"
+	"sigs.k8s.io/cluster-api/util/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	llmgeeperiov1alpha1 "github.com/geeper-io/llm-operator/api/v1alpha1"
 )
 
 const (
@@ -73,11 +70,8 @@ func (r *LMDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	err := r.Get(ctx, req.NamespacedName, deployment)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Return and don't requeue
 			return ctrl.Result{}, nil
 		}
-		// Error reading the object - requeue the request.
 		return ctrl.Result{}, err
 	}
 
@@ -85,8 +79,7 @@ func (r *LMDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	if !deployment.DeletionTimestamp.IsZero() {
 		// Resource is being deleted, handle finalization
 		if err := r.finalizeDeployment(ctx, deployment); err != nil {
-			logger.Error(err, "Failed to finalize deployment")
-			return ctrl.Result{RequeueAfter: time.Minute}, err
+			return ctrl.Result{}, fmt.Errorf("failed to finalize deployment: %w", err)
 		}
 		return ctrl.Result{}, nil
 	}
@@ -95,10 +88,9 @@ func (r *LMDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	if !containsFinalizer(deployment.Finalizers, FinalizerName) {
 		deployment.Finalizers = append(deployment.Finalizers, FinalizerName)
 		if err := r.Update(ctx, deployment); err != nil {
-			logger.Error(err, "Failed to add finalizer")
-			return ctrl.Result{RequeueAfter: time.Minute}, err
+			return ctrl.Result{}, fmt.Errorf("failed to add finalizer: %w", err)
 		}
-		return ctrl.Result{Requeue: true}, nil
+		return ctrl.Result{}, nil
 	}
 
 	// Set default values if not specified
@@ -106,33 +98,29 @@ func (r *LMDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	// Reconcile Ollama deployment
 	if err := r.reconcileOllama(ctx, deployment); err != nil {
-		logger.Error(err, "Failed to reconcile Ollama")
-		return ctrl.Result{RequeueAfter: time.Minute}, err
+		return ctrl.Result{}, fmt.Errorf("failed to reconcile Ollama: %w", err)
 	}
 
-	// Reconcile OpenWebUI deployment if enabled
 	if deployment.Spec.OpenWebUI.Enabled {
 		if err := r.reconcileOpenWebUI(ctx, deployment); err != nil {
-			logger.Error(err, "Failed to reconcile OpenWebUI")
-			return ctrl.Result{RequeueAfter: time.Minute}, err
+			return ctrl.Result{}, fmt.Errorf("failed to reconcile OpenWebUI: %w", err)
 		}
 	}
 
-	// Reconcile Tabby deployment if enabled
 	if deployment.Spec.Tabby.Enabled {
 		if err := r.reconcileTabby(ctx, deployment); err != nil {
-			logger.Error(err, "Failed to reconcile Tabby")
-			return ctrl.Result{RequeueAfter: time.Minute}, err
+			return ctrl.Result{}, fmt.Errorf("failed to reconcile Tabby: %w", err)
 		}
 	}
 
 	// Update status
 	if err := r.updateStatus(ctx, deployment); err != nil {
-		logger.Error(err, "Failed to update status")
-		return ctrl.Result{RequeueAfter: time.Minute}, err
+		return ctrl.Result{}, fmt.Errorf("failed to update deployment status: %w", err)
 	}
 
-	return ctrl.Result{RequeueAfter: time.Minute * 5}, nil
+	// Only requeue if there are actual changes that need monitoring
+	// If everything is stable, don't requeue unnecessarily
+	return ctrl.Result{}, nil
 }
 
 // setDefaults sets default values for the Deployment
@@ -303,7 +291,7 @@ func (r *LMDeploymentReconciler) buildResourceRequirements(resources llmgeeperio
 	return req
 }
 
-// createOrUpdateDeployment creates or updates a deployment
+// createOrUpdateDeployment creates or updates a deployment using patch helper to avoid unnecessary reconciliations
 func (r *LMDeploymentReconciler) createOrUpdateDeployment(ctx context.Context, deployment *appsv1.Deployment) error {
 	existing := &appsv1.Deployment{}
 	err := r.Get(ctx, types.NamespacedName{Name: deployment.Name, Namespace: deployment.Namespace}, existing)
@@ -313,11 +301,16 @@ func (r *LMDeploymentReconciler) createOrUpdateDeployment(ctx context.Context, d
 			return err
 		}
 	} else if err == nil {
-		// Update existing deployment
+		// Update existing deployment using patch helper
 		if !reflect.DeepEqual(existing.Spec, deployment.Spec) {
+			patchHelper, err := patch.NewHelper(existing, r.Client)
+			if err != nil {
+				return fmt.Errorf("failed to create patch helper for deployment %s: %w", deployment.Name, err)
+			}
+
 			existing.Spec = deployment.Spec
-			if err := r.Update(ctx, existing); err != nil {
-				return err
+			if err := patchHelper.Patch(ctx, existing); err != nil {
+				return fmt.Errorf("failed to patch deployment %s: %w", deployment.Name, err)
 			}
 		}
 	} else {
@@ -326,7 +319,7 @@ func (r *LMDeploymentReconciler) createOrUpdateDeployment(ctx context.Context, d
 	return nil
 }
 
-// createOrUpdateService creates or updates a service
+// createOrUpdateService creates or updates a service using patch helper to avoid unnecessary reconciliations
 func (r *LMDeploymentReconciler) createOrUpdateService(ctx context.Context, service *corev1.Service) error {
 	existing := &corev1.Service{}
 	err := r.Get(ctx, types.NamespacedName{Name: service.Name, Namespace: service.Namespace}, existing)
@@ -336,11 +329,16 @@ func (r *LMDeploymentReconciler) createOrUpdateService(ctx context.Context, serv
 			return err
 		}
 	} else if err == nil {
-		// Update existing service
+		// Update existing service using patch helper
 		if !reflect.DeepEqual(existing.Spec, service.Spec) {
+			patchHelper, err := patch.NewHelper(existing, r.Client)
+			if err != nil {
+				return fmt.Errorf("failed to create patch helper for service %s: %w", service.Name, err)
+			}
+
 			existing.Spec = service.Spec
-			if err := r.Update(ctx, existing); err != nil {
-				return err
+			if err := patchHelper.Patch(ctx, existing); err != nil {
+				return fmt.Errorf("failed to patch service %s: %w", service.Name, err)
 			}
 		}
 	} else {
@@ -349,7 +347,7 @@ func (r *LMDeploymentReconciler) createOrUpdateService(ctx context.Context, serv
 	return nil
 }
 
-// createOrUpdateIngress creates or updates an ingress
+// createOrUpdateIngress creates or updates an ingress using patch helper to avoid unnecessary reconciliations
 func (r *LMDeploymentReconciler) createOrUpdateIngress(ctx context.Context, ingress *networkingv1.Ingress) error {
 	existing := &networkingv1.Ingress{}
 	err := r.Get(ctx, types.NamespacedName{Name: ingress.Name, Namespace: ingress.Namespace}, existing)
@@ -359,11 +357,16 @@ func (r *LMDeploymentReconciler) createOrUpdateIngress(ctx context.Context, ingr
 			return err
 		}
 	} else if err == nil {
-		// Update existing ingress
+		// Update existing ingress using patch helper
 		if !reflect.DeepEqual(existing.Spec, ingress.Spec) {
+			patchHelper, err := patch.NewHelper(existing, r.Client)
+			if err != nil {
+				return fmt.Errorf("failed to create patch helper for ingress %s: %w", ingress.Name, err)
+			}
+
 			existing.Spec = ingress.Spec
-			if err := r.Update(ctx, existing); err != nil {
-				return err
+			if err := patchHelper.Patch(ctx, existing); err != nil {
+				return fmt.Errorf("failed to patch ingress %s: %w", ingress.Name, err)
 			}
 		}
 	} else {
@@ -372,7 +375,7 @@ func (r *LMDeploymentReconciler) createOrUpdateIngress(ctx context.Context, ingr
 	return nil
 }
 
-// createOrUpdateConfigMap creates or updates a ConfigMap
+// createOrUpdateConfigMap creates or updates a ConfigMap using patch helper to avoid unnecessary reconciliations
 func (r *LMDeploymentReconciler) createOrUpdateConfigMap(ctx context.Context, configMap *corev1.ConfigMap) error {
 	existing := &corev1.ConfigMap{}
 	err := r.Get(ctx, types.NamespacedName{Name: configMap.Name, Namespace: configMap.Namespace}, existing)
@@ -382,11 +385,16 @@ func (r *LMDeploymentReconciler) createOrUpdateConfigMap(ctx context.Context, co
 			return err
 		}
 	} else if err == nil {
-		// Update existing ConfigMap
+		// Update existing ConfigMap using patch helper
 		if !reflect.DeepEqual(existing.Data, configMap.Data) {
+			patchHelper, err := patch.NewHelper(existing, r.Client)
+			if err != nil {
+				return fmt.Errorf("failed to create patch helper for ConfigMap %s: %w", configMap.Name, err)
+			}
+
 			existing.Data = configMap.Data
-			if err := r.Update(ctx, existing); err != nil {
-				return err
+			if err := patchHelper.Patch(ctx, existing); err != nil {
+				return fmt.Errorf("failed to patch ConfigMap %s: %w", configMap.Name, err)
 			}
 		}
 	} else {
@@ -395,11 +403,16 @@ func (r *LMDeploymentReconciler) createOrUpdateConfigMap(ctx context.Context, co
 	return nil
 }
 
-// updateStatus updates the status of the Deployment
+// updateStatus updates the status of the Deployment using patch helper to avoid unnecessary reconciliations
 func (r *LMDeploymentReconciler) updateStatus(ctx context.Context, deployment *llmgeeperiov1alpha1.LMDeployment) error {
+	// Create patch helper before making any changes
+	patchHelper, err := patch.NewHelper(deployment, r.Client)
+	if err != nil {
+		return fmt.Errorf("failed to create patch helper: %w", err)
+	}
 	// Get Ollama deployment status
 	ollamaDeployment := &appsv1.Deployment{}
-	err := r.Get(ctx, types.NamespacedName{
+	err = r.Get(ctx, types.NamespacedName{
 		Name:      deployment.GetOllamaDeploymentName(),
 		Namespace: deployment.Namespace,
 	}, ollamaDeployment)
@@ -408,23 +421,12 @@ func (r *LMDeploymentReconciler) updateStatus(ctx context.Context, deployment *l
 		deployment.Status.OllamaStatus.AvailableReplicas = ollamaDeployment.Status.AvailableReplicas
 		deployment.Status.OllamaStatus.ReadyReplicas = ollamaDeployment.Status.ReadyReplicas
 		deployment.Status.OllamaStatus.UpdatedReplicas = ollamaDeployment.Status.UpdatedReplicas
-		// Convert DeploymentCondition to metav1.Condition
-		for _, cond := range ollamaDeployment.Status.Conditions {
-			metaCond := metav1.Condition{
-				Type:               string(cond.Type),
-				Status:             metav1.ConditionStatus(cond.Status),
-				LastTransitionTime: cond.LastTransitionTime,
-				Reason:             cond.Reason,
-				Message:            cond.Message,
-			}
-			deployment.Status.OllamaStatus.Conditions = append(deployment.Status.OllamaStatus.Conditions, metaCond)
-		}
 	}
 
 	// Get OpenWebUI deployment status if enabled
 	if deployment.Spec.OpenWebUI.Enabled {
 		openwebuiDeployment := &appsv1.Deployment{}
-		err := r.Get(ctx, types.NamespacedName{
+		err = r.Get(ctx, types.NamespacedName{
 			Name:      deployment.GetOpenWebUIDeploymentName(),
 			Namespace: deployment.Namespace,
 		}, openwebuiDeployment)
@@ -433,24 +435,13 @@ func (r *LMDeploymentReconciler) updateStatus(ctx context.Context, deployment *l
 			deployment.Status.OpenWebUIStatus.AvailableReplicas = openwebuiDeployment.Status.AvailableReplicas
 			deployment.Status.OpenWebUIStatus.ReadyReplicas = openwebuiDeployment.Status.ReadyReplicas
 			deployment.Status.OpenWebUIStatus.UpdatedReplicas = openwebuiDeployment.Status.UpdatedReplicas
-			// Convert DeploymentCondition to metav1.Condition
-			for _, cond := range openwebuiDeployment.Status.Conditions {
-				metaCond := metav1.Condition{
-					Type:               string(cond.Type),
-					Status:             metav1.ConditionStatus(cond.Status),
-					LastTransitionTime: cond.LastTransitionTime,
-					Reason:             cond.Reason,
-					Message:            cond.Message,
-				}
-				deployment.Status.OpenWebUIStatus.Conditions = append(deployment.Status.OpenWebUIStatus.Conditions, metaCond)
-			}
 		}
 	}
 
 	// Get Tabby deployment status if enabled
 	if deployment.Spec.Tabby.Enabled {
 		tabbyDeployment := &appsv1.Deployment{}
-		err := r.Get(ctx, types.NamespacedName{
+		err = r.Get(ctx, types.NamespacedName{
 			Name:      deployment.GetTabbyDeploymentName(),
 			Namespace: deployment.Namespace,
 		}, tabbyDeployment)
@@ -459,17 +450,6 @@ func (r *LMDeploymentReconciler) updateStatus(ctx context.Context, deployment *l
 			deployment.Status.TabbyStatus.AvailableReplicas = tabbyDeployment.Status.AvailableReplicas
 			deployment.Status.TabbyStatus.ReadyReplicas = tabbyDeployment.Status.ReadyReplicas
 			deployment.Status.TabbyStatus.UpdatedReplicas = tabbyDeployment.Status.UpdatedReplicas
-			// Convert DeploymentCondition to metav1.Condition
-			for _, cond := range tabbyDeployment.Status.Conditions {
-				metaCond := metav1.Condition{
-					Type:               string(cond.Type),
-					Status:             metav1.ConditionStatus(cond.Status),
-					LastTransitionTime: cond.LastTransitionTime,
-					Reason:             cond.Reason,
-					Message:            cond.Message,
-				}
-				deployment.Status.TabbyStatus.Conditions = append(deployment.Status.TabbyStatus.Conditions, metaCond)
-			}
 		}
 	}
 
@@ -504,8 +484,8 @@ func (r *LMDeploymentReconciler) updateStatus(ctx context.Context, deployment *l
 		deployment.Status.Phase = "Progressing"
 	}
 
-	// Update status
-	return r.Status().Update(ctx, deployment)
+	// Use patch helper to update status - this only updates fields that actually changed
+	return patchHelper.Patch(ctx, deployment)
 }
 
 // SetupWithManager sets up the controller with the Manager.

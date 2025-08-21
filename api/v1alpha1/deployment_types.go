@@ -215,7 +215,6 @@ type PipelinesSpec struct {
 	Resources ResourceRequirements `json:"resources,omitempty"`
 
 	// Service describes service to expose the Pipelines
-	// +kubebuilder:validation:Enum=ClusterIP;NodePort;LoadBalancer
 	Service ServiceSpec `json:"service,omitempty"`
 
 	// PipelinesDir is the directory containing pipeline definitions

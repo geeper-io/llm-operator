@@ -539,10 +539,6 @@ spec:
                         type: object
                       service:
                         description: Service describes service to expose the Pipelines
-                        enum:
-                        - ClusterIP
-                        - NodePort
-                        - LoadBalancer
                         properties:
                           port:
                             description: Port is the port to expose the service

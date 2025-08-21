@@ -130,12 +130,12 @@ func (r *OllamaDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Req
     
     // Delegate to specialized controllers
     if err := r.ollamaController.ReconcileOllama(ctx, deployment, r); err != nil {
-        return ctrl.Result{RequeueAfter: time.Minute}, err
+        return ctrl.Result{}, err
     }
     
     // Reconcile OpenWebUI deployment if enabled
     if err := r.reconcileOpenWebUI(ctx, deployment); err != nil {
-        return ctrl.Result{RequeueAfter: time.Minute}, err
+        return ctrl.Result{}, err
     }
 }
 ```
@@ -186,7 +186,7 @@ To add a new specialized controller:
 4. **Use in reconciliation**:
    ```go
    if err := r.newComponentController.ReconcileNewComponent(ctx, deployment, r); err != nil {
-       return ctrl.Result{RequeueAfter: time.Minute}, err
+       return ctrl.Result{}, err
    }
    ```
 

@@ -195,7 +195,7 @@ Pipelines defines the OpenWebUI Pipelines configuration
 | port | integer | Port is the port the Pipelines service exposes<br/>*Format*: int32<br/>*Minimum*: 1<br/>*Maximum*: 65535<br/> | false |
 | replicas | integer | Replicas is the number of Pipelines pods to run<br/>*Format*: int32<br/>*Minimum*: 1<br/>*Maximum*: 3<br/> | false |
 | [resources](#lmdeploymentspecopenwebuipipelinesresources) | object | Resources defines the resource requirements for Pipelines pods | false |
-| [service](#lmdeploymentspecopenwebuipipelinesservice) | object | Service describes service to expose the Pipelines<br/>*Enum*: ClusterIP, NodePort, LoadBalancer<br/> | false |
+| [service](#lmdeploymentspecopenwebuipipelinesservice) | object | Service describes service to expose the Pipelines | false |
 | [volumeMounts](#lmdeploymentspecopenwebuipipelinesvolumemountsindex) | []object | VolumeMounts defines volume mounts for the Pipelines | false |
 | [volumes](#lmdeploymentspecopenwebuipipelinesvolumesindex) | []object | Volumes defines volumes for the Pipelines | false |
 ### LMDeployment.spec.openwebui.pipelines.envVars[index]

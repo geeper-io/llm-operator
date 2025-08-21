@@ -28,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/cluster-api/util/patch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -892,14 +893,14 @@ func (r *LMDeploymentReconciler) buildOpenWebUIConfig(ctx context.Context, deplo
 	return openwebuiConfig, nil
 }
 
-// createOrUpdateConfigMap creates or updates a Kubernetes ConfigMap
+// createOrUpdateSecret creates or updates a Kubernetes Secret using patch helper to avoid unnecessary reconciliations
 func (r *LMDeploymentReconciler) createOrUpdateSecret(ctx context.Context, secret *corev1.Secret) error {
 	logger := log.FromContext(ctx)
 	existingSecret := &corev1.Secret{}
 	err := r.Get(ctx, client.ObjectKeyFromObject(secret), existingSecret)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			// ConfigMap doesn't exist, create it
+			// Secret doesn't exist, create it
 			if err := r.Create(ctx, secret); err != nil {
 				return fmt.Errorf("failed to create secret %s: %w", secret.Name, err)
 			}
@@ -908,14 +909,22 @@ func (r *LMDeploymentReconciler) createOrUpdateSecret(ctx context.Context, secre
 			return fmt.Errorf("failed to get secret %s: %w", secret.Name, err)
 		}
 	} else {
-		// ConfigMap exists, update it
+		// Secret exists, use patch helper to only update if changes exist
+		patchHelper, err := patch.NewHelper(existingSecret, r.Client)
+		if err != nil {
+			return fmt.Errorf("failed to create patch helper for secret %s: %w", secret.Name, err)
+		}
+
+		// Update the existing secret with new data and labels
 		existingSecret.Data = secret.Data
 		existingSecret.Labels = secret.Labels
 
-		if err := r.Update(ctx, existingSecret); err != nil {
-			return fmt.Errorf("failed to update ConfigMap %s: %w", secret.Name, err)
+		// Use patch helper to update - this only patches if changes exist
+		if err := patchHelper.Patch(ctx, existingSecret); err != nil {
+			return fmt.Errorf("failed to patch secret %s: %w", secret.Name, err)
 		}
-		logger.Info("Updated OpenWebUI config secret", "name", secret.Name, "namespace", secret.Namespace)
+		// Note: PatchHelper only applies patches when there are actual changes,
+		// so we don't log here to avoid spam when no changes are made
 	}
 	return nil
 }

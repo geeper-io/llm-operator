@@ -79,7 +79,7 @@ E2E_TEST ?= ".*"
 .PHONY: test-e2e
 test-e2e: setup-test-e2e generate fmt vet ## Run the e2e tests. Expected an isolated environment using Kind.
 	KIND_CLUSTER=$(KIND_CLUSTER) go test ./test/e2e/ -v -run $(E2E_TEST)
-	$(MAKE) cleanup-test-e2e
+	#$(MAKE) cleanup-test-e2e
 
 .PHONY: cleanup-test-e2e
 cleanup-test-e2e: ## Tear down the Kind cluster used for e2e tests
