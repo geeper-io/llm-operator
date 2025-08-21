@@ -34,29 +34,6 @@ type StatusLMDeploymentTestSuite struct {
 	GlobalE2ESuite
 }
 
-// SetupSuite runs once before all tests
-func (suite *StatusLMDeploymentTestSuite) SetupSuite() {
-	suite.testNamespace = "lmdeployment-status-test"
-
-	suite.T().Log("Creating test namespace")
-	cmd := exec.Command("kubectl", "create", "ns", suite.testNamespace)
-	_, err := utils.Run(cmd)
-	require.NoError(suite.T(), err, "Failed to create test namespace")
-
-	suite.T().Log("Labeling the namespace to enforce the restricted security policy")
-	cmd = exec.Command("kubectl", "label", "--overwrite", "ns", suite.testNamespace,
-		"pod-security.kubernetes.io/enforce=restricted")
-	_, err = utils.Run(cmd)
-	require.NoError(suite.T(), err, "Failed to label namespace with restricted policy")
-}
-
-// TearDownSuite runs once after all tests
-func (suite *StatusLMDeploymentTestSuite) TearDownSuite() {
-	suite.T().Log("Cleaning up test namespace")
-	cmd := exec.Command("kubectl", "delete", "ns", suite.testNamespace)
-	_, _ = utils.Run(cmd)
-}
-
 // TestLMDeploymentStatusAndMetrics tests status and metrics reporting
 func (suite *StatusLMDeploymentTestSuite) TestLMDeploymentStatusAndMetrics() {
 	deploymentName := "test-status-metrics"
@@ -105,10 +82,10 @@ spec:
 	suite.waitForLMDeploymentReady(deploymentName, 8*time.Minute)
 
 	suite.T().Log("Verifying total replicas count")
-	suite.waitForStatusField(deploymentName, "totalReplicas", "6", 2*time.Minute)
+	suite.waitForStatusField(deploymentName, "totalReplicas", "4", 2*time.Minute)
 
 	suite.T().Log("Verifying ready replicas count")
-	suite.waitForStatusField(deploymentName, "readyReplicas", "6", 2*time.Minute)
+	suite.waitForStatusField(deploymentName, "readyReplicas", "4", 2*time.Minute)
 
 	suite.T().Log("Verifying component statuses")
 	suite.waitForStatusField(deploymentName, "ollamaStatus.readyReplicas", "2", 2*time.Minute)

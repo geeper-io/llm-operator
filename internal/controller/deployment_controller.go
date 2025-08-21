@@ -512,7 +512,7 @@ func (r *LMDeploymentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	// Initialize specialized controllers
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&llmgeeperiov1alpha1.LMDeployment{}).
-		//Owns(&appsv1.Deployment{}).
+		Owns(&appsv1.Deployment{}).
 		// PVCs are managed manually via ensurePVC to avoid immutable field issues
 		// Services, ConfigMaps, Secrets, and Ingresses are managed by individual controllers
 		Named("lmdeployment").

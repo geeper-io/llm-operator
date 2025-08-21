@@ -115,6 +115,12 @@ type TabbySpec struct {
 	// Image is the Tabby container image to use (including tag)
 	Image string `json:"image,omitempty"`
 
+	// Device specifies the device type for Tabby,
+	//+kubebuilder:validation:Optional
+	//+kubebuilder:validation:Enum=cpu;cuda;rocm;metal;vulkan
+	//+kubebuilder:default=cpu
+	Device string `json:"device,omitempty"`
+
 	// Resources defines the resource requirements for Tabby pods
 	Resources ResourceRequirements `json:"resources,omitempty"`
 

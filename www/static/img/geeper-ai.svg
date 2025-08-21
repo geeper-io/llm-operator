@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="600" height="160" viewBox="0 0 600 160" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+    <title id="title">Geeper wordmark logo</title>
+    <desc id="desc">A clean sans-serif wordmark. The G is in an accent color, the rest of the letters are in a neutral dark color.</desc>
+    <defs>
+        <style>
+            .g { fill: #4F46E5; }        /* Accent color for the "G" (Indigo) */
+            .rest { fill: #111827; }     /* Neutral dark for remaining letters */
+            text { font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial, system-ui, -apple-system, sans-serif;
+            font-weight: 700; font-size: 120px; }
+        </style>
+    </defs>
+    <!-- Center vertically using dominant-baseline -->
+    <text x="20" y="115" dominant-baseline="middle">
+        <tspan class="g">G</tspan><tspan class="rest">eeper.</tspan><tspan class="g">AI</tspan>
+    </text>
+</svg>

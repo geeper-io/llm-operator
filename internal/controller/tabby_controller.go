@@ -186,7 +186,7 @@ func (r *LMDeploymentReconciler) buildTabbyDeployment(deployment *llmgeeperiov1a
 						{
 							Name:  "tabby",
 							Image: image,
-							Args:  []string{"serve"},
+							Args:  []string{"serve", "--device", deployment.Spec.Tabby.Device},
 							Ports: []corev1.ContainerPort{
 								{
 									Name:          "http",
