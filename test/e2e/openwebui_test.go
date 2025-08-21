@@ -64,9 +64,6 @@ spec:
     enabled: true
     replicas: 1
     image: ghcr.io/open-webui/open-webui:main
-    service:
-      type: ClusterIP
-      port: 8080
     redis:
       enabled: true
       image: redis:7-alpine

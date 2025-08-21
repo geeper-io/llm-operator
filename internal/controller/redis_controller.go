@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"k8s.io/utils/ptr"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -118,7 +119,7 @@ func (r *LMDeploymentReconciler) buildRedisDeployment(deployment *llmgeeperiov1a
 			Labels:    labels,
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: int32Ptr(1), // Redis should only have 1 replica
+			Replicas: ptr.To(int32(1)), // Redis should only have 1 replica
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},
@@ -203,29 +204,21 @@ func (r *LMDeploymentReconciler) buildRedisPVC(deployment *llmgeeperiov1alpha1.L
 	storageClass := deployment.Spec.OpenWebUI.Redis.Persistence.StorageClass
 	var pvcSpec corev1.PersistentVolumeClaimSpec
 
+	pvcSpec = corev1.PersistentVolumeClaimSpec{
+		AccessModes: []corev1.PersistentVolumeAccessMode{
+			corev1.ReadWriteOnce,
+		},
+		Resources: corev1.VolumeResourceRequirements{
+			Requests: corev1.ResourceList{
+				corev1.ResourceStorage: resource.MustParse(deployment.Spec.OpenWebUI.Redis.Persistence.Size),
+			},
+		},
+	}
+
+	// Only set StorageClassName if explicitly specified
+	// This prevents conflicts with existing PVCs that have default storage class
 	if storageClass != "" {
-		pvcSpec = corev1.PersistentVolumeClaimSpec{
-			AccessModes: []corev1.PersistentVolumeAccessMode{
-				corev1.ReadWriteOnce,
-			},
-			StorageClassName: &storageClass,
-			Resources: corev1.VolumeResourceRequirements{
-				Requests: corev1.ResourceList{
-					corev1.ResourceStorage: resource.MustParse(deployment.Spec.OpenWebUI.Redis.Persistence.Size),
-				},
-			},
-		}
-	} else {
-		pvcSpec = corev1.PersistentVolumeClaimSpec{
-			AccessModes: []corev1.PersistentVolumeAccessMode{
-				corev1.ReadWriteOnce,
-			},
-			Resources: corev1.VolumeResourceRequirements{
-				Requests: corev1.ResourceList{
-					corev1.ResourceStorage: resource.MustParse(deployment.Spec.OpenWebUI.Redis.Persistence.Size),
-				},
-			},
-		}
+		pvcSpec.StorageClassName = &storageClass
 	}
 
 	redisPVC := &corev1.PersistentVolumeClaim{
@@ -237,12 +230,5 @@ func (r *LMDeploymentReconciler) buildRedisPVC(deployment *llmgeeperiov1alpha1.L
 		Spec: pvcSpec,
 	}
 
-	// Set owner reference
-	controllerutil.SetControllerReference(deployment, redisPVC, r.Scheme)
 	return redisPVC
-}
-
-// int32Ptr returns a pointer to an int32
-func int32Ptr(i int32) *int32 {
-	return &i
 }

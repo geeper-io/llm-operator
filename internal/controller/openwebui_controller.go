@@ -110,7 +110,7 @@ func (r *LMDeploymentReconciler) reconcileOpenWebUI(ctx context.Context, deploym
 	}
 
 	// Create or update OpenWebUI PVC if persistence is enabled
-	if deployment.Spec.OpenWebUI.Persistence.Enabled {
+	if deployment.Spec.OpenWebUI.Persistence != nil && deployment.Spec.OpenWebUI.Persistence.Enabled {
 		pvc := r.buildOpenWebUIPVC(deployment)
 		if err := r.ensurePVC(ctx, pvc); err != nil {
 			return err
@@ -226,7 +226,8 @@ func (r *LMDeploymentReconciler) buildOpenWebUIPVC(deployment *llmgeeperiov1alph
 		pvc.Spec.StorageClassName = &deployment.Spec.OpenWebUI.Persistence.StorageClass
 	}
 
-	controllerutil.SetControllerReference(deployment, pvc, r.Scheme)
+	// Note: We don't set controller reference on PVCs because they should persist
+	// even if the LMDeployment is deleted to preserve user data
 	return pvc
 }
 
@@ -737,8 +738,8 @@ func (r *LMDeploymentReconciler) buildPipelinesPVC(deployment *llmgeeperiov1alph
 		pvc.Spec.StorageClassName = &storageClass
 	}
 
-	// Set owner reference
-	controllerutil.SetControllerReference(deployment, pvc, r.Scheme)
+	// Note: We don't set controller reference on PVCs because they should persist
+	// even if the LMDeployment is deleted to preserve user data
 	return pvc
 }
 

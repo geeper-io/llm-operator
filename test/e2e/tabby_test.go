@@ -62,12 +62,9 @@ spec:
   
   tabby:
     enabled: true
-    replicas: 1
     image: tabbyml/tabby:latest
-    service:
-      type: ClusterIP
-      port: 8080
-    modelName: gemma3:270m`
+    chatModel: gemma3:270m
+    completionModel: gemma3:270m`
 
 	// Write YAML to temporary file
 	yamlFile := filepath.Join("/tmp", "test-tabby.yaml")

@@ -71,8 +71,6 @@ spec:
       enabled: true
       image: redis:7-alpine
       password: "test-redis-password"
-      service:
-        port: 6379
       persistence:
         enabled: true
         size: 1Gi
@@ -81,26 +79,9 @@ spec:
       enabled: true
       image: ghcr.io/open-webui/pipelines:main
       replicas: 1
-      port: 9099
-      service:
-        type: ClusterIP
-        port: 9099
       persistence:
         enabled: true
-        size: 1Gi
-    
-    langfuse:
-      enabled: true
-      projectName: "test-project"
-      environment: "test"
-      deploy:
-        enabled: true
-        image: langfuse/langfuse:latest
-        replicas: 1
-        port: 3000
-        persistence:
-          enabled: true
-          size: 1Gi`
+        size: 1Gi`
 
 	// Write YAML to temporary file
 	yamlFile := filepath.Join("/tmp", "test-advanced-all.yaml")
@@ -121,7 +102,6 @@ spec:
 		"test-advanced-all-openwebui",
 		"test-advanced-all-redis",
 		"test-advanced-all-pipelines",
-		"test-advanced-all-langfuse",
 	}
 	for _, deploymentName := range deployments {
 		suite.waitForDeploymentReady(deploymentName, 5*time.Minute)
@@ -133,7 +113,6 @@ spec:
 		"test-advanced-all-openwebui",
 		"test-advanced-all-redis",
 		"test-advanced-all-pipelines",
-		"test-advanced-all-langfuse",
 	}
 	for _, serviceName := range services {
 		cmd := exec.Command("kubectl", "get", "service", serviceName, "-n", suite.testNamespace)
@@ -144,8 +123,7 @@ spec:
 	suite.T().Log("Verifying all PVCs are created")
 	pvcs := []string{
 		"test-advanced-all-redis",
-		"test-advanced-all-pipelines",
-		"test-advanced-all-langfuse",
+		"test-advanced-all-pipelines-data",
 	}
 	for _, pvcName := range pvcs {
 		cmd := exec.Command("kubectl", "get", "pvc", pvcName, "-n", suite.testNamespace)

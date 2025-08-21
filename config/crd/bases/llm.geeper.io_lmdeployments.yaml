@@ -4651,9 +4651,6 @@ spec:
                       - name
                       type: object
                     type: array
-                required:
-                - chatModel
-                - completionModel
                 type: object
             required:
             - ollama

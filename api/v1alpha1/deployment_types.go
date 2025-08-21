@@ -126,11 +126,11 @@ type TabbySpec struct {
 
 	// ChatModel is the name of the Ollama model to use for chat functionality
 	// Must be one of the models specified in spec.ollama.models
-	ChatModel string `json:"chatModel"`
+	ChatModel string `json:"chatModel,omitempty"`
 
 	// CompletionModel is the name of the Ollama model to use for code completion
 	// Must be one of the models specified in spec.ollama.models
-	CompletionModel string `json:"completionModel"`
+	CompletionModel string `json:"completionModel,omitempty"`
 
 	// EnvVars defines environment variables for Tabby
 	EnvVars []corev1.EnvVar `json:"envVars,omitempty"`
@@ -320,9 +320,11 @@ type LMDeploymentSpec struct {
 	Ollama OllamaSpec `json:"ollama"`
 
 	// OpenWebUI defines the OpenWebUI deployment configuration
+	// +kubebuilder:validation:Optional
 	OpenWebUI OpenWebUISpec `json:"openwebui,omitempty"`
 
 	// Tabby defines the Tabby deployment configuration
+	// +kubebuilder:validation:Optional
 	Tabby TabbySpec `json:"tabby,omitempty"`
 }
 

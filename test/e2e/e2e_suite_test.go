@@ -53,8 +53,8 @@ func (suite *GlobalE2ESuite) SetupSuite() {
 	suite.T().Log("Starting llm-operator integration test suite")
 
 	suite.T().Log("Building the manager(Operator) image")
-	//cmd := exec.Command("make", "docker-build", fmt.Sprintf("IMG=%s", projectImage))
-	cmd := exec.Command("make", "docker-build")
+	cmd := exec.Command("make", "docker-build", fmt.Sprintf("IMG=%s", projectImage))
+	//cmd := exec.Command("make", "docker-build")
 	_, err := utils.Run(cmd)
 	suite.Require().NoError(err, "Failed to build the manager(Operator) image")
 

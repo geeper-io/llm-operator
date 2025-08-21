@@ -79,17 +79,11 @@ spec:
     image: ollama/ollama:latest
     models:
     - "gemma3:270m"
-    service:
-      type: ClusterIP
-      port: 11434
   
   openwebui:
     enabled: true
     replicas: 2
     image: ghcr.io/open-webui/open-webui:main
-    service:
-      type: ClusterIP
-      port: 8080
     redis:
       enabled: true
       image: redis:7-alpine

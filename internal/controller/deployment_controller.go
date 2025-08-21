@@ -512,27 +512,29 @@ func (r *LMDeploymentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	// Initialize specialized controllers
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&llmgeeperiov1alpha1.LMDeployment{}).
-		Owns(&appsv1.Deployment{}).
-		Owns(&corev1.Service{}).
-		Owns(&corev1.ConfigMap{}).
-		Owns(&corev1.Secret{}).
-		Owns(&networkingv1.Ingress{}).
-		Owns(&corev1.PersistentVolumeClaim{}).
+		//Owns(&appsv1.Deployment{}).
+		// PVCs are managed manually via ensurePVC to avoid immutable field issues
+		// Services, ConfigMaps, Secrets, and Ingresses are managed by individual controllers
 		Named("lmdeployment").
 		Complete(r)
 }
 
 // ensurePVC creates a PersistentVolumeClaim only if it doesn't exist
 func (r *LMDeploymentReconciler) ensurePVC(ctx context.Context, pvc *corev1.PersistentVolumeClaim) error {
+	logger := log.FromContext(ctx)
 	existing := &corev1.PersistentVolumeClaim{}
 	err := r.Get(ctx, types.NamespacedName{Name: pvc.Name, Namespace: pvc.Namespace}, existing)
 	if err != nil && errors.IsNotFound(err) {
 		// Create new PVC only if it doesn't exist
+		logger.Info("Creating new PVC", "name", pvc.Name, "namespace", pvc.Namespace, "storageClass", pvc.Spec.StorageClassName)
 		if err := r.Create(ctx, pvc); err != nil {
-			return err
+			// Check if it's already exists error (race condition)
+			return fmt.Errorf("failed to create PVC %s: %w", pvc.Name, err)
 		}
+		logger.Info("Successfully created PVC", "name", pvc.Name, "namespace", pvc.Namespace)
 	} else if err != nil {
 		// Return error if it's not a "not found" error
+		logger.Error(err, "Failed to get PVC", "name", pvc.Name, "namespace", pvc.Namespace)
 		return err
 	}
 	// If PVC exists, do nothing (don't try to update immutable fields)
