@@ -206,7 +206,7 @@ func (r *LMDeploymentReconciler) buildTabbyDeployment(deployment *llmgeeperiov1a
 	}
 
 	// Set owner reference
-	controllerutil.SetControllerReference(deployment, tabbyDeployment, r.Scheme)
+	_ = controllerutil.SetControllerReference(deployment, tabbyDeployment, r.Scheme)
 	return tabbyDeployment
 }
 
@@ -224,7 +224,7 @@ func (r *LMDeploymentReconciler) buildTabbyService(deployment *llmgeeperiov1alph
 
 	serviceType := deployment.Spec.Tabby.Service.Type
 	if serviceType == "" {
-		serviceType = "ClusterIP"
+		serviceType = corev1.ServiceTypeClusterIP
 	}
 
 	tabbyService := &corev1.Service{
@@ -234,7 +234,7 @@ func (r *LMDeploymentReconciler) buildTabbyService(deployment *llmgeeperiov1alph
 			Labels:    labels,
 		},
 		Spec: corev1.ServiceSpec{
-			Type: corev1.ServiceType(serviceType),
+			Type: serviceType,
 			Ports: []corev1.ServicePort{
 				{
 					Name:       "http",
@@ -248,7 +248,7 @@ func (r *LMDeploymentReconciler) buildTabbyService(deployment *llmgeeperiov1alph
 	}
 
 	// Set owner reference
-	controllerutil.SetControllerReference(deployment, tabbyService, r.Scheme)
+	_ = controllerutil.SetControllerReference(deployment, tabbyService, r.Scheme)
 	return tabbyService
 }
 
@@ -303,7 +303,7 @@ func (r *LMDeploymentReconciler) buildTabbyIngress(deployment *llmgeeperiov1alph
 	}
 
 	// Set owner reference
-	controllerutil.SetControllerReference(deployment, tabbyIngress, r.Scheme)
+	_ = controllerutil.SetControllerReference(deployment, tabbyIngress, r.Scheme)
 	return tabbyIngress
 }
 

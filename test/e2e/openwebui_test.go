@@ -35,16 +35,16 @@ type OpenWebUILMDeploymentTestSuite struct {
 }
 
 // TestOpenWebUILMDeployment tests OpenWebUI with Redis deployment
-func (suite *OpenWebUILMDeploymentTestSuite) TestOpenWebUILMDeployment() {
+func (owuiTestSuite *OpenWebUILMDeploymentTestSuite) TestOpenWebUILMDeployment() {
 	deploymentName := "test-openwebui-redis"
 
-	suite.T().Cleanup(func() {
-		suite.T().Log("Cleaning up LMDeployment")
-		cmd := exec.Command("kubectl", "delete", "lmdeployment", deploymentName, "-n", suite.testNamespace)
+	owuiTestSuite.T().Cleanup(func() {
+		owuiTestSuite.T().Log("Cleaning up LMDeployment")
+		cmd := exec.Command("kubectl", "delete", "lmdeployment", deploymentName, "-n", owuiTestSuite.testNamespace)
 		_, _ = utils.Run(cmd)
 	})
 
-	suite.T().Log("Creating OpenWebUI LMDeployment YAML")
+	owuiTestSuite.T().Log("Creating OpenWebUI LMDeployment YAML")
 	openwebuiDeployment := `apiVersion: llm.geeper.io/v1alpha1
 kind: LMDeployment
 metadata:
@@ -77,91 +77,91 @@ spec:
 	// Write YAML to temporary file
 	yamlFile := filepath.Join("/tmp", "test-openwebui-redis.yaml")
 	err := os.WriteFile(yamlFile, []byte(openwebuiDeployment), 0644)
-	require.NoError(suite.T(), err)
+	require.NoError(owuiTestSuite.T(), err)
 
-	suite.T().Log("Applying OpenWebUI LMDeployment YAML")
+	owuiTestSuite.T().Log("Applying OpenWebUI LMDeployment YAML")
 	cmd := exec.Command("kubectl", "apply", "-f", yamlFile)
 	_, err = utils.Run(cmd)
-	require.NoError(suite.T(), err, "Failed to apply OpenWebUI LMDeployment")
+	require.NoError(owuiTestSuite.T(), err, "Failed to apply OpenWebUI LMDeployment")
 
-	suite.T().Log("Waiting for LMDeployment to be ready")
-	suite.waitForLMDeploymentReady(deploymentName, 8*time.Minute)
+	owuiTestSuite.T().Log("Waiting for LMDeployment to be ready")
+	owuiTestSuite.waitForLMDeploymentReady(deploymentName, 8*time.Minute)
 
-	suite.T().Log("Verifying Ollama deployment is running")
-	suite.waitForDeploymentReady("test-openwebui-redis-ollama", 3*time.Minute)
+	owuiTestSuite.T().Log("Verifying Ollama deployment is running")
+	owuiTestSuite.waitForDeploymentReady("test-openwebui-redis-ollama", 3*time.Minute)
 
-	suite.T().Log("Verifying OpenWebUI deployment is running")
-	suite.waitForDeploymentReady("test-openwebui-redis-openwebui", 5*time.Minute)
+	owuiTestSuite.T().Log("Verifying OpenWebUI deployment is running")
+	owuiTestSuite.waitForDeploymentReady("test-openwebui-redis-openwebui", 5*time.Minute)
 
-	suite.T().Log("Verifying Redis deployment is running")
-	suite.waitForDeploymentReady("test-openwebui-redis-redis", 3*time.Minute)
+	owuiTestSuite.T().Log("Verifying Redis deployment is running")
+	owuiTestSuite.waitForDeploymentReady("test-openwebui-redis-redis", 3*time.Minute)
 
-	suite.T().Log("Verifying all services are created")
+	owuiTestSuite.T().Log("Verifying all services are created")
 	services := []string{
 		"test-openwebui-redis-ollama",
 		"test-openwebui-redis-openwebui",
 		"test-openwebui-redis-redis",
 	}
 	for _, serviceName := range services {
-		cmd := exec.Command("kubectl", "get", "service", serviceName, "-n", suite.testNamespace)
+		cmd := exec.Command("kubectl", "get", "service", serviceName, "-n", owuiTestSuite.testNamespace)
 		_, err := utils.Run(cmd)
-		require.NoError(suite.T(), err, "Service "+serviceName+" not found")
+		require.NoError(owuiTestSuite.T(), err, "Service "+serviceName+" not found")
 	}
 
-	suite.T().Log("Verifying OpenWebUI secret is created")
-	suite.waitForSecretExists("test-openwebui-redis-openwebui-secret", 2*time.Minute)
+	owuiTestSuite.T().Log("Verifying OpenWebUI secret is created")
+	owuiTestSuite.waitForSecretExists("test-openwebui-redis-openwebui-secret", 2*time.Minute)
 
-	suite.T().Log("Verifying Redis PVC is created")
+	owuiTestSuite.T().Log("Verifying Redis PVC is created")
 	cmd = exec.Command("kubectl", "get", "pvc",
-		"test-openwebui-redis-redis", "-n", suite.testNamespace)
+		"test-openwebui-redis-redis", "-n", owuiTestSuite.testNamespace)
 	_, pvcErr := utils.Run(cmd)
-	require.NoError(suite.T(), pvcErr, "Redis PVC not found")
+	require.NoError(owuiTestSuite.T(), pvcErr, "Redis PVC not found")
 
 	// Clean up temporary file
-	os.Remove(yamlFile)
+	_ = os.Remove(yamlFile)
 }
 
 // Helper methods for the OpenWebUI test suite
 
-func (suite *OpenWebUILMDeploymentTestSuite) waitForLMDeploymentReady(name string, timeout time.Duration) {
+func (owuiTestSuite *OpenWebUILMDeploymentTestSuite) waitForLMDeploymentReady(name string, timeout time.Duration) {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
 		cmd := exec.Command("kubectl", "get", "lmdeployment", name,
-			"-n", suite.testNamespace, "-o", "jsonpath={.status.phase}")
+			"-n", owuiTestSuite.testNamespace, "-o", "jsonpath={.status.phase}")
 		output, err := utils.Run(cmd)
 		if err == nil && output == "Ready" {
 			return
 		}
 		time.Sleep(10 * time.Second)
 	}
-	suite.T().Fatalf("LMDeployment %s not ready within %v", name, timeout)
+	owuiTestSuite.T().Fatalf("LMDeployment %s not ready within %v", name, timeout)
 }
 
-func (suite *OpenWebUILMDeploymentTestSuite) waitForDeploymentReady(name string, timeout time.Duration) {
+func (owuiTestSuite *OpenWebUILMDeploymentTestSuite) waitForDeploymentReady(name string, timeout time.Duration) {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
 		cmd := exec.Command("kubectl", "get", "deployment", name,
-			"-n", suite.testNamespace, "-o", "jsonpath={.status.readyReplicas}")
+			"-n", owuiTestSuite.testNamespace, "-o", "jsonpath={.status.readyReplicas}")
 		output, err := utils.Run(cmd)
 		if err == nil && output == "1" {
 			return
 		}
 		time.Sleep(10 * time.Second)
 	}
-	suite.T().Fatalf("Deployment %s not ready within %v", name, timeout)
+	owuiTestSuite.T().Fatalf("Deployment %s not ready within %v", name, timeout)
 }
 
-func (suite *OpenWebUILMDeploymentTestSuite) waitForSecretExists(name string, timeout time.Duration) {
+func (owuiTestSuite *OpenWebUILMDeploymentTestSuite) waitForSecretExists(name string, timeout time.Duration) {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
-		cmd := exec.Command("kubectl", "get", "secret", name, "-n", suite.testNamespace)
+		cmd := exec.Command("kubectl", "get", "secret", name, "-n", owuiTestSuite.testNamespace)
 		_, err := utils.Run(cmd)
 		if err == nil {
 			return
 		}
 		time.Sleep(10 * time.Second)
 	}
-	suite.T().Fatalf("Secret %s not found within %v", name, timeout)
+	owuiTestSuite.T().Fatalf("Secret %s not found within %v", name, timeout)
 }
 
 // TestOpenWebUILMDeploymentSuite runs the OpenWebUI test suite

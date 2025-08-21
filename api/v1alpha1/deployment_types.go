@@ -47,7 +47,7 @@ type OllamaSpec struct {
 type ServiceSpec struct {
 	// Type is the type of service to expose
 	// +kubebuilder:validation:Enum=ClusterIP;NodePort;LoadBalancer
-	Type string `json:"type,omitempty"`
+	Type corev1.ServiceType `json:"type,omitempty"`
 
 	// Port is the port to expose the service
 	// +kubebuilder:validation:Minimum=1
@@ -116,9 +116,9 @@ type TabbySpec struct {
 	Image string `json:"image,omitempty"`
 
 	// Device specifies the device type for Tabby,
-	//+kubebuilder:validation:Optional
-	//+kubebuilder:validation:Enum=cpu;cuda;rocm;metal;vulkan
-	//+kubebuilder:default=cpu
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Enum=cpu;cuda;rocm;metal;vulkan
+	// +kubebuilder:default=cpu
 	Device string `json:"device,omitempty"`
 
 	// Resources defines the resource requirements for Tabby pods
@@ -214,9 +214,9 @@ type PipelinesSpec struct {
 	// Resources defines the resource requirements for Pipelines pods
 	Resources ResourceRequirements `json:"resources,omitempty"`
 
-	// ServiceType is the type of service to expose the Pipelines
+	// Service describes service to expose the Pipelines
 	// +kubebuilder:validation:Enum=ClusterIP;NodePort;LoadBalancer
-	ServiceType string `json:"serviceType,omitempty"`
+	Service ServiceSpec `json:"service,omitempty"`
 
 	// PipelinesDir is the directory containing pipeline definitions
 	// Default: /app/pipelines

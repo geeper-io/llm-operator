@@ -35,16 +35,16 @@ type BasicLMDeploymentTestSuite struct {
 }
 
 // TestBasicLMDeployment tests basic Ollama deployment
-func (suite *BasicLMDeploymentTestSuite) TestBasicLMDeployment() {
+func (basicTestSuite *BasicLMDeploymentTestSuite) TestBasicLMDeployment() {
 	deploymentName := "test-basic-ollama"
 
-	suite.T().Cleanup(func() {
-		suite.T().Log("Cleaning up LMDeployment")
-		cmd := exec.Command("kubectl", "delete", "lmdeployment", deploymentName, "-n", suite.testNamespace)
+	basicTestSuite.T().Cleanup(func() {
+		basicTestSuite.T().Log("Cleaning up LMDeployment")
+		cmd := exec.Command("kubectl", "delete", "lmdeployment", deploymentName, "-n", basicTestSuite.testNamespace)
 		_, _ = utils.Run(cmd)
 	})
 
-	suite.T().Log("Creating basic LMDeployment YAML")
+	basicTestSuite.T().Log("Creating basic LMDeployment YAML")
 	basicDeployment := `apiVersion: llm.geeper.io/v1alpha1
 kind: LMDeployment
 metadata:
@@ -63,74 +63,74 @@ spec:
 	// Write YAML to temporary file
 	yamlFile := filepath.Join("/tmp", "test-basic-ollama.yaml")
 	err := os.WriteFile(yamlFile, []byte(basicDeployment), 0644)
-	require.NoError(suite.T(), err)
+	require.NoError(basicTestSuite.T(), err)
 
-	suite.T().Log("Applying LMDeployment YAML")
+	basicTestSuite.T().Log("Applying LMDeployment YAML")
 	cmd := exec.Command("kubectl", "apply", "-f", yamlFile)
 	_, err = utils.Run(cmd)
-	require.NoError(suite.T(), err, "Failed to apply LMDeployment")
+	require.NoError(basicTestSuite.T(), err, "Failed to apply LMDeployment")
 
-	suite.T().Log("Waiting for LMDeployment to be ready")
-	suite.waitForLMDeploymentReady(deploymentName, 5*time.Minute)
+	basicTestSuite.T().Log("Waiting for LMDeployment to be ready")
+	basicTestSuite.waitForLMDeploymentReady(deploymentName, 5*time.Minute)
 
-	suite.T().Log("Verifying Ollama deployment is created and running")
-	suite.waitForDeploymentReady("test-basic-ollama-ollama", 3*time.Minute)
+	basicTestSuite.T().Log("Verifying Ollama deployment is created and running")
+	basicTestSuite.waitForDeploymentReady("test-basic-ollama-ollama", 3*time.Minute)
 
-	suite.T().Log("Verifying Ollama service is created")
+	basicTestSuite.T().Log("Verifying Ollama service is created")
 	cmd = exec.Command("kubectl", "get", "service",
-		"test-basic-ollama-ollama", "-n", suite.testNamespace)
+		"test-basic-ollama-ollama", "-n", basicTestSuite.testNamespace)
 	_, err = utils.Run(cmd)
-	require.NoError(suite.T(), err, "Ollama service not found")
+	require.NoError(basicTestSuite.T(), err, "Ollama service not found")
 
-	suite.T().Log("Verifying Ollama pod is running")
-	suite.waitForPodRunning("app=ollama,llm-deployment=test-basic-ollama", 3*time.Minute)
+	basicTestSuite.T().Log("Verifying Ollama pod is running")
+	basicTestSuite.waitForPodRunning("app=ollama,llm-deployment=test-basic-ollama", 3*time.Minute)
 
 	// Clean up temporary file
-	os.Remove(yamlFile)
+	_ = os.Remove(yamlFile)
 }
 
 // Helper methods for the basic test suite
 
-func (suite *BasicLMDeploymentTestSuite) waitForLMDeploymentReady(name string, timeout time.Duration) {
+func (basicTestSuite *BasicLMDeploymentTestSuite) waitForLMDeploymentReady(name string, timeout time.Duration) {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
 		cmd := exec.Command("kubectl", "get", "lmdeployment", name,
-			"-n", suite.testNamespace, "-o", "jsonpath={.status.phase}")
+			"-n", basicTestSuite.testNamespace, "-o", "jsonpath={.status.phase}")
 		output, err := utils.Run(cmd)
 		if err == nil && output == "Ready" {
 			return
 		}
 		time.Sleep(10 * time.Second)
 	}
-	suite.T().Fatalf("LMDeployment %s not ready within %v", name, timeout)
+	basicTestSuite.T().Fatalf("LMDeployment %s not ready within %v", name, timeout)
 }
 
-func (suite *BasicLMDeploymentTestSuite) waitForDeploymentReady(name string, timeout time.Duration) {
+func (basicTestSuite *BasicLMDeploymentTestSuite) waitForDeploymentReady(name string, timeout time.Duration) {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
 		cmd := exec.Command("kubectl", "get", "deployment", name,
-			"-n", suite.testNamespace, "-o", "jsonpath={.status.readyReplicas}")
+			"-n", basicTestSuite.testNamespace, "-o", "jsonpath={.status.readyReplicas}")
 		output, err := utils.Run(cmd)
 		if err == nil && output == "1" {
 			return
 		}
 		time.Sleep(10 * time.Second)
 	}
-	suite.T().Fatalf("Deployment %s not ready within %v", name, timeout)
+	basicTestSuite.T().Fatalf("Deployment %s not ready within %v", name, timeout)
 }
 
-func (suite *BasicLMDeploymentTestSuite) waitForPodRunning(labels string, timeout time.Duration) {
+func (basicTestSuite *BasicLMDeploymentTestSuite) waitForPodRunning(labels string, timeout time.Duration) {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
 		cmd := exec.Command("kubectl", "get", "pods", "-l", labels,
-			"-n", suite.testNamespace, "-o", "jsonpath={.items[0].status.phase}")
+			"-n", basicTestSuite.testNamespace, "-o", "jsonpath={.items[0].status.phase}")
 		output, err := utils.Run(cmd)
 		if err == nil && output == "Running" {
 			return
 		}
 		time.Sleep(10 * time.Second)
 	}
-	suite.T().Fatalf("Pod with labels %s not running within %v", labels, timeout)
+	basicTestSuite.T().Fatalf("Pod with labels %s not running within %v", labels, timeout)
 }
 
 // TestBasicLMDeploymentSuite runs the basic test suite

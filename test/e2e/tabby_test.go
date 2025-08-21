@@ -35,16 +35,16 @@ type TabbyLMDeploymentTestSuite struct {
 }
 
 // TestTabbyLMDeployment tests Tabby deployment
-func (suite *TabbyLMDeploymentTestSuite) TestTabbyLMDeployment() {
+func (tabbyTestSuite *TabbyLMDeploymentTestSuite) TestTabbyLMDeployment() {
 	deploymentName := "test-tabby"
 
-	suite.T().Cleanup(func() {
-		suite.T().Log("Cleaning up LMDeployment")
-		cmd := exec.Command("kubectl", "delete", "lmdeployment", deploymentName, "-n", suite.testNamespace)
+	tabbyTestSuite.T().Cleanup(func() {
+		tabbyTestSuite.T().Log("Cleaning up LMDeployment")
+		cmd := exec.Command("kubectl", "delete", "lmdeployment", deploymentName, "-n", tabbyTestSuite.testNamespace)
 		_, _ = utils.Run(cmd)
 	})
 
-	suite.T().Log("Creating Tabby LMDeployment YAML")
+	tabbyTestSuite.T().Log("Creating Tabby LMDeployment YAML")
 	tabbyDeployment := `apiVersion: llm.geeper.io/v1alpha1
 kind: LMDeployment
 metadata:
@@ -69,65 +69,65 @@ spec:
 	// Write YAML to temporary file
 	yamlFile := filepath.Join("/tmp", "test-tabby.yaml")
 	err := os.WriteFile(yamlFile, []byte(tabbyDeployment), 0644)
-	require.NoError(suite.T(), err)
+	require.NoError(tabbyTestSuite.T(), err)
 
-	suite.T().Log("Applying Tabby LMDeployment YAML")
+	tabbyTestSuite.T().Log("Applying Tabby LMDeployment YAML")
 	cmd := exec.Command("kubectl", "apply", "-f", yamlFile)
 	_, err = utils.Run(cmd)
-	require.NoError(suite.T(), err, "Failed to apply Tabby LMDeployment")
+	require.NoError(tabbyTestSuite.T(), err, "Failed to apply Tabby LMDeployment")
 
-	suite.T().Log("Waiting for LMDeployment to be ready")
-	suite.waitForLMDeploymentReady(deploymentName, 8*time.Minute)
+	tabbyTestSuite.T().Log("Waiting for LMDeployment to be ready")
+	tabbyTestSuite.waitForLMDeploymentReady(deploymentName, 8*time.Minute)
 
-	suite.T().Log("Verifying Ollama deployment is running")
-	suite.waitForDeploymentReady("test-tabby-ollama", 3*time.Minute)
+	tabbyTestSuite.T().Log("Verifying Ollama deployment is running")
+	tabbyTestSuite.waitForDeploymentReady("test-tabby-ollama", 3*time.Minute)
 
-	suite.T().Log("Verifying Tabby deployment is running")
-	suite.waitForDeploymentReady("test-tabby-tabby", 5*time.Minute)
+	tabbyTestSuite.T().Log("Verifying Tabby deployment is running")
+	tabbyTestSuite.waitForDeploymentReady("test-tabby-tabby", 5*time.Minute)
 
-	suite.T().Log("Verifying all services are created")
+	tabbyTestSuite.T().Log("Verifying all services are created")
 	services := []string{
 		"test-tabby-ollama",
 		"test-tabby-tabby",
 	}
 	for _, serviceName := range services {
-		cmd := exec.Command("kubectl", "get", "service", serviceName, "-n", suite.testNamespace)
+		cmd := exec.Command("kubectl", "get", "service", serviceName, "-n", tabbyTestSuite.testNamespace)
 		_, err := utils.Run(cmd)
-		require.NoError(suite.T(), err, "Service "+serviceName+" not found")
+		require.NoError(tabbyTestSuite.T(), err, "Service "+serviceName+" not found")
 	}
 
 	// Clean up temporary file
-	os.Remove(yamlFile)
+	_ = os.Remove(yamlFile)
 }
 
 // Helper methods for the Tabby test suite
 
-func (suite *TabbyLMDeploymentTestSuite) waitForLMDeploymentReady(name string, timeout time.Duration) {
+func (tabbyTestSuite *TabbyLMDeploymentTestSuite) waitForLMDeploymentReady(name string, timeout time.Duration) {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
 		cmd := exec.Command("kubectl", "get", "lmdeployment", name,
-			"-n", suite.testNamespace, "-o", "jsonpath={.status.phase}")
+			"-n", tabbyTestSuite.testNamespace, "-o", "jsonpath={.status.phase}")
 		output, err := utils.Run(cmd)
 		if err == nil && output == "Ready" {
 			return
 		}
 		time.Sleep(10 * time.Second)
 	}
-	suite.T().Fatalf("LMDeployment %s not ready within %v", name, timeout)
+	tabbyTestSuite.T().Fatalf("LMDeployment %s not ready within %v", name, timeout)
 }
 
-func (suite *TabbyLMDeploymentTestSuite) waitForDeploymentReady(name string, timeout time.Duration) {
+func (tabbyTestSuite *TabbyLMDeploymentTestSuite) waitForDeploymentReady(name string, timeout time.Duration) {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
 		cmd := exec.Command("kubectl", "get", "deployment", name,
-			"-n", suite.testNamespace, "-o", "jsonpath={.status.readyReplicas}")
+			"-n", tabbyTestSuite.testNamespace, "-o", "jsonpath={.status.readyReplicas}")
 		output, err := utils.Run(cmd)
 		if err == nil && output == "1" {
 			return
 		}
 		time.Sleep(10 * time.Second)
 	}
-	suite.T().Fatalf("Deployment %s not ready within %v", name, timeout)
+	tabbyTestSuite.T().Fatalf("Deployment %s not ready within %v", name, timeout)
 }
 
 // TestTabbyLMDeploymentSuite runs the Tabby test suite

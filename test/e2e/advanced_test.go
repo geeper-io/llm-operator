@@ -35,16 +35,16 @@ type AdvancedLMDeploymentTestSuite struct {
 }
 
 // TestAdvancedLMDeployment tests advanced deployment with all components
-func (suite *AdvancedLMDeploymentTestSuite) TestAdvancedLMDeployment() {
+func (advancedTestSuite *AdvancedLMDeploymentTestSuite) TestAdvancedLMDeployment() {
 	deploymentName := "test-advanced-all"
 
-	suite.T().Cleanup(func() {
-		suite.T().Log("Cleaning up LMDeployment")
-		cmd := exec.Command("kubectl", "delete", "lmdeployment", deploymentName, "-n", suite.testNamespace)
+	advancedTestSuite.T().Cleanup(func() {
+		advancedTestSuite.T().Log("Cleaning up LMDeployment")
+		cmd := exec.Command("kubectl", "delete", "lmdeployment", deploymentName, "-n", advancedTestSuite.testNamespace)
 		_, _ = utils.Run(cmd)
 	})
 
-	suite.T().Log("Creating advanced LMDeployment YAML")
+	advancedTestSuite.T().Log("Creating advanced LMDeployment YAML")
 	advancedDeployment := `apiVersion: llm.geeper.io/v1alpha1
 kind: LMDeployment
 metadata:
@@ -86,17 +86,17 @@ spec:
 	// Write YAML to temporary file
 	yamlFile := filepath.Join("/tmp", "test-advanced-all.yaml")
 	err := os.WriteFile(yamlFile, []byte(advancedDeployment), 0644)
-	require.NoError(suite.T(), err)
+	require.NoError(advancedTestSuite.T(), err)
 
-	suite.T().Log("Applying advanced LMDeployment YAML")
+	advancedTestSuite.T().Log("Applying advanced LMDeployment YAML")
 	cmd := exec.Command("kubectl", "apply", "-f", yamlFile)
 	_, err = utils.Run(cmd)
-	require.NoError(suite.T(), err, "Failed to apply advanced LMDeployment")
+	require.NoError(advancedTestSuite.T(), err, "Failed to apply advanced LMDeployment")
 
-	suite.T().Log("Waiting for LMDeployment to be ready")
-	suite.waitForLMDeploymentReady(deploymentName, 10*time.Minute)
+	advancedTestSuite.T().Log("Waiting for LMDeployment to be ready")
+	advancedTestSuite.waitForLMDeploymentReady(deploymentName, 10*time.Minute)
 
-	suite.T().Log("Verifying all deployments are running")
+	advancedTestSuite.T().Log("Verifying all deployments are running")
 	deployments := []string{
 		"test-advanced-all-ollama",
 		"test-advanced-all-openwebui",
@@ -104,10 +104,10 @@ spec:
 		"test-advanced-all-pipelines",
 	}
 	for _, deploymentName := range deployments {
-		suite.waitForDeploymentReady(deploymentName, 5*time.Minute)
+		advancedTestSuite.waitForDeploymentReady(deploymentName, 5*time.Minute)
 	}
 
-	suite.T().Log("Verifying all services are created")
+	advancedTestSuite.T().Log("Verifying all services are created")
 	services := []string{
 		"test-advanced-all-ollama",
 		"test-advanced-all-openwebui",
@@ -115,54 +115,54 @@ spec:
 		"test-advanced-all-pipelines",
 	}
 	for _, serviceName := range services {
-		cmd := exec.Command("kubectl", "get", "service", serviceName, "-n", suite.testNamespace)
+		cmd := exec.Command("kubectl", "get", "service", serviceName, "-n", advancedTestSuite.testNamespace)
 		_, err := utils.Run(cmd)
-		require.NoError(suite.T(), err, "Service "+serviceName+" not found")
+		require.NoError(advancedTestSuite.T(), err, "Service "+serviceName+" not found")
 	}
 
-	suite.T().Log("Verifying all PVCs are created")
+	advancedTestSuite.T().Log("Verifying all PVCs are created")
 	pvcs := []string{
 		"test-advanced-all-redis",
 		"test-advanced-all-pipelines-data",
 	}
 	for _, pvcName := range pvcs {
-		cmd := exec.Command("kubectl", "get", "pvc", pvcName, "-n", suite.testNamespace)
+		cmd := exec.Command("kubectl", "get", "pvc", pvcName, "-n", advancedTestSuite.testNamespace)
 		_, err := utils.Run(cmd)
-		require.NoError(suite.T(), err, "PVC "+pvcName+" not found")
+		require.NoError(advancedTestSuite.T(), err, "PVC "+pvcName+" not found")
 	}
 
 	// Clean up temporary file
-	os.Remove(yamlFile)
+	_ = os.Remove(yamlFile)
 }
 
 // Helper methods for the advanced test suite
 
-func (suite *AdvancedLMDeploymentTestSuite) waitForLMDeploymentReady(name string, timeout time.Duration) {
+func (advancedTestSuite *AdvancedLMDeploymentTestSuite) waitForLMDeploymentReady(name string, timeout time.Duration) {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
 		cmd := exec.Command("kubectl", "get", "lmdeployment", name,
-			"-n", suite.testNamespace, "-o", "jsonpath={.status.phase}")
+			"-n", advancedTestSuite.testNamespace, "-o", "jsonpath={.status.phase}")
 		output, err := utils.Run(cmd)
 		if err == nil && output == "Ready" {
 			return
 		}
 		time.Sleep(10 * time.Second)
 	}
-	suite.T().Fatalf("LMDeployment %s not ready within %v", name, timeout)
+	advancedTestSuite.T().Fatalf("LMDeployment %s not ready within %v", name, timeout)
 }
 
-func (suite *AdvancedLMDeploymentTestSuite) waitForDeploymentReady(name string, timeout time.Duration) {
+func (advancedTestSuite *AdvancedLMDeploymentTestSuite) waitForDeploymentReady(name string, timeout time.Duration) {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
 		cmd := exec.Command("kubectl", "get", "deployment", name,
-			"-n", suite.testNamespace, "-o", "jsonpath={.status.readyReplicas}")
+			"-n", advancedTestSuite.testNamespace, "-o", "jsonpath={.status.readyReplicas}")
 		output, err := utils.Run(cmd)
 		if err == nil && output == "1" {
 			return
 		}
 		time.Sleep(10 * time.Second)
 	}
-	suite.T().Fatalf("Deployment %s not ready within %v", name, timeout)
+	advancedTestSuite.T().Fatalf("Deployment %s not ready within %v", name, timeout)
 }
 
 // TestAdvancedLMDeploymentSuite runs the advanced test suite

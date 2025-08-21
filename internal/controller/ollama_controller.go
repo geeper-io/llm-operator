@@ -55,16 +55,15 @@ func (r *LMDeploymentReconciler) buildOllamaDeployment(deployment *llmgeeperiov1
 	}
 
 	// Build postStart hook for model pulling
-	var postStartCommands []string
+	postStartCommands := make([]string, 0, len(deployment.Spec.Ollama.Models))
 	for _, model := range deployment.Spec.Ollama.Models {
 		// Extract model name and tag from "modelname:tag" format
-		modelStr := string(model)
-		modelName := modelStr
 		modelTag := "latest"
+		modelName := model
 
 		// Check if tag is specified (format: "modelname:tag")
-		if strings.Contains(modelStr, ":") {
-			parts := strings.Split(modelStr, ":")
+		if strings.Contains(model, ":") {
+			parts := strings.Split(model, ":")
 			if len(parts) == 2 {
 				modelName = parts[0]
 				modelTag = parts[1]
@@ -133,7 +132,7 @@ func (r *LMDeploymentReconciler) buildOllamaDeployment(deployment *llmgeeperiov1
 	}
 
 	// Set owner reference
-	controllerutil.SetControllerReference(deployment, ollamaDeployment, r.Scheme)
+	_ = controllerutil.SetControllerReference(deployment, ollamaDeployment, r.Scheme)
 	return ollamaDeployment
 }
 
@@ -151,7 +150,7 @@ func (r *LMDeploymentReconciler) buildOllamaService(deployment *llmgeeperiov1alp
 			Labels:    labels,
 		},
 		Spec: corev1.ServiceSpec{
-			Type: corev1.ServiceType(deployment.Spec.Ollama.Service.Type),
+			Type: deployment.Spec.Ollama.Service.Type,
 			Ports: []corev1.ServicePort{
 				{
 					Name:       "http",
@@ -165,6 +164,6 @@ func (r *LMDeploymentReconciler) buildOllamaService(deployment *llmgeeperiov1alp
 	}
 
 	// Set owner reference
-	controllerutil.SetControllerReference(deployment, ollamaService, r.Scheme)
+	_ = controllerutil.SetControllerReference(deployment, ollamaService, r.Scheme)
 	return ollamaService
 }

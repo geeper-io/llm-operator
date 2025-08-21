@@ -12,7 +12,6 @@ linters:
     - gocyclo
     - govet
     - ineffassign
-    - lll
     - misspell
     - nakedret
     - prealloc
@@ -30,11 +29,11 @@ linters:
     generated: lax
     rules:
       - linters:
-          - lll
-        path: api/*
+          - goconst
+          - unparam
+        path: test/*
       - linters:
           - dupl
-          - lll
         path: internal/*
     paths:
       - third_party$

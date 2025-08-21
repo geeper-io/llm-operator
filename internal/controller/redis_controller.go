@@ -18,13 +18,13 @@ package controller
 
 import (
 	"context"
-	"k8s.io/utils/ptr"
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	llmgeeperiov1alpha1 "github.com/geeper-io/llm-operator/api/v1alpha1"
@@ -158,7 +158,7 @@ func (r *LMDeploymentReconciler) buildRedisDeployment(deployment *llmgeeperiov1a
 	}
 
 	// Set owner reference
-	controllerutil.SetControllerReference(deployment, redisDeployment, r.Scheme)
+	_ = controllerutil.SetControllerReference(deployment, redisDeployment, r.Scheme)
 	return redisDeployment
 }
 
@@ -176,7 +176,7 @@ func (r *LMDeploymentReconciler) buildRedisService(deployment *llmgeeperiov1alph
 			Labels:    labels,
 		},
 		Spec: corev1.ServiceSpec{
-			Type: corev1.ServiceType(deployment.Spec.OpenWebUI.Redis.Service.Type),
+			Type: deployment.Spec.OpenWebUI.Redis.Service.Type,
 			Ports: []corev1.ServicePort{
 				{
 					Name:       "redis",
@@ -190,7 +190,7 @@ func (r *LMDeploymentReconciler) buildRedisService(deployment *llmgeeperiov1alph
 	}
 
 	// Set owner reference
-	controllerutil.SetControllerReference(deployment, redisService, r.Scheme)
+	_ = controllerutil.SetControllerReference(deployment, redisService, r.Scheme)
 	return redisService
 }
 
@@ -201,10 +201,7 @@ func (r *LMDeploymentReconciler) buildRedisPVC(deployment *llmgeeperiov1alpha1.L
 		"llm-deployment": deployment.Name,
 	}
 
-	storageClass := deployment.Spec.OpenWebUI.Redis.Persistence.StorageClass
-	var pvcSpec corev1.PersistentVolumeClaimSpec
-
-	pvcSpec = corev1.PersistentVolumeClaimSpec{
+	pvcSpec := corev1.PersistentVolumeClaimSpec{
 		AccessModes: []corev1.PersistentVolumeAccessMode{
 			corev1.ReadWriteOnce,
 		},
@@ -215,8 +212,7 @@ func (r *LMDeploymentReconciler) buildRedisPVC(deployment *llmgeeperiov1alpha1.L
 		},
 	}
 
-	// Only set StorageClassName if explicitly specified
-	// This prevents conflicts with existing PVCs that have default storage class
+	storageClass := deployment.Spec.OpenWebUI.Redis.Persistence.StorageClass
 	if storageClass != "" {
 		pvcSpec.StorageClassName = &storageClass
 	}

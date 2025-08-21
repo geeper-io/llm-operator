@@ -80,7 +80,7 @@ func (r *LMDeploymentReconciler) ensurePipelineSecret(ctx context.Context, deplo
 		},
 	}
 
-	controllerutil.SetControllerReference(deployment, secret, r.Scheme)
+	_ = controllerutil.SetControllerReference(deployment, secret, r.Scheme)
 
 	if err := r.createOrUpdateSecret(ctx, secret); err != nil {
 		return "", fmt.Errorf("failed to create pipelines secret: %w", err)
@@ -101,12 +101,6 @@ func (r *LMDeploymentReconciler) reconcileOpenWebUI(ctx context.Context, deploym
 		if err := r.reconcilePipelines(ctx, deployment); err != nil {
 			return err
 		}
-	}
-
-	// Reconcile Langfuse if enabled
-	if deployment.Spec.OpenWebUI.Langfuse != nil && deployment.Spec.OpenWebUI.Langfuse.Enabled {
-		// Langfuse is now external-only, no deployment needed
-		// Configuration is handled via environment variables in pipelines
 	}
 
 	// Create or update OpenWebUI PVC if persistence is enabled
@@ -243,7 +237,6 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 	// Build environment variables
 	envVars := []corev1.EnvVar{
 		{Name: "OLLAMA_BASE_URL", Value: fmt.Sprintf("http://%s:%d", ollamaServiceName, deployment.GetOllamaServicePort())},
-		//{Name: "ENABLE_PERSISTENT_CONFIG", Value: "False"},
 		{Name: "ENABLE_VERSION_UPDATE_CHECK", Value: "False"},
 		{
 			Name: "WEBUI_SECRET_KEY",
@@ -395,7 +388,7 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 	}
 
 	// Set owner reference
-	controllerutil.SetControllerReference(deployment, openwebuiDeployment, r.Scheme)
+	_ = controllerutil.SetControllerReference(deployment, openwebuiDeployment, r.Scheme)
 	return openwebuiDeployment
 }
 
@@ -422,11 +415,6 @@ func (r *LMDeploymentReconciler) buildPipelinesDeployment(deployment *llmgeeperi
 	replicas := pipelinesSpec.Replicas
 	if replicas == 0 {
 		replicas = 1
-	}
-
-	serviceType := pipelinesSpec.ServiceType
-	if serviceType == "" {
-		serviceType = "ClusterIP"
 	}
 
 	// Build environment variables
@@ -495,20 +483,6 @@ func (r *LMDeploymentReconciler) buildPipelinesDeployment(deployment *llmgeeperi
 				},
 			})
 		}
-
-		//if langfuseSpec.ProjectName != "" {
-		//	envVars = append(envVars, corev1.EnvVar{
-		//		Name:  "LANGFUSE_PROJECT",
-		//		Value: langfuseSpec.ProjectName,
-		//	})
-		//}
-
-		//if langfuseSpec.Environment != "" {
-		//	envVars = append(envVars, corev1.EnvVar{
-		//		Name:  "LANGFUSE_ENVIRONMENT",
-		//		Value: langfuseSpec.Environment,
-		//	})
-		//}
 
 		if langfuseSpec.Debug {
 			envVars = append(envVars, corev1.EnvVar{
@@ -650,7 +624,7 @@ func (r *LMDeploymentReconciler) buildPipelinesDeployment(deployment *llmgeeperi
 	}
 
 	// Set owner reference
-	controllerutil.SetControllerReference(deployment, deploymentObj, r.Scheme)
+	_ = controllerutil.SetControllerReference(deployment, deploymentObj, r.Scheme)
 	return deploymentObj
 }
 
@@ -668,9 +642,9 @@ func (r *LMDeploymentReconciler) buildPipelinesService(deployment *llmgeeperiov1
 		port = 9099
 	}
 
-	serviceType := pipelinesSpec.ServiceType
+	serviceType := pipelinesSpec.Service.Type
 	if serviceType == "" {
-		serviceType = "ClusterIP"
+		serviceType = corev1.ServiceTypeClusterIP
 	}
 
 	service := &corev1.Service{
@@ -680,7 +654,7 @@ func (r *LMDeploymentReconciler) buildPipelinesService(deployment *llmgeeperiov1
 			Labels:    labels,
 		},
 		Spec: corev1.ServiceSpec{
-			Type:     corev1.ServiceType(serviceType),
+			Type:     serviceType,
 			Selector: labels,
 			Ports: []corev1.ServicePort{
 				{
@@ -693,7 +667,7 @@ func (r *LMDeploymentReconciler) buildPipelinesService(deployment *llmgeeperiov1
 	}
 
 	// Set owner reference
-	controllerutil.SetControllerReference(deployment, service, r.Scheme)
+	_ = controllerutil.SetControllerReference(deployment, service, r.Scheme)
 	return service
 }
 
@@ -757,7 +731,7 @@ func (r *LMDeploymentReconciler) buildOpenWebUIService(deployment *llmgeeperiov1
 			Labels:    labels,
 		},
 		Spec: corev1.ServiceSpec{
-			Type: corev1.ServiceType(deployment.Spec.OpenWebUI.Service.Type),
+			Type: deployment.Spec.OpenWebUI.Service.Type,
 			Ports: []corev1.ServicePort{
 				{
 					Name:       "http",
@@ -771,7 +745,7 @@ func (r *LMDeploymentReconciler) buildOpenWebUIService(deployment *llmgeeperiov1
 	}
 
 	// Set owner reference
-	controllerutil.SetControllerReference(deployment, openwebuiService, r.Scheme)
+	_ = controllerutil.SetControllerReference(deployment, openwebuiService, r.Scheme)
 	return openwebuiService
 }
 
@@ -914,7 +888,7 @@ func (r *LMDeploymentReconciler) buildOpenWebUIConfig(ctx context.Context, deplo
 			"config.json": configJSON,
 		},
 	}
-	controllerutil.SetControllerReference(deployment, openwebuiConfig, r.Scheme)
+	_ = controllerutil.SetControllerReference(deployment, openwebuiConfig, r.Scheme)
 	return openwebuiConfig, nil
 }
 

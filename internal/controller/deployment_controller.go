@@ -145,7 +145,7 @@ func (r *LMDeploymentReconciler) setDefaults(deployment *llmgeeperiov1alpha1.LMD
 		deployment.Spec.Ollama.Replicas = 1
 	}
 	if deployment.Spec.Ollama.Service.Type == "" {
-		deployment.Spec.Ollama.Service.Type = "ClusterIP"
+		deployment.Spec.Ollama.Service.Type = corev1.ServiceTypeClusterIP
 	}
 	if deployment.Spec.Ollama.Service.Port == 0 {
 		deployment.Spec.Ollama.Service.Port = 11434
@@ -159,7 +159,7 @@ func (r *LMDeploymentReconciler) setDefaults(deployment *llmgeeperiov1alpha1.LMD
 		deployment.Spec.OpenWebUI.Replicas = 1
 	}
 	if deployment.Spec.OpenWebUI.Service.Type == "" {
-		deployment.Spec.OpenWebUI.Service.Type = "ClusterIP"
+		deployment.Spec.OpenWebUI.Service.Type = corev1.ServiceTypeClusterIP
 	}
 	if deployment.Spec.OpenWebUI.Service.Port == 0 {
 		deployment.Spec.OpenWebUI.Service.Port = 8080
@@ -173,7 +173,7 @@ func (r *LMDeploymentReconciler) setDefaults(deployment *llmgeeperiov1alpha1.LMD
 		deployment.Spec.OpenWebUI.Redis.Service.Port = 6379
 	}
 	if deployment.Spec.OpenWebUI.Redis.Service.Type == "" {
-		deployment.Spec.OpenWebUI.Redis.Service.Type = "ClusterIP"
+		deployment.Spec.OpenWebUI.Redis.Service.Type = corev1.ServiceTypeClusterIP
 	}
 	if deployment.Spec.OpenWebUI.Redis.Persistence.Size == "" {
 		deployment.Spec.OpenWebUI.Redis.Persistence.Size = "1Gi"
@@ -207,8 +207,8 @@ func (r *LMDeploymentReconciler) setDefaults(deployment *llmgeeperiov1alpha1.LMD
 		if deployment.Spec.OpenWebUI.Pipelines.Port == 0 {
 			deployment.Spec.OpenWebUI.Pipelines.Port = 9099
 		}
-		if deployment.Spec.OpenWebUI.Pipelines.ServiceType == "" {
-			deployment.Spec.OpenWebUI.Pipelines.ServiceType = "ClusterIP"
+		if deployment.Spec.OpenWebUI.Pipelines.Service.Type == "" {
+			deployment.Spec.OpenWebUI.Pipelines.Service.Type = corev1.ServiceTypeClusterIP
 		}
 		if deployment.Spec.OpenWebUI.Pipelines.PipelinesDir == "" {
 			deployment.Spec.OpenWebUI.Pipelines.PipelinesDir = "/app/pipelines"
@@ -223,7 +223,7 @@ func (r *LMDeploymentReconciler) setDefaults(deployment *llmgeeperiov1alpha1.LMD
 		deployment.Spec.Tabby.Replicas = 1
 	}
 	if deployment.Spec.Tabby.Service.Type == "" {
-		deployment.Spec.Tabby.Service.Type = "ClusterIP"
+		deployment.Spec.Tabby.Service.Type = corev1.ServiceTypeClusterIP
 	}
 	if deployment.Spec.Tabby.Service.Port == 0 {
 		deployment.Spec.Tabby.Service.Port = 8080
@@ -495,6 +495,7 @@ func (r *LMDeploymentReconciler) updateStatus(ctx context.Context, deployment *l
 	}
 
 	// Set phase
+	// nolint:staticcheck
 	if deployment.Status.ReadyReplicas == 0 {
 		deployment.Status.Phase = "Pending"
 	} else if deployment.Status.ReadyReplicas == deployment.Status.TotalReplicas {

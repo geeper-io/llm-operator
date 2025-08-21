@@ -35,16 +35,16 @@ type StatusLMDeploymentTestSuite struct {
 }
 
 // TestLMDeploymentStatusAndMetrics tests status and metrics reporting
-func (suite *StatusLMDeploymentTestSuite) TestLMDeploymentStatusAndMetrics() {
+func (statusTestSuite *StatusLMDeploymentTestSuite) TestLMDeploymentStatusAndMetrics() {
 	deploymentName := "test-status-metrics"
 
-	suite.T().Cleanup(func() {
-		suite.T().Log("Cleaning up LMDeployment")
-		cmd := exec.Command("kubectl", "delete", "lmdeployment", deploymentName, "-n", suite.testNamespace)
+	statusTestSuite.T().Cleanup(func() {
+		statusTestSuite.T().Log("Cleaning up LMDeployment")
+		cmd := exec.Command("kubectl", "delete", "lmdeployment", deploymentName, "-n", statusTestSuite.testNamespace)
 		_, _ = utils.Run(cmd)
 	})
 
-	suite.T().Log("Creating LMDeployment for status testing")
+	statusTestSuite.T().Log("Creating LMDeployment for status testing")
 	statusDeployment := `apiVersion: llm.geeper.io/v1alpha1
 kind: LMDeployment
 metadata:
@@ -71,58 +71,58 @@ spec:
 	// Write YAML to temporary file
 	yamlFile := filepath.Join("/tmp", "test-status-metrics.yaml")
 	err := os.WriteFile(yamlFile, []byte(statusDeployment), 0644)
-	require.NoError(suite.T(), err)
+	require.NoError(statusTestSuite.T(), err)
 
-	suite.T().Log("Applying LMDeployment YAML")
+	statusTestSuite.T().Log("Applying LMDeployment YAML")
 	cmd := exec.Command("kubectl", "apply", "-f", yamlFile)
 	_, err = utils.Run(cmd)
-	require.NoError(suite.T(), err, "Failed to apply LMDeployment")
+	require.NoError(statusTestSuite.T(), err, "Failed to apply LMDeployment")
 
-	suite.T().Log("Waiting for LMDeployment to be ready")
-	suite.waitForLMDeploymentReady(deploymentName, 8*time.Minute)
+	statusTestSuite.T().Log("Waiting for LMDeployment to be ready")
+	statusTestSuite.waitForLMDeploymentReady(deploymentName, 8*time.Minute)
 
-	suite.T().Log("Verifying total replicas count")
-	suite.waitForStatusField(deploymentName, "totalReplicas", "4", 2*time.Minute)
+	statusTestSuite.T().Log("Verifying total replicas count")
+	statusTestSuite.waitForStatusField(deploymentName, "totalReplicas", "4", 2*time.Minute)
 
-	suite.T().Log("Verifying ready replicas count")
-	suite.waitForStatusField(deploymentName, "readyReplicas", "4", 2*time.Minute)
+	statusTestSuite.T().Log("Verifying ready replicas count")
+	statusTestSuite.waitForStatusField(deploymentName, "readyReplicas", "4", 2*time.Minute)
 
-	suite.T().Log("Verifying component statuses")
-	suite.waitForStatusField(deploymentName, "ollamaStatus.readyReplicas", "2", 2*time.Minute)
-	suite.waitForStatusField(deploymentName, "openwebuiStatus.readyReplicas", "2", 2*time.Minute)
+	statusTestSuite.T().Log("Verifying component statuses")
+	statusTestSuite.waitForStatusField(deploymentName, "ollamaStatus.readyReplicas", "2", 2*time.Minute)
+	statusTestSuite.waitForStatusField(deploymentName, "openwebuiStatus.readyReplicas", "2", 2*time.Minute)
 
 	// Clean up temporary file
-	os.Remove(yamlFile)
+	_ = os.Remove(yamlFile)
 }
 
 // Helper methods for the status test suite
 
-func (suite *StatusLMDeploymentTestSuite) waitForLMDeploymentReady(name string, timeout time.Duration) {
+func (statusTestSuite *StatusLMDeploymentTestSuite) waitForLMDeploymentReady(name string, timeout time.Duration) {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
 		cmd := exec.Command("kubectl", "get", "lmdeployment", name,
-			"-n", suite.testNamespace, "-o", "jsonpath={.status.phase}")
+			"-n", statusTestSuite.testNamespace, "-o", "jsonpath={.status.phase}")
 		output, err := utils.Run(cmd)
 		if err == nil && output == "Ready" {
 			return
 		}
 		time.Sleep(10 * time.Second)
 	}
-	suite.T().Fatalf("LMDeployment %s not ready within %v", name, timeout)
+	statusTestSuite.T().Fatalf("LMDeployment %s not ready within %v", name, timeout)
 }
 
-func (suite *StatusLMDeploymentTestSuite) waitForStatusField(name, field, expectedValue string, timeout time.Duration) {
+func (statusTestSuite *StatusLMDeploymentTestSuite) waitForStatusField(name, field, expectedValue string, timeout time.Duration) {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
 		cmd := exec.Command("kubectl", "get", "lmdeployment", name,
-			"-n", suite.testNamespace, "-o", "jsonpath={.status."+field+"}")
+			"-n", statusTestSuite.testNamespace, "-o", "jsonpath={.status."+field+"}")
 		output, err := utils.Run(cmd)
 		if err == nil && output == expectedValue {
 			return
 		}
 		time.Sleep(10 * time.Second)
 	}
-	suite.T().Fatalf("Status field %s for LMDeployment %s not equal to %s within %v", field, name, expectedValue, timeout)
+	statusTestSuite.T().Fatalf("Status field %s for LMDeployment %s not equal to %s within %v", field, name, expectedValue, timeout)
 }
 
 // TestStatusLMDeploymentSuite runs the status test suite
