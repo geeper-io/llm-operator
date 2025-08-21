@@ -174,12 +174,7 @@ func (r *LMDeploymentReconciler) buildTabbyDeployment(deployment *llmgeeperiov1a
 								"-c",
 								"cp /tmp/config/config.toml /data/config.toml && echo 'Config file copied successfully'",
 							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "tabby-config",
-									MountPath: "/tmp/config",
-								},
-							},
+							VolumeMounts: volumeMounts,
 						},
 					},
 					Containers: []corev1.Container{
@@ -391,9 +386,10 @@ func (r *LMDeploymentReconciler) generateTabbyConfig(deployment *llmgeeperiov1al
 			},
 			Chat: TabbyChatConfig{
 				HTTP: TabbyHTTPConfig{
-					Kind:        "ollama/chat",
-					ModelName:   deployment.Spec.Tabby.ChatModel,
-					APIEndpoint: fmt.Sprintf("http://%s", ollamaHost),
+					Kind:            "openai/chat",
+					ModelName:       deployment.Spec.Tabby.ChatModel,
+					SupportedModels: deployment.Spec.Ollama.Models,
+					APIEndpoint:     fmt.Sprintf("http://%s/v1", ollamaHost),
 				},
 			},
 			Embedding: TabbyEmbeddingConfig{

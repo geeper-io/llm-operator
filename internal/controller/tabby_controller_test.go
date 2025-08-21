@@ -63,9 +63,10 @@ func TestTabbyController_ConfigGeneration(t *testing.T) {
       prompt_template = "<PRE> {prefix} <SUF>{suffix} <MID>"
   [model.chat]
     [model.chat.http]
-      kind = "ollama/chat"
+      kind = "openai/chat"
       model_name = "codellama:7b"
-      api_endpoint = "http://test-deployment-ollama.default:11434"
+      api_endpoint = "http://test-deployment-ollama.default:11434/v1"
+      supported_models = ["codellama:7b"]
   [model.embedding]
     [model.embedding.local]
       model_id = "Nomic-Embed-Text"
@@ -109,9 +110,10 @@ func TestTabbyController_ConfigGeneration(t *testing.T) {
       prompt_template = "<PRE> {prefix} <SUF>{suffix} <MID>"
   [model.chat]
     [model.chat.http]
-      kind = "ollama/chat"
+      kind = "openai/chat"
       model_name = "llama2:7b"
-      api_endpoint = "http://test-deployment-ollama.default:11434"
+      api_endpoint = "http://test-deployment-ollama.default:11434/v1"
+      supported_models = ["llama2:7b", "codellama:13b"]
   [model.embedding]
     [model.embedding.local]
       model_id = "Nomic-Embed-Text"
@@ -152,9 +154,10 @@ func TestTabbyController_ConfigGeneration(t *testing.T) {
       prompt_template = "<PRE> {prefix} <SUF>{suffix} <MID>"
   [model.chat]
     [model.chat.http]
-      kind = "ollama/chat"
+      kind = "openai/chat"
       model_name = "llama2:7b"
-      api_endpoint = "http://my-app-ollama.production:8080"
+      api_endpoint = "http://my-app-ollama.production:8080/v1"
+      supported_models = ["llama2:7b"]
   [model.embedding]
     [model.embedding.local]
       model_id = "Nomic-Embed-Text"
@@ -210,9 +213,10 @@ func TestTabbyController_ConfigGeneration(t *testing.T) {
       prompt_template = "<PRE> {prefix} <SUF>{suffix} <MID>"
   [model.chat]
     [model.chat.http]
-      kind = "ollama/chat"
+      kind = "openai/chat"
       model_name = "test-model:1.0"
-      api_endpoint = "http://test-deployment-ollama.default:11434"
+      api_endpoint = "http://test-deployment-ollama.default:11434/v1"
+      supported_models = ["test-model:1.0"]
   [model.embedding]
     [model.embedding.local]
       model_id = "Nomic-Embed-Text"

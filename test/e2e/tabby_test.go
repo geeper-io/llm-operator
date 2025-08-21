@@ -62,7 +62,7 @@ spec:
   
   tabby:
     enabled: true
-    image: tabbyml/tabby:latest
+    image: makhov/tabby:0.0.3
     chatModel: gemma3:270m
     completionModel: gemma3:270m`
 
