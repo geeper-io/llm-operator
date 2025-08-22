@@ -126,6 +126,7 @@ func (r *LMDeploymentReconciler) buildOllamaDeployment(deployment *llmgeeperiov1
 							},
 						},
 					},
+					Affinity: deployment.Spec.Ollama.Affinity,
 				},
 			},
 		},

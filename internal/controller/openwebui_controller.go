@@ -380,6 +380,7 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 					Labels: labels,
 				},
 				Spec: corev1.PodSpec{
+					Affinity:       deployment.Spec.OpenWebUI.Affinity,
 					InitContainers: []corev1.Container{initContainer},
 					Containers:     []corev1.Container{container},
 					Volumes:        volumes,
@@ -550,21 +551,8 @@ func (r *LMDeploymentReconciler) buildPipelinesDeployment(deployment *llmgeeperi
 	// Add resource requirements if specified
 	if pipelinesSpec.Resources.Requests != nil || pipelinesSpec.Resources.Limits != nil {
 		container.Resources = corev1.ResourceRequirements{
-			Requests: corev1.ResourceList{},
-			Limits:   corev1.ResourceList{},
-		}
-
-		if pipelinesSpec.Resources.Requests.CPU != "" {
-			container.Resources.Requests[corev1.ResourceCPU] = resource.MustParse(pipelinesSpec.Resources.Requests.CPU)
-		}
-		if pipelinesSpec.Resources.Requests.Memory != "" {
-			container.Resources.Requests[corev1.ResourceMemory] = resource.MustParse(pipelinesSpec.Resources.Requests.Memory)
-		}
-		if pipelinesSpec.Resources.Limits.CPU != "" {
-			container.Resources.Limits[corev1.ResourceCPU] = resource.MustParse(pipelinesSpec.Resources.Limits.CPU)
-		}
-		if pipelinesSpec.Resources.Limits.Memory != "" {
-			container.Resources.Limits[corev1.ResourceMemory] = resource.MustParse(pipelinesSpec.Resources.Limits.Memory)
+			Requests: pipelinesSpec.Resources.Requests,
+			Limits:   pipelinesSpec.Resources.Limits,
 		}
 	}
 

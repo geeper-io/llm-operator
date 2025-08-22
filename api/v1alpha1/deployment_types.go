@@ -41,6 +41,9 @@ type OllamaSpec struct {
 
 	// Service defines the service configuration for Ollama
 	Service ServiceSpec `json:"service,omitempty"`
+
+	// Affinity defines pod affinity and anti-affinity rules for Ollama pods
+	Affinity *corev1.Affinity `json:"affinity,omitempty"`
 }
 
 // ServiceSpec defines service configuration
@@ -100,6 +103,9 @@ type OpenWebUISpec struct {
 
 	// Persistence defines OpenWebUI persistence configuration
 	Persistence *OpenWebUIPersistenceSpec `json:"persistence,omitempty"`
+
+	// Affinity defines pod affinity and anti-affinity rules for OpenWebUI pods
+	Affinity *corev1.Affinity `json:"affinity,omitempty"`
 }
 
 // TabbySpec defines the desired state of Tabby deployment
@@ -152,6 +158,9 @@ type TabbySpec struct {
 
 	// Persistence defines Tabby persistence configuration
 	Persistence TabbyPersistenceSpec `json:"persistence,omitempty"`
+
+	// Affinity defines pod affinity and anti-affinity rules for Tabby pods
+	Affinity *corev1.Affinity `json:"affinity,omitempty"`
 }
 
 // RedisSpec defines the Redis configuration for OpenWebUI
@@ -301,22 +310,10 @@ type LangfuseSpec struct {
 // ResourceRequirements describes the compute resource requirements
 type ResourceRequirements struct {
 	// Limits describes the maximum amount of compute resources allowed
-	Limits *ResourceList `json:"limits,omitempty"`
+	Limits corev1.ResourceList `json:"limits,omitempty"`
 
 	// Requests describes the minimum amount of compute resources required
-	Requests *ResourceList `json:"requests,omitempty"`
-}
-
-// ResourceList is a set of (resource name, quantity) pairs
-type ResourceList struct {
-	// CPU is the CPU resource (e.g., "100m", "2")
-	CPU string `json:"cpu,omitempty"`
-
-	// Memory is the memory resource (e.g., "128Mi", "2Gi")
-	Memory string `json:"memory,omitempty"`
-
-	// Storage is the storage resource (e.g., "1Gi", "100Gi")
-	Storage string `json:"storage,omitempty"`
+	Requests corev1.ResourceList `json:"requests,omitempty"`
 }
 
 // LMDeploymentSpec defines the desired state of Deployment

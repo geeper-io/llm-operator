@@ -26,7 +26,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"reflect"
@@ -168,10 +167,6 @@ func (r *LMDeploymentReconciler) setDefaults(deployment *llmgeeperiov1alpha1.LMD
 	if deployment.Spec.OpenWebUI.Redis.Persistence.Size == "" {
 		deployment.Spec.OpenWebUI.Redis.Persistence.Size = "1Gi"
 	}
-	if deployment.Spec.OpenWebUI.Redis.Password == "" {
-		// Generate a default Redis password if not provided
-		deployment.Spec.OpenWebUI.Redis.Password = "redis-password-123"
-	}
 
 	// Set default Langfuse configuration if enabled
 	if deployment.Spec.OpenWebUI.Langfuse != nil && deployment.Spec.OpenWebUI.Langfuse.Enabled {
@@ -258,39 +253,10 @@ func (r *LMDeploymentReconciler) finalizeDeployment(ctx context.Context, deploym
 
 // buildResourceRequirements builds resource requirements from the spec
 func (r *LMDeploymentReconciler) buildResourceRequirements(resources llmgeeperiov1alpha1.ResourceRequirements) corev1.ResourceRequirements {
-	req := corev1.ResourceRequirements{}
-
-	if resources.Requests != nil {
-		if resources.Requests.CPU != "" {
-			if req.Requests == nil {
-				req.Requests = corev1.ResourceList{}
-			}
-			req.Requests[corev1.ResourceCPU] = resource.MustParse(resources.Requests.CPU)
-		}
-		if resources.Requests.Memory != "" {
-			if req.Requests == nil {
-				req.Requests = corev1.ResourceList{}
-			}
-			req.Requests[corev1.ResourceMemory] = resource.MustParse(resources.Requests.Memory)
-		}
+	return corev1.ResourceRequirements{
+		Requests: resources.Requests,
+		Limits:   resources.Limits,
 	}
-
-	if resources.Limits != nil {
-		if resources.Limits.CPU != "" {
-			if req.Limits == nil {
-				req.Limits = corev1.ResourceList{}
-			}
-			req.Limits[corev1.ResourceCPU] = resource.MustParse(resources.Limits.CPU)
-		}
-		if resources.Limits.Memory != "" {
-			if req.Limits == nil {
-				req.Limits = corev1.ResourceList{}
-			}
-			req.Limits[corev1.ResourceMemory] = resource.MustParse(resources.Limits.Memory)
-		}
-	}
-
-	return req
 }
 
 // createOrUpdateDeployment creates or updates a deployment using patch helper to avoid unnecessary reconciliations

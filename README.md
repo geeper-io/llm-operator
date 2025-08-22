@@ -93,6 +93,12 @@ kubectl apply -f my-ai-stack.yaml
 - Mix different model types (chat, code, embedding)
 - Automatic model management and updates
 
+### **🚀 GPU Acceleration**
+- **NVIDIA GPU Support** - Accelerate inference with CUDA
+- **AMD GPU Support** - Use ROCm for AMD graphics cards
+- **Intel GPU Support** - Leverage Intel graphics acceleration
+- **Resource Management** - Standard Kubernetes resource specification
+
 ### **💻 Developer Experience**
 - **Tabby Integration** - Get AI code completion in VS Code, Vim, and more
 - **WebSocket Support** - Real-time streaming for IDE extensions

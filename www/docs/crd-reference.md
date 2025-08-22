@@ -34,36 +34,319 @@ Ollama defines the Ollama deployment configuration
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
 | models | []string | Models is the list of models to deploy with Ollama | true |
+| [affinity](#lmdeploymentspecollamaaffinity) | object | Affinity defines pod affinity and anti-affinity rules for Ollama pods | false |
 | image | string | Image is the Ollama container image to use (including tag) | false |
 | replicas | integer | Replicas is the number of Ollama pods to run<br/>*Format*: int32<br/>*Minimum*: 1<br/>*Maximum*: 10<br/> | false |
 | [resources](#lmdeploymentspecollamaresources) | object | Resources defines the resource requirements for Ollama pods | false |
 | [service](#lmdeploymentspecollamaservice) | object | Service defines the service configuration for Ollama | false |
+### LMDeployment.spec.ollama.affinity
+
+Affinity defines pod affinity and anti-affinity rules for Ollama pods
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [nodeAffinity](#lmdeploymentspecollamaaffinitynodeaffinity) | object | Describes node affinity scheduling rules for the pod. | false |
+| [podAffinity](#lmdeploymentspecollamaaffinitypodaffinity) | object | Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)). | false |
+| [podAntiAffinity](#lmdeploymentspecollamaaffinitypodantiaffinity) | object | Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)). | false |
+### LMDeployment.spec.ollama.affinity.nodeAffinity
+
+Describes node affinity scheduling rules for the pod.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [preferredDuringSchedulingIgnoredDuringExecution](#lmdeploymentspecollamaaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindex) | []object | The scheduler will prefer to schedule pods to nodes that satisfy<br/>the affinity expressions specified by this field, but it may choose<br/>a node that violates one or more of the expressions. The node that is<br/>most preferred is the one with the greatest sum of weights, i.e.<br/>for each node that meets all of the scheduling requirements (resource<br/>request, requiredDuringScheduling affinity expressions, etc.),<br/>compute a sum by iterating through the elements of this field and adding<br/>"weight" to the sum if the node matches the corresponding matchExpressions; the<br/>node(s) with the highest sum are the most preferred. | false |
+| [requiredDuringSchedulingIgnoredDuringExecution](#lmdeploymentspecollamaaffinitynodeaffinityrequiredduringschedulingignoredduringexecution) | object | If the affinity requirements specified by this field are not met at<br/>scheduling time, the pod will not be scheduled onto the node.<br/>If the affinity requirements specified by this field cease to be met<br/>at some point during pod execution (e.g. due to an update), the system<br/>may or may not try to eventually evict the pod from its node. | false |
+### LMDeployment.spec.ollama.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+
+An empty preferred scheduling term matches all objects with implicit weight 0<br/>(i.e. it's a no-op). A null preferred scheduling term matches no objects (i.e. is also a no-op).
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [preference](#lmdeploymentspecollamaaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference) | object | A node selector term, associated with the corresponding weight. | true |
+| weight | integer | Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.<br/>*Format*: int32<br/> | true |
+### LMDeployment.spec.ollama.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference
+
+A node selector term, associated with the corresponding weight.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspecollamaaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchexpressionsindex) | []object | A list of node selector requirements by node's labels. | false |
+| [matchFields](#lmdeploymentspecollamaaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchfieldsindex) | []object | A list of node selector requirements by node's fields. | false |
+### LMDeployment.spec.ollama.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference.matchExpressions[index]
+
+A node selector requirement is a selector that contains values, a key, and an operator<br/>that relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | The label key that the selector applies to. | true |
+| operator | string | Represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt. | true |
+| values | []string | An array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. If the operator is Gt or Lt, the values<br/>array must have a single element, which will be interpreted as an integer.<br/>This array is replaced during a strategic merge patch. | false |
+### LMDeployment.spec.ollama.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference.matchFields[index]
+
+A node selector requirement is a selector that contains values, a key, and an operator<br/>that relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | The label key that the selector applies to. | true |
+| operator | string | Represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt. | true |
+| values | []string | An array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. If the operator is Gt or Lt, the values<br/>array must have a single element, which will be interpreted as an integer.<br/>This array is replaced during a strategic merge patch. | false |
+### LMDeployment.spec.ollama.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution
+
+If the affinity requirements specified by this field are not met at<br/>scheduling time, the pod will not be scheduled onto the node.<br/>If the affinity requirements specified by this field cease to be met<br/>at some point during pod execution (e.g. due to an update), the system<br/>may or may not try to eventually evict the pod from its node.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [nodeSelectorTerms](#lmdeploymentspecollamaaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex) | []object | Required. A list of node selector terms. The terms are ORed. | true |
+### LMDeployment.spec.ollama.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index]
+
+A null or empty node selector term matches no objects. The requirements of<br/>them are ANDed.<br/>The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspecollamaaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchexpressionsindex) | []object | A list of node selector requirements by node's labels. | false |
+| [matchFields](#lmdeploymentspecollamaaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchfieldsindex) | []object | A list of node selector requirements by node's fields. | false |
+### LMDeployment.spec.ollama.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index].matchExpressions[index]
+
+A node selector requirement is a selector that contains values, a key, and an operator<br/>that relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | The label key that the selector applies to. | true |
+| operator | string | Represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt. | true |
+| values | []string | An array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. If the operator is Gt or Lt, the values<br/>array must have a single element, which will be interpreted as an integer.<br/>This array is replaced during a strategic merge patch. | false |
+### LMDeployment.spec.ollama.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index].matchFields[index]
+
+A node selector requirement is a selector that contains values, a key, and an operator<br/>that relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | The label key that the selector applies to. | true |
+| operator | string | Represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt. | true |
+| values | []string | An array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. If the operator is Gt or Lt, the values<br/>array must have a single element, which will be interpreted as an integer.<br/>This array is replaced during a strategic merge patch. | false |
+### LMDeployment.spec.ollama.affinity.podAffinity
+
+Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)).
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [preferredDuringSchedulingIgnoredDuringExecution](#lmdeploymentspecollamaaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindex) | []object | The scheduler will prefer to schedule pods to nodes that satisfy<br/>the affinity expressions specified by this field, but it may choose<br/>a node that violates one or more of the expressions. The node that is<br/>most preferred is the one with the greatest sum of weights, i.e.<br/>for each node that meets all of the scheduling requirements (resource<br/>request, requiredDuringScheduling affinity expressions, etc.),<br/>compute a sum by iterating through the elements of this field and adding<br/>"weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the<br/>node(s) with the highest sum are the most preferred. | false |
+| [requiredDuringSchedulingIgnoredDuringExecution](#lmdeploymentspecollamaaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex) | []object | If the affinity requirements specified by this field are not met at<br/>scheduling time, the pod will not be scheduled onto the node.<br/>If the affinity requirements specified by this field cease to be met<br/>at some point during pod execution (e.g. due to a pod label update), the<br/>system may or may not try to eventually evict the pod from its node.<br/>When there are multiple elements, the lists of nodes corresponding to each<br/>podAffinityTerm are intersected, i.e. all terms must be satisfied. | false |
+### LMDeployment.spec.ollama.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+
+The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [podAffinityTerm](#lmdeploymentspecollamaaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm) | object | Required. A pod affinity term, associated with the corresponding weight. | true |
+| weight | integer | weight associated with matching the corresponding podAffinityTerm,<br/>in the range 1-100.<br/>*Format*: int32<br/> | true |
+### LMDeployment.spec.ollama.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm
+
+Required. A pod affinity term, associated with the corresponding weight.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| topologyKey | string | This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching<br/>the labelSelector in the specified namespaces, where co-located is defined as running on a node<br/>whose value of the label with key topologyKey matches that of any node on which any of the<br/>selected pods is running.<br/>Empty topologyKey is not allowed. | true |
+| [labelSelector](#lmdeploymentspecollamaaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector) | object | A label query over a set of resources, in this case pods.<br/>If it's null, this PodAffinityTerm matches with no Pods. | false |
+| matchLabelKeys | []string | MatchLabelKeys is a set of pod label keys to select which pods will<br/>be taken into consideration. The keys are used to lookup values from the<br/>incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`<br/>to select the group of existing pods which pods will be taken into consideration<br/>for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming<br/>pod labels will be ignored. The default value is empty.<br/>The same key is forbidden to exist in both matchLabelKeys and labelSelector.<br/>Also, matchLabelKeys cannot be set when labelSelector isn't set. | false |
+| mismatchLabelKeys | []string | MismatchLabelKeys is a set of pod label keys to select which pods will<br/>be taken into consideration. The keys are used to lookup values from the<br/>incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`<br/>to select the group of existing pods which pods will be taken into consideration<br/>for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming<br/>pod labels will be ignored. The default value is empty.<br/>The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.<br/>Also, mismatchLabelKeys cannot be set when labelSelector isn't set. | false |
+| [namespaceSelector](#lmdeploymentspecollamaaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector) | object | A label query over the set of namespaces that the term applies to.<br/>The term is applied to the union of the namespaces selected by this field<br/>and the ones listed in the namespaces field.<br/>null selector and null or empty namespaces list means "this pod's namespace".<br/>An empty selector (&#123;&#125;) matches all namespaces. | false |
+| namespaces | []string | namespaces specifies a static list of namespace names that the term applies to.<br/>The term is applied to the union of the namespaces listed in this field<br/>and the ones selected by namespaceSelector.<br/>null or empty namespaces list and null namespaceSelector means "this pod's namespace". | false |
+### LMDeployment.spec.ollama.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector
+
+A label query over a set of resources, in this case pods.<br/>If it's null, this PodAffinityTerm matches with no Pods.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspecollamaaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex) | []object | matchExpressions is a list of label selector requirements. The requirements are ANDed. | false |
+| matchLabels | map[string]string | matchLabels is a map of &#123;key,value&#125; pairs. A single &#123;key,value&#125; in the matchLabels<br/>map is equivalent to an element of matchExpressions, whose key field is "key", the<br/>operator is "In", and the values array contains only "value". The requirements are ANDed. | false |
+### LMDeployment.spec.ollama.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector.matchExpressions[index]
+
+A label selector requirement is a selector that contains values, a key, and an operator that<br/>relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | key is the label key that the selector applies to. | true |
+| operator | string | operator represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists and DoesNotExist. | true |
+| values | []string | values is an array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. This array is replaced during a strategic<br/>merge patch. | false |
+### LMDeployment.spec.ollama.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector
+
+A label query over the set of namespaces that the term applies to.<br/>The term is applied to the union of the namespaces selected by this field<br/>and the ones listed in the namespaces field.<br/>null selector and null or empty namespaces list means "this pod's namespace".<br/>An empty selector (&#123;&#125;) matches all namespaces.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspecollamaaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex) | []object | matchExpressions is a list of label selector requirements. The requirements are ANDed. | false |
+| matchLabels | map[string]string | matchLabels is a map of &#123;key,value&#125; pairs. A single &#123;key,value&#125; in the matchLabels<br/>map is equivalent to an element of matchExpressions, whose key field is "key", the<br/>operator is "In", and the values array contains only "value". The requirements are ANDed. | false |
+### LMDeployment.spec.ollama.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector.matchExpressions[index]
+
+A label selector requirement is a selector that contains values, a key, and an operator that<br/>relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | key is the label key that the selector applies to. | true |
+| operator | string | operator represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists and DoesNotExist. | true |
+| values | []string | values is an array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. This array is replaced during a strategic<br/>merge patch. | false |
+### LMDeployment.spec.ollama.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index]
+
+Defines a set of pods (namely those matching the labelSelector<br/>relative to the given namespace(s)) that this pod should be<br/>co-located (affinity) or not co-located (anti-affinity) with,<br/>where co-located is defined as running on a node whose value of<br/>the label with key &lt;topologyKey&gt; matches that of any node on which<br/>a pod of the set of pods is running
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| topologyKey | string | This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching<br/>the labelSelector in the specified namespaces, where co-located is defined as running on a node<br/>whose value of the label with key topologyKey matches that of any node on which any of the<br/>selected pods is running.<br/>Empty topologyKey is not allowed. | true |
+| [labelSelector](#lmdeploymentspecollamaaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector) | object | A label query over a set of resources, in this case pods.<br/>If it's null, this PodAffinityTerm matches with no Pods. | false |
+| matchLabelKeys | []string | MatchLabelKeys is a set of pod label keys to select which pods will<br/>be taken into consideration. The keys are used to lookup values from the<br/>incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`<br/>to select the group of existing pods which pods will be taken into consideration<br/>for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming<br/>pod labels will be ignored. The default value is empty.<br/>The same key is forbidden to exist in both matchLabelKeys and labelSelector.<br/>Also, matchLabelKeys cannot be set when labelSelector isn't set. | false |
+| mismatchLabelKeys | []string | MismatchLabelKeys is a set of pod label keys to select which pods will<br/>be taken into consideration. The keys are used to lookup values from the<br/>incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`<br/>to select the group of existing pods which pods will be taken into consideration<br/>for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming<br/>pod labels will be ignored. The default value is empty.<br/>The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.<br/>Also, mismatchLabelKeys cannot be set when labelSelector isn't set. | false |
+| [namespaceSelector](#lmdeploymentspecollamaaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector) | object | A label query over the set of namespaces that the term applies to.<br/>The term is applied to the union of the namespaces selected by this field<br/>and the ones listed in the namespaces field.<br/>null selector and null or empty namespaces list means "this pod's namespace".<br/>An empty selector (&#123;&#125;) matches all namespaces. | false |
+| namespaces | []string | namespaces specifies a static list of namespace names that the term applies to.<br/>The term is applied to the union of the namespaces listed in this field<br/>and the ones selected by namespaceSelector.<br/>null or empty namespaces list and null namespaceSelector means "this pod's namespace". | false |
+### LMDeployment.spec.ollama.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector
+
+A label query over a set of resources, in this case pods.<br/>If it's null, this PodAffinityTerm matches with no Pods.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspecollamaaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex) | []object | matchExpressions is a list of label selector requirements. The requirements are ANDed. | false |
+| matchLabels | map[string]string | matchLabels is a map of &#123;key,value&#125; pairs. A single &#123;key,value&#125; in the matchLabels<br/>map is equivalent to an element of matchExpressions, whose key field is "key", the<br/>operator is "In", and the values array contains only "value". The requirements are ANDed. | false |
+### LMDeployment.spec.ollama.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector.matchExpressions[index]
+
+A label selector requirement is a selector that contains values, a key, and an operator that<br/>relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | key is the label key that the selector applies to. | true |
+| operator | string | operator represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists and DoesNotExist. | true |
+| values | []string | values is an array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. This array is replaced during a strategic<br/>merge patch. | false |
+### LMDeployment.spec.ollama.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector
+
+A label query over the set of namespaces that the term applies to.<br/>The term is applied to the union of the namespaces selected by this field<br/>and the ones listed in the namespaces field.<br/>null selector and null or empty namespaces list means "this pod's namespace".<br/>An empty selector (&#123;&#125;) matches all namespaces.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspecollamaaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex) | []object | matchExpressions is a list of label selector requirements. The requirements are ANDed. | false |
+| matchLabels | map[string]string | matchLabels is a map of &#123;key,value&#125; pairs. A single &#123;key,value&#125; in the matchLabels<br/>map is equivalent to an element of matchExpressions, whose key field is "key", the<br/>operator is "In", and the values array contains only "value". The requirements are ANDed. | false |
+### LMDeployment.spec.ollama.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector.matchExpressions[index]
+
+A label selector requirement is a selector that contains values, a key, and an operator that<br/>relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | key is the label key that the selector applies to. | true |
+| operator | string | operator represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists and DoesNotExist. | true |
+| values | []string | values is an array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. This array is replaced during a strategic<br/>merge patch. | false |
+### LMDeployment.spec.ollama.affinity.podAntiAffinity
+
+Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)).
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [preferredDuringSchedulingIgnoredDuringExecution](#lmdeploymentspecollamaaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindex) | []object | The scheduler will prefer to schedule pods to nodes that satisfy<br/>the anti-affinity expressions specified by this field, but it may choose<br/>a node that violates one or more of the expressions. The node that is<br/>most preferred is the one with the greatest sum of weights, i.e.<br/>for each node that meets all of the scheduling requirements (resource<br/>request, requiredDuringScheduling anti-affinity expressions, etc.),<br/>compute a sum by iterating through the elements of this field and adding<br/>"weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the<br/>node(s) with the highest sum are the most preferred. | false |
+| [requiredDuringSchedulingIgnoredDuringExecution](#lmdeploymentspecollamaaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex) | []object | If the anti-affinity requirements specified by this field are not met at<br/>scheduling time, the pod will not be scheduled onto the node.<br/>If the anti-affinity requirements specified by this field cease to be met<br/>at some point during pod execution (e.g. due to a pod label update), the<br/>system may or may not try to eventually evict the pod from its node.<br/>When there are multiple elements, the lists of nodes corresponding to each<br/>podAffinityTerm are intersected, i.e. all terms must be satisfied. | false |
+### LMDeployment.spec.ollama.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+
+The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [podAffinityTerm](#lmdeploymentspecollamaaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm) | object | Required. A pod affinity term, associated with the corresponding weight. | true |
+| weight | integer | weight associated with matching the corresponding podAffinityTerm,<br/>in the range 1-100.<br/>*Format*: int32<br/> | true |
+### LMDeployment.spec.ollama.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm
+
+Required. A pod affinity term, associated with the corresponding weight.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| topologyKey | string | This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching<br/>the labelSelector in the specified namespaces, where co-located is defined as running on a node<br/>whose value of the label with key topologyKey matches that of any node on which any of the<br/>selected pods is running.<br/>Empty topologyKey is not allowed. | true |
+| [labelSelector](#lmdeploymentspecollamaaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector) | object | A label query over a set of resources, in this case pods.<br/>If it's null, this PodAffinityTerm matches with no Pods. | false |
+| matchLabelKeys | []string | MatchLabelKeys is a set of pod label keys to select which pods will<br/>be taken into consideration. The keys are used to lookup values from the<br/>incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`<br/>to select the group of existing pods which pods will be taken into consideration<br/>for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming<br/>pod labels will be ignored. The default value is empty.<br/>The same key is forbidden to exist in both matchLabelKeys and labelSelector.<br/>Also, matchLabelKeys cannot be set when labelSelector isn't set. | false |
+| mismatchLabelKeys | []string | MismatchLabelKeys is a set of pod label keys to select which pods will<br/>be taken into consideration. The keys are used to lookup values from the<br/>incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`<br/>to select the group of existing pods which pods will be taken into consideration<br/>for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming<br/>pod labels will be ignored. The default value is empty.<br/>The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.<br/>Also, mismatchLabelKeys cannot be set when labelSelector isn't set. | false |
+| [namespaceSelector](#lmdeploymentspecollamaaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector) | object | A label query over the set of namespaces that the term applies to.<br/>The term is applied to the union of the namespaces selected by this field<br/>and the ones listed in the namespaces field.<br/>null selector and null or empty namespaces list means "this pod's namespace".<br/>An empty selector (&#123;&#125;) matches all namespaces. | false |
+| namespaces | []string | namespaces specifies a static list of namespace names that the term applies to.<br/>The term is applied to the union of the namespaces listed in this field<br/>and the ones selected by namespaceSelector.<br/>null or empty namespaces list and null namespaceSelector means "this pod's namespace". | false |
+### LMDeployment.spec.ollama.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector
+
+A label query over a set of resources, in this case pods.<br/>If it's null, this PodAffinityTerm matches with no Pods.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspecollamaaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex) | []object | matchExpressions is a list of label selector requirements. The requirements are ANDed. | false |
+| matchLabels | map[string]string | matchLabels is a map of &#123;key,value&#125; pairs. A single &#123;key,value&#125; in the matchLabels<br/>map is equivalent to an element of matchExpressions, whose key field is "key", the<br/>operator is "In", and the values array contains only "value". The requirements are ANDed. | false |
+### LMDeployment.spec.ollama.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector.matchExpressions[index]
+
+A label selector requirement is a selector that contains values, a key, and an operator that<br/>relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | key is the label key that the selector applies to. | true |
+| operator | string | operator represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists and DoesNotExist. | true |
+| values | []string | values is an array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. This array is replaced during a strategic<br/>merge patch. | false |
+### LMDeployment.spec.ollama.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector
+
+A label query over the set of namespaces that the term applies to.<br/>The term is applied to the union of the namespaces selected by this field<br/>and the ones listed in the namespaces field.<br/>null selector and null or empty namespaces list means "this pod's namespace".<br/>An empty selector (&#123;&#125;) matches all namespaces.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspecollamaaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex) | []object | matchExpressions is a list of label selector requirements. The requirements are ANDed. | false |
+| matchLabels | map[string]string | matchLabels is a map of &#123;key,value&#125; pairs. A single &#123;key,value&#125; in the matchLabels<br/>map is equivalent to an element of matchExpressions, whose key field is "key", the<br/>operator is "In", and the values array contains only "value". The requirements are ANDed. | false |
+### LMDeployment.spec.ollama.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector.matchExpressions[index]
+
+A label selector requirement is a selector that contains values, a key, and an operator that<br/>relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | key is the label key that the selector applies to. | true |
+| operator | string | operator represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists and DoesNotExist. | true |
+| values | []string | values is an array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. This array is replaced during a strategic<br/>merge patch. | false |
+### LMDeployment.spec.ollama.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index]
+
+Defines a set of pods (namely those matching the labelSelector<br/>relative to the given namespace(s)) that this pod should be<br/>co-located (affinity) or not co-located (anti-affinity) with,<br/>where co-located is defined as running on a node whose value of<br/>the label with key &lt;topologyKey&gt; matches that of any node on which<br/>a pod of the set of pods is running
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| topologyKey | string | This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching<br/>the labelSelector in the specified namespaces, where co-located is defined as running on a node<br/>whose value of the label with key topologyKey matches that of any node on which any of the<br/>selected pods is running.<br/>Empty topologyKey is not allowed. | true |
+| [labelSelector](#lmdeploymentspecollamaaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector) | object | A label query over a set of resources, in this case pods.<br/>If it's null, this PodAffinityTerm matches with no Pods. | false |
+| matchLabelKeys | []string | MatchLabelKeys is a set of pod label keys to select which pods will<br/>be taken into consideration. The keys are used to lookup values from the<br/>incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`<br/>to select the group of existing pods which pods will be taken into consideration<br/>for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming<br/>pod labels will be ignored. The default value is empty.<br/>The same key is forbidden to exist in both matchLabelKeys and labelSelector.<br/>Also, matchLabelKeys cannot be set when labelSelector isn't set. | false |
+| mismatchLabelKeys | []string | MismatchLabelKeys is a set of pod label keys to select which pods will<br/>be taken into consideration. The keys are used to lookup values from the<br/>incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`<br/>to select the group of existing pods which pods will be taken into consideration<br/>for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming<br/>pod labels will be ignored. The default value is empty.<br/>The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.<br/>Also, mismatchLabelKeys cannot be set when labelSelector isn't set. | false |
+| [namespaceSelector](#lmdeploymentspecollamaaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector) | object | A label query over the set of namespaces that the term applies to.<br/>The term is applied to the union of the namespaces selected by this field<br/>and the ones listed in the namespaces field.<br/>null selector and null or empty namespaces list means "this pod's namespace".<br/>An empty selector (&#123;&#125;) matches all namespaces. | false |
+| namespaces | []string | namespaces specifies a static list of namespace names that the term applies to.<br/>The term is applied to the union of the namespaces listed in this field<br/>and the ones selected by namespaceSelector.<br/>null or empty namespaces list and null namespaceSelector means "this pod's namespace". | false |
+### LMDeployment.spec.ollama.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector
+
+A label query over a set of resources, in this case pods.<br/>If it's null, this PodAffinityTerm matches with no Pods.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspecollamaaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex) | []object | matchExpressions is a list of label selector requirements. The requirements are ANDed. | false |
+| matchLabels | map[string]string | matchLabels is a map of &#123;key,value&#125; pairs. A single &#123;key,value&#125; in the matchLabels<br/>map is equivalent to an element of matchExpressions, whose key field is "key", the<br/>operator is "In", and the values array contains only "value". The requirements are ANDed. | false |
+### LMDeployment.spec.ollama.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector.matchExpressions[index]
+
+A label selector requirement is a selector that contains values, a key, and an operator that<br/>relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | key is the label key that the selector applies to. | true |
+| operator | string | operator represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists and DoesNotExist. | true |
+| values | []string | values is an array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. This array is replaced during a strategic<br/>merge patch. | false |
+### LMDeployment.spec.ollama.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector
+
+A label query over the set of namespaces that the term applies to.<br/>The term is applied to the union of the namespaces selected by this field<br/>and the ones listed in the namespaces field.<br/>null selector and null or empty namespaces list means "this pod's namespace".<br/>An empty selector (&#123;&#125;) matches all namespaces.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspecollamaaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex) | []object | matchExpressions is a list of label selector requirements. The requirements are ANDed. | false |
+| matchLabels | map[string]string | matchLabels is a map of &#123;key,value&#125; pairs. A single &#123;key,value&#125; in the matchLabels<br/>map is equivalent to an element of matchExpressions, whose key field is "key", the<br/>operator is "In", and the values array contains only "value". The requirements are ANDed. | false |
+### LMDeployment.spec.ollama.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector.matchExpressions[index]
+
+A label selector requirement is a selector that contains values, a key, and an operator that<br/>relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | key is the label key that the selector applies to. | true |
+| operator | string | operator represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists and DoesNotExist. | true |
+| values | []string | values is an array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. This array is replaced during a strategic<br/>merge patch. | false |
 ### LMDeployment.spec.ollama.resources
 
 Resources defines the resource requirements for Ollama pods
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| [limits](#lmdeploymentspecollamaresourceslimits) | object | Limits describes the maximum amount of compute resources allowed | false |
-| [requests](#lmdeploymentspecollamaresourcesrequests) | object | Requests describes the minimum amount of compute resources required | false |
-### LMDeployment.spec.ollama.resources.limits
-
-Limits describes the maximum amount of compute resources allowed
-
-| Name | Type | Description | Required |
-|------|------|-------------|----------|
-| cpu | string | CPU is the CPU resource (e.g., "100m", "2") | false |
-| memory | string | Memory is the memory resource (e.g., "128Mi", "2Gi") | false |
-| storage | string | Storage is the storage resource (e.g., "1Gi", "100Gi") | false |
-### LMDeployment.spec.ollama.resources.requests
-
-Requests describes the minimum amount of compute resources required
-
-| Name | Type | Description | Required |
-|------|------|-------------|----------|
-| cpu | string | CPU is the CPU resource (e.g., "100m", "2") | false |
-| memory | string | Memory is the memory resource (e.g., "128Mi", "2Gi") | false |
-| storage | string | Storage is the storage resource (e.g., "1Gi", "100Gi") | false |
+| limits | map[string]int or string | Limits describes the maximum amount of compute resources allowed | false |
+| requests | map[string]int or string | Requests describes the minimum amount of compute resources required | false |
 ### LMDeployment.spec.ollama.service
 
 Service defines the service configuration for Ollama
@@ -78,6 +361,7 @@ OpenWebUI defines the OpenWebUI deployment configuration
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
+| [affinity](#lmdeploymentspecopenwebuiaffinity) | object | Affinity defines pod affinity and anti-affinity rules for OpenWebUI pods | false |
 | enabled | boolean | Enabled determines if OpenWebUI should be deployed | false |
 | [envVars](#lmdeploymentspecopenwebuienvvarsindex) | []object | EnvVars defines environment variables for the Pipelines | false |
 | image | string | Image is the OpenWebUI container image to use (including tag) | false |
@@ -89,6 +373,306 @@ OpenWebUI defines the OpenWebUI deployment configuration
 | replicas | integer | Replicas is the number of OpenWebUI pods to run<br/>*Format*: int32<br/>*Minimum*: 1<br/>*Maximum*: 5<br/> | false |
 | [resources](#lmdeploymentspecopenwebuiresources) | object | Resources defines the resource requirements for OpenWebUI pods | false |
 | [service](#lmdeploymentspecopenwebuiservice) | object | Service defines the service configuration for OpenWebUI | false |
+### LMDeployment.spec.openwebui.affinity
+
+Affinity defines pod affinity and anti-affinity rules for OpenWebUI pods
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [nodeAffinity](#lmdeploymentspecopenwebuiaffinitynodeaffinity) | object | Describes node affinity scheduling rules for the pod. | false |
+| [podAffinity](#lmdeploymentspecopenwebuiaffinitypodaffinity) | object | Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)). | false |
+| [podAntiAffinity](#lmdeploymentspecopenwebuiaffinitypodantiaffinity) | object | Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)). | false |
+### LMDeployment.spec.openwebui.affinity.nodeAffinity
+
+Describes node affinity scheduling rules for the pod.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [preferredDuringSchedulingIgnoredDuringExecution](#lmdeploymentspecopenwebuiaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindex) | []object | The scheduler will prefer to schedule pods to nodes that satisfy<br/>the affinity expressions specified by this field, but it may choose<br/>a node that violates one or more of the expressions. The node that is<br/>most preferred is the one with the greatest sum of weights, i.e.<br/>for each node that meets all of the scheduling requirements (resource<br/>request, requiredDuringScheduling affinity expressions, etc.),<br/>compute a sum by iterating through the elements of this field and adding<br/>"weight" to the sum if the node matches the corresponding matchExpressions; the<br/>node(s) with the highest sum are the most preferred. | false |
+| [requiredDuringSchedulingIgnoredDuringExecution](#lmdeploymentspecopenwebuiaffinitynodeaffinityrequiredduringschedulingignoredduringexecution) | object | If the affinity requirements specified by this field are not met at<br/>scheduling time, the pod will not be scheduled onto the node.<br/>If the affinity requirements specified by this field cease to be met<br/>at some point during pod execution (e.g. due to an update), the system<br/>may or may not try to eventually evict the pod from its node. | false |
+### LMDeployment.spec.openwebui.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+
+An empty preferred scheduling term matches all objects with implicit weight 0<br/>(i.e. it's a no-op). A null preferred scheduling term matches no objects (i.e. is also a no-op).
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [preference](#lmdeploymentspecopenwebuiaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference) | object | A node selector term, associated with the corresponding weight. | true |
+| weight | integer | Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.<br/>*Format*: int32<br/> | true |
+### LMDeployment.spec.openwebui.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference
+
+A node selector term, associated with the corresponding weight.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspecopenwebuiaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchexpressionsindex) | []object | A list of node selector requirements by node's labels. | false |
+| [matchFields](#lmdeploymentspecopenwebuiaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchfieldsindex) | []object | A list of node selector requirements by node's fields. | false |
+### LMDeployment.spec.openwebui.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference.matchExpressions[index]
+
+A node selector requirement is a selector that contains values, a key, and an operator<br/>that relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | The label key that the selector applies to. | true |
+| operator | string | Represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt. | true |
+| values | []string | An array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. If the operator is Gt or Lt, the values<br/>array must have a single element, which will be interpreted as an integer.<br/>This array is replaced during a strategic merge patch. | false |
+### LMDeployment.spec.openwebui.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference.matchFields[index]
+
+A node selector requirement is a selector that contains values, a key, and an operator<br/>that relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | The label key that the selector applies to. | true |
+| operator | string | Represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt. | true |
+| values | []string | An array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. If the operator is Gt or Lt, the values<br/>array must have a single element, which will be interpreted as an integer.<br/>This array is replaced during a strategic merge patch. | false |
+### LMDeployment.spec.openwebui.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution
+
+If the affinity requirements specified by this field are not met at<br/>scheduling time, the pod will not be scheduled onto the node.<br/>If the affinity requirements specified by this field cease to be met<br/>at some point during pod execution (e.g. due to an update), the system<br/>may or may not try to eventually evict the pod from its node.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [nodeSelectorTerms](#lmdeploymentspecopenwebuiaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex) | []object | Required. A list of node selector terms. The terms are ORed. | true |
+### LMDeployment.spec.openwebui.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index]
+
+A null or empty node selector term matches no objects. The requirements of<br/>them are ANDed.<br/>The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspecopenwebuiaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchexpressionsindex) | []object | A list of node selector requirements by node's labels. | false |
+| [matchFields](#lmdeploymentspecopenwebuiaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchfieldsindex) | []object | A list of node selector requirements by node's fields. | false |
+### LMDeployment.spec.openwebui.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index].matchExpressions[index]
+
+A node selector requirement is a selector that contains values, a key, and an operator<br/>that relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | The label key that the selector applies to. | true |
+| operator | string | Represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt. | true |
+| values | []string | An array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. If the operator is Gt or Lt, the values<br/>array must have a single element, which will be interpreted as an integer.<br/>This array is replaced during a strategic merge patch. | false |
+### LMDeployment.spec.openwebui.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index].matchFields[index]
+
+A node selector requirement is a selector that contains values, a key, and an operator<br/>that relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | The label key that the selector applies to. | true |
+| operator | string | Represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt. | true |
+| values | []string | An array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. If the operator is Gt or Lt, the values<br/>array must have a single element, which will be interpreted as an integer.<br/>This array is replaced during a strategic merge patch. | false |
+### LMDeployment.spec.openwebui.affinity.podAffinity
+
+Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)).
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [preferredDuringSchedulingIgnoredDuringExecution](#lmdeploymentspecopenwebuiaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindex) | []object | The scheduler will prefer to schedule pods to nodes that satisfy<br/>the affinity expressions specified by this field, but it may choose<br/>a node that violates one or more of the expressions. The node that is<br/>most preferred is the one with the greatest sum of weights, i.e.<br/>for each node that meets all of the scheduling requirements (resource<br/>request, requiredDuringScheduling affinity expressions, etc.),<br/>compute a sum by iterating through the elements of this field and adding<br/>"weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the<br/>node(s) with the highest sum are the most preferred. | false |
+| [requiredDuringSchedulingIgnoredDuringExecution](#lmdeploymentspecopenwebuiaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex) | []object | If the affinity requirements specified by this field are not met at<br/>scheduling time, the pod will not be scheduled onto the node.<br/>If the affinity requirements specified by this field cease to be met<br/>at some point during pod execution (e.g. due to a pod label update), the<br/>system may or may not try to eventually evict the pod from its node.<br/>When there are multiple elements, the lists of nodes corresponding to each<br/>podAffinityTerm are intersected, i.e. all terms must be satisfied. | false |
+### LMDeployment.spec.openwebui.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+
+The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [podAffinityTerm](#lmdeploymentspecopenwebuiaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm) | object | Required. A pod affinity term, associated with the corresponding weight. | true |
+| weight | integer | weight associated with matching the corresponding podAffinityTerm,<br/>in the range 1-100.<br/>*Format*: int32<br/> | true |
+### LMDeployment.spec.openwebui.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm
+
+Required. A pod affinity term, associated with the corresponding weight.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| topologyKey | string | This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching<br/>the labelSelector in the specified namespaces, where co-located is defined as running on a node<br/>whose value of the label with key topologyKey matches that of any node on which any of the<br/>selected pods is running.<br/>Empty topologyKey is not allowed. | true |
+| [labelSelector](#lmdeploymentspecopenwebuiaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector) | object | A label query over a set of resources, in this case pods.<br/>If it's null, this PodAffinityTerm matches with no Pods. | false |
+| matchLabelKeys | []string | MatchLabelKeys is a set of pod label keys to select which pods will<br/>be taken into consideration. The keys are used to lookup values from the<br/>incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`<br/>to select the group of existing pods which pods will be taken into consideration<br/>for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming<br/>pod labels will be ignored. The default value is empty.<br/>The same key is forbidden to exist in both matchLabelKeys and labelSelector.<br/>Also, matchLabelKeys cannot be set when labelSelector isn't set. | false |
+| mismatchLabelKeys | []string | MismatchLabelKeys is a set of pod label keys to select which pods will<br/>be taken into consideration. The keys are used to lookup values from the<br/>incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`<br/>to select the group of existing pods which pods will be taken into consideration<br/>for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming<br/>pod labels will be ignored. The default value is empty.<br/>The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.<br/>Also, mismatchLabelKeys cannot be set when labelSelector isn't set. | false |
+| [namespaceSelector](#lmdeploymentspecopenwebuiaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector) | object | A label query over the set of namespaces that the term applies to.<br/>The term is applied to the union of the namespaces selected by this field<br/>and the ones listed in the namespaces field.<br/>null selector and null or empty namespaces list means "this pod's namespace".<br/>An empty selector (&#123;&#125;) matches all namespaces. | false |
+| namespaces | []string | namespaces specifies a static list of namespace names that the term applies to.<br/>The term is applied to the union of the namespaces listed in this field<br/>and the ones selected by namespaceSelector.<br/>null or empty namespaces list and null namespaceSelector means "this pod's namespace". | false |
+### LMDeployment.spec.openwebui.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector
+
+A label query over a set of resources, in this case pods.<br/>If it's null, this PodAffinityTerm matches with no Pods.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspecopenwebuiaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex) | []object | matchExpressions is a list of label selector requirements. The requirements are ANDed. | false |
+| matchLabels | map[string]string | matchLabels is a map of &#123;key,value&#125; pairs. A single &#123;key,value&#125; in the matchLabels<br/>map is equivalent to an element of matchExpressions, whose key field is "key", the<br/>operator is "In", and the values array contains only "value". The requirements are ANDed. | false |
+### LMDeployment.spec.openwebui.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector.matchExpressions[index]
+
+A label selector requirement is a selector that contains values, a key, and an operator that<br/>relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | key is the label key that the selector applies to. | true |
+| operator | string | operator represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists and DoesNotExist. | true |
+| values | []string | values is an array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. This array is replaced during a strategic<br/>merge patch. | false |
+### LMDeployment.spec.openwebui.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector
+
+A label query over the set of namespaces that the term applies to.<br/>The term is applied to the union of the namespaces selected by this field<br/>and the ones listed in the namespaces field.<br/>null selector and null or empty namespaces list means "this pod's namespace".<br/>An empty selector (&#123;&#125;) matches all namespaces.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspecopenwebuiaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex) | []object | matchExpressions is a list of label selector requirements. The requirements are ANDed. | false |
+| matchLabels | map[string]string | matchLabels is a map of &#123;key,value&#125; pairs. A single &#123;key,value&#125; in the matchLabels<br/>map is equivalent to an element of matchExpressions, whose key field is "key", the<br/>operator is "In", and the values array contains only "value". The requirements are ANDed. | false |
+### LMDeployment.spec.openwebui.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector.matchExpressions[index]
+
+A label selector requirement is a selector that contains values, a key, and an operator that<br/>relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | key is the label key that the selector applies to. | true |
+| operator | string | operator represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists and DoesNotExist. | true |
+| values | []string | values is an array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. This array is replaced during a strategic<br/>merge patch. | false |
+### LMDeployment.spec.openwebui.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index]
+
+Defines a set of pods (namely those matching the labelSelector<br/>relative to the given namespace(s)) that this pod should be<br/>co-located (affinity) or not co-located (anti-affinity) with,<br/>where co-located is defined as running on a node whose value of<br/>the label with key &lt;topologyKey&gt; matches that of any node on which<br/>a pod of the set of pods is running
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| topologyKey | string | This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching<br/>the labelSelector in the specified namespaces, where co-located is defined as running on a node<br/>whose value of the label with key topologyKey matches that of any node on which any of the<br/>selected pods is running.<br/>Empty topologyKey is not allowed. | true |
+| [labelSelector](#lmdeploymentspecopenwebuiaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector) | object | A label query over a set of resources, in this case pods.<br/>If it's null, this PodAffinityTerm matches with no Pods. | false |
+| matchLabelKeys | []string | MatchLabelKeys is a set of pod label keys to select which pods will<br/>be taken into consideration. The keys are used to lookup values from the<br/>incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`<br/>to select the group of existing pods which pods will be taken into consideration<br/>for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming<br/>pod labels will be ignored. The default value is empty.<br/>The same key is forbidden to exist in both matchLabelKeys and labelSelector.<br/>Also, matchLabelKeys cannot be set when labelSelector isn't set. | false |
+| mismatchLabelKeys | []string | MismatchLabelKeys is a set of pod label keys to select which pods will<br/>be taken into consideration. The keys are used to lookup values from the<br/>incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`<br/>to select the group of existing pods which pods will be taken into consideration<br/>for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming<br/>pod labels will be ignored. The default value is empty.<br/>The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.<br/>Also, mismatchLabelKeys cannot be set when labelSelector isn't set. | false |
+| [namespaceSelector](#lmdeploymentspecopenwebuiaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector) | object | A label query over the set of namespaces that the term applies to.<br/>The term is applied to the union of the namespaces selected by this field<br/>and the ones listed in the namespaces field.<br/>null selector and null or empty namespaces list means "this pod's namespace".<br/>An empty selector (&#123;&#125;) matches all namespaces. | false |
+| namespaces | []string | namespaces specifies a static list of namespace names that the term applies to.<br/>The term is applied to the union of the namespaces listed in this field<br/>and the ones selected by namespaceSelector.<br/>null or empty namespaces list and null namespaceSelector means "this pod's namespace". | false |
+### LMDeployment.spec.openwebui.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector
+
+A label query over a set of resources, in this case pods.<br/>If it's null, this PodAffinityTerm matches with no Pods.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspecopenwebuiaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex) | []object | matchExpressions is a list of label selector requirements. The requirements are ANDed. | false |
+| matchLabels | map[string]string | matchLabels is a map of &#123;key,value&#125; pairs. A single &#123;key,value&#125; in the matchLabels<br/>map is equivalent to an element of matchExpressions, whose key field is "key", the<br/>operator is "In", and the values array contains only "value". The requirements are ANDed. | false |
+### LMDeployment.spec.openwebui.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector.matchExpressions[index]
+
+A label selector requirement is a selector that contains values, a key, and an operator that<br/>relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | key is the label key that the selector applies to. | true |
+| operator | string | operator represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists and DoesNotExist. | true |
+| values | []string | values is an array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. This array is replaced during a strategic<br/>merge patch. | false |
+### LMDeployment.spec.openwebui.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector
+
+A label query over the set of namespaces that the term applies to.<br/>The term is applied to the union of the namespaces selected by this field<br/>and the ones listed in the namespaces field.<br/>null selector and null or empty namespaces list means "this pod's namespace".<br/>An empty selector (&#123;&#125;) matches all namespaces.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspecopenwebuiaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex) | []object | matchExpressions is a list of label selector requirements. The requirements are ANDed. | false |
+| matchLabels | map[string]string | matchLabels is a map of &#123;key,value&#125; pairs. A single &#123;key,value&#125; in the matchLabels<br/>map is equivalent to an element of matchExpressions, whose key field is "key", the<br/>operator is "In", and the values array contains only "value". The requirements are ANDed. | false |
+### LMDeployment.spec.openwebui.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector.matchExpressions[index]
+
+A label selector requirement is a selector that contains values, a key, and an operator that<br/>relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | key is the label key that the selector applies to. | true |
+| operator | string | operator represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists and DoesNotExist. | true |
+| values | []string | values is an array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. This array is replaced during a strategic<br/>merge patch. | false |
+### LMDeployment.spec.openwebui.affinity.podAntiAffinity
+
+Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)).
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [preferredDuringSchedulingIgnoredDuringExecution](#lmdeploymentspecopenwebuiaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindex) | []object | The scheduler will prefer to schedule pods to nodes that satisfy<br/>the anti-affinity expressions specified by this field, but it may choose<br/>a node that violates one or more of the expressions. The node that is<br/>most preferred is the one with the greatest sum of weights, i.e.<br/>for each node that meets all of the scheduling requirements (resource<br/>request, requiredDuringScheduling anti-affinity expressions, etc.),<br/>compute a sum by iterating through the elements of this field and adding<br/>"weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the<br/>node(s) with the highest sum are the most preferred. | false |
+| [requiredDuringSchedulingIgnoredDuringExecution](#lmdeploymentspecopenwebuiaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex) | []object | If the anti-affinity requirements specified by this field are not met at<br/>scheduling time, the pod will not be scheduled onto the node.<br/>If the anti-affinity requirements specified by this field cease to be met<br/>at some point during pod execution (e.g. due to a pod label update), the<br/>system may or may not try to eventually evict the pod from its node.<br/>When there are multiple elements, the lists of nodes corresponding to each<br/>podAffinityTerm are intersected, i.e. all terms must be satisfied. | false |
+### LMDeployment.spec.openwebui.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+
+The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [podAffinityTerm](#lmdeploymentspecopenwebuiaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm) | object | Required. A pod affinity term, associated with the corresponding weight. | true |
+| weight | integer | weight associated with matching the corresponding podAffinityTerm,<br/>in the range 1-100.<br/>*Format*: int32<br/> | true |
+### LMDeployment.spec.openwebui.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm
+
+Required. A pod affinity term, associated with the corresponding weight.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| topologyKey | string | This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching<br/>the labelSelector in the specified namespaces, where co-located is defined as running on a node<br/>whose value of the label with key topologyKey matches that of any node on which any of the<br/>selected pods is running.<br/>Empty topologyKey is not allowed. | true |
+| [labelSelector](#lmdeploymentspecopenwebuiaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector) | object | A label query over a set of resources, in this case pods.<br/>If it's null, this PodAffinityTerm matches with no Pods. | false |
+| matchLabelKeys | []string | MatchLabelKeys is a set of pod label keys to select which pods will<br/>be taken into consideration. The keys are used to lookup values from the<br/>incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`<br/>to select the group of existing pods which pods will be taken into consideration<br/>for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming<br/>pod labels will be ignored. The default value is empty.<br/>The same key is forbidden to exist in both matchLabelKeys and labelSelector.<br/>Also, matchLabelKeys cannot be set when labelSelector isn't set. | false |
+| mismatchLabelKeys | []string | MismatchLabelKeys is a set of pod label keys to select which pods will<br/>be taken into consideration. The keys are used to lookup values from the<br/>incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`<br/>to select the group of existing pods which pods will be taken into consideration<br/>for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming<br/>pod labels will be ignored. The default value is empty.<br/>The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.<br/>Also, mismatchLabelKeys cannot be set when labelSelector isn't set. | false |
+| [namespaceSelector](#lmdeploymentspecopenwebuiaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector) | object | A label query over the set of namespaces that the term applies to.<br/>The term is applied to the union of the namespaces selected by this field<br/>and the ones listed in the namespaces field.<br/>null selector and null or empty namespaces list means "this pod's namespace".<br/>An empty selector (&#123;&#125;) matches all namespaces. | false |
+| namespaces | []string | namespaces specifies a static list of namespace names that the term applies to.<br/>The term is applied to the union of the namespaces listed in this field<br/>and the ones selected by namespaceSelector.<br/>null or empty namespaces list and null namespaceSelector means "this pod's namespace". | false |
+### LMDeployment.spec.openwebui.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector
+
+A label query over a set of resources, in this case pods.<br/>If it's null, this PodAffinityTerm matches with no Pods.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspecopenwebuiaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex) | []object | matchExpressions is a list of label selector requirements. The requirements are ANDed. | false |
+| matchLabels | map[string]string | matchLabels is a map of &#123;key,value&#125; pairs. A single &#123;key,value&#125; in the matchLabels<br/>map is equivalent to an element of matchExpressions, whose key field is "key", the<br/>operator is "In", and the values array contains only "value". The requirements are ANDed. | false |
+### LMDeployment.spec.openwebui.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector.matchExpressions[index]
+
+A label selector requirement is a selector that contains values, a key, and an operator that<br/>relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | key is the label key that the selector applies to. | true |
+| operator | string | operator represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists and DoesNotExist. | true |
+| values | []string | values is an array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. This array is replaced during a strategic<br/>merge patch. | false |
+### LMDeployment.spec.openwebui.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector
+
+A label query over the set of namespaces that the term applies to.<br/>The term is applied to the union of the namespaces selected by this field<br/>and the ones listed in the namespaces field.<br/>null selector and null or empty namespaces list means "this pod's namespace".<br/>An empty selector (&#123;&#125;) matches all namespaces.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspecopenwebuiaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex) | []object | matchExpressions is a list of label selector requirements. The requirements are ANDed. | false |
+| matchLabels | map[string]string | matchLabels is a map of &#123;key,value&#125; pairs. A single &#123;key,value&#125; in the matchLabels<br/>map is equivalent to an element of matchExpressions, whose key field is "key", the<br/>operator is "In", and the values array contains only "value". The requirements are ANDed. | false |
+### LMDeployment.spec.openwebui.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector.matchExpressions[index]
+
+A label selector requirement is a selector that contains values, a key, and an operator that<br/>relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | key is the label key that the selector applies to. | true |
+| operator | string | operator represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists and DoesNotExist. | true |
+| values | []string | values is an array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. This array is replaced during a strategic<br/>merge patch. | false |
+### LMDeployment.spec.openwebui.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index]
+
+Defines a set of pods (namely those matching the labelSelector<br/>relative to the given namespace(s)) that this pod should be<br/>co-located (affinity) or not co-located (anti-affinity) with,<br/>where co-located is defined as running on a node whose value of<br/>the label with key &lt;topologyKey&gt; matches that of any node on which<br/>a pod of the set of pods is running
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| topologyKey | string | This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching<br/>the labelSelector in the specified namespaces, where co-located is defined as running on a node<br/>whose value of the label with key topologyKey matches that of any node on which any of the<br/>selected pods is running.<br/>Empty topologyKey is not allowed. | true |
+| [labelSelector](#lmdeploymentspecopenwebuiaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector) | object | A label query over a set of resources, in this case pods.<br/>If it's null, this PodAffinityTerm matches with no Pods. | false |
+| matchLabelKeys | []string | MatchLabelKeys is a set of pod label keys to select which pods will<br/>be taken into consideration. The keys are used to lookup values from the<br/>incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`<br/>to select the group of existing pods which pods will be taken into consideration<br/>for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming<br/>pod labels will be ignored. The default value is empty.<br/>The same key is forbidden to exist in both matchLabelKeys and labelSelector.<br/>Also, matchLabelKeys cannot be set when labelSelector isn't set. | false |
+| mismatchLabelKeys | []string | MismatchLabelKeys is a set of pod label keys to select which pods will<br/>be taken into consideration. The keys are used to lookup values from the<br/>incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`<br/>to select the group of existing pods which pods will be taken into consideration<br/>for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming<br/>pod labels will be ignored. The default value is empty.<br/>The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.<br/>Also, mismatchLabelKeys cannot be set when labelSelector isn't set. | false |
+| [namespaceSelector](#lmdeploymentspecopenwebuiaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector) | object | A label query over the set of namespaces that the term applies to.<br/>The term is applied to the union of the namespaces selected by this field<br/>and the ones listed in the namespaces field.<br/>null selector and null or empty namespaces list means "this pod's namespace".<br/>An empty selector (&#123;&#125;) matches all namespaces. | false |
+| namespaces | []string | namespaces specifies a static list of namespace names that the term applies to.<br/>The term is applied to the union of the namespaces listed in this field<br/>and the ones selected by namespaceSelector.<br/>null or empty namespaces list and null namespaceSelector means "this pod's namespace". | false |
+### LMDeployment.spec.openwebui.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector
+
+A label query over a set of resources, in this case pods.<br/>If it's null, this PodAffinityTerm matches with no Pods.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspecopenwebuiaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex) | []object | matchExpressions is a list of label selector requirements. The requirements are ANDed. | false |
+| matchLabels | map[string]string | matchLabels is a map of &#123;key,value&#125; pairs. A single &#123;key,value&#125; in the matchLabels<br/>map is equivalent to an element of matchExpressions, whose key field is "key", the<br/>operator is "In", and the values array contains only "value". The requirements are ANDed. | false |
+### LMDeployment.spec.openwebui.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector.matchExpressions[index]
+
+A label selector requirement is a selector that contains values, a key, and an operator that<br/>relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | key is the label key that the selector applies to. | true |
+| operator | string | operator represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists and DoesNotExist. | true |
+| values | []string | values is an array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. This array is replaced during a strategic<br/>merge patch. | false |
+### LMDeployment.spec.openwebui.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector
+
+A label query over the set of namespaces that the term applies to.<br/>The term is applied to the union of the namespaces selected by this field<br/>and the ones listed in the namespaces field.<br/>null selector and null or empty namespaces list means "this pod's namespace".<br/>An empty selector (&#123;&#125;) matches all namespaces.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspecopenwebuiaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex) | []object | matchExpressions is a list of label selector requirements. The requirements are ANDed. | false |
+| matchLabels | map[string]string | matchLabels is a map of &#123;key,value&#125; pairs. A single &#123;key,value&#125; in the matchLabels<br/>map is equivalent to an element of matchExpressions, whose key field is "key", the<br/>operator is "In", and the values array contains only "value". The requirements are ANDed. | false |
+### LMDeployment.spec.openwebui.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector.matchExpressions[index]
+
+A label selector requirement is a selector that contains values, a key, and an operator that<br/>relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | key is the label key that the selector applies to. | true |
+| operator | string | operator represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists and DoesNotExist. | true |
+| values | []string | values is an array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. This array is replaced during a strategic<br/>merge patch. | false |
 ### LMDeployment.spec.openwebui.envVars[index]
 
 EnvVar represents an environment variable present in a Container.
@@ -267,26 +851,8 @@ Resources defines the resource requirements for Pipelines pods
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| [limits](#lmdeploymentspecopenwebuipipelinesresourceslimits) | object | Limits describes the maximum amount of compute resources allowed | false |
-| [requests](#lmdeploymentspecopenwebuipipelinesresourcesrequests) | object | Requests describes the minimum amount of compute resources required | false |
-### LMDeployment.spec.openwebui.pipelines.resources.limits
-
-Limits describes the maximum amount of compute resources allowed
-
-| Name | Type | Description | Required |
-|------|------|-------------|----------|
-| cpu | string | CPU is the CPU resource (e.g., "100m", "2") | false |
-| memory | string | Memory is the memory resource (e.g., "128Mi", "2Gi") | false |
-| storage | string | Storage is the storage resource (e.g., "1Gi", "100Gi") | false |
-### LMDeployment.spec.openwebui.pipelines.resources.requests
-
-Requests describes the minimum amount of compute resources required
-
-| Name | Type | Description | Required |
-|------|------|-------------|----------|
-| cpu | string | CPU is the CPU resource (e.g., "100m", "2") | false |
-| memory | string | Memory is the memory resource (e.g., "128Mi", "2Gi") | false |
-| storage | string | Storage is the storage resource (e.g., "1Gi", "100Gi") | false |
+| limits | map[string]int or string | Limits describes the maximum amount of compute resources allowed | false |
+| requests | map[string]int or string | Requests describes the minimum amount of compute resources required | false |
 ### LMDeployment.spec.openwebui.pipelines.service
 
 Service describes service to expose the Pipelines
@@ -962,26 +1528,8 @@ Resources defines the resource requirements for Redis pods
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| [limits](#lmdeploymentspecopenwebuiredisresourceslimits) | object | Limits describes the maximum amount of compute resources allowed | false |
-| [requests](#lmdeploymentspecopenwebuiredisresourcesrequests) | object | Requests describes the minimum amount of compute resources required | false |
-### LMDeployment.spec.openwebui.redis.resources.limits
-
-Limits describes the maximum amount of compute resources allowed
-
-| Name | Type | Description | Required |
-|------|------|-------------|----------|
-| cpu | string | CPU is the CPU resource (e.g., "100m", "2") | false |
-| memory | string | Memory is the memory resource (e.g., "128Mi", "2Gi") | false |
-| storage | string | Storage is the storage resource (e.g., "1Gi", "100Gi") | false |
-### LMDeployment.spec.openwebui.redis.resources.requests
-
-Requests describes the minimum amount of compute resources required
-
-| Name | Type | Description | Required |
-|------|------|-------------|----------|
-| cpu | string | CPU is the CPU resource (e.g., "100m", "2") | false |
-| memory | string | Memory is the memory resource (e.g., "128Mi", "2Gi") | false |
-| storage | string | Storage is the storage resource (e.g., "1Gi", "100Gi") | false |
+| limits | map[string]int or string | Limits describes the maximum amount of compute resources allowed | false |
+| requests | map[string]int or string | Requests describes the minimum amount of compute resources required | false |
 ### LMDeployment.spec.openwebui.redis.service
 
 Service defines the service configuration for Redis
@@ -996,26 +1544,8 @@ Resources defines the resource requirements for OpenWebUI pods
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| [limits](#lmdeploymentspecopenwebuiresourceslimits) | object | Limits describes the maximum amount of compute resources allowed | false |
-| [requests](#lmdeploymentspecopenwebuiresourcesrequests) | object | Requests describes the minimum amount of compute resources required | false |
-### LMDeployment.spec.openwebui.resources.limits
-
-Limits describes the maximum amount of compute resources allowed
-
-| Name | Type | Description | Required |
-|------|------|-------------|----------|
-| cpu | string | CPU is the CPU resource (e.g., "100m", "2") | false |
-| memory | string | Memory is the memory resource (e.g., "128Mi", "2Gi") | false |
-| storage | string | Storage is the storage resource (e.g., "1Gi", "100Gi") | false |
-### LMDeployment.spec.openwebui.resources.requests
-
-Requests describes the minimum amount of compute resources required
-
-| Name | Type | Description | Required |
-|------|------|-------------|----------|
-| cpu | string | CPU is the CPU resource (e.g., "100m", "2") | false |
-| memory | string | Memory is the memory resource (e.g., "128Mi", "2Gi") | false |
-| storage | string | Storage is the storage resource (e.g., "1Gi", "100Gi") | false |
+| limits | map[string]int or string | Limits describes the maximum amount of compute resources allowed | false |
+| requests | map[string]int or string | Requests describes the minimum amount of compute resources required | false |
 ### LMDeployment.spec.openwebui.service
 
 Service defines the service configuration for OpenWebUI
@@ -1030,6 +1560,7 @@ Tabby defines the Tabby deployment configuration
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
+| [affinity](#lmdeploymentspectabbyaffinity) | object | Affinity defines pod affinity and anti-affinity rules for Tabby pods | false |
 | chatModel | string | ChatModel is the name of the Ollama model to use for chat functionality<br/>Must be one of the models specified in spec.ollama.models | false |
 | completionModel | string | CompletionModel is the name of the Ollama model to use for code completion<br/>Must be one of the models specified in spec.ollama.models | false |
 | configMapName | string | ConfigMapName is the name of the ConfigMap containing Tabby configuration | false |
@@ -1044,6 +1575,306 @@ Tabby defines the Tabby deployment configuration
 | [service](#lmdeploymentspectabbyservice) | object | Service defines the service configuration for Tabby | false |
 | [volumeMounts](#lmdeploymentspectabbyvolumemountsindex) | []object | VolumeMounts defines volume mounts for Tabby | false |
 | [volumes](#lmdeploymentspectabbyvolumesindex) | []object | Volumes defines volumes for Tabby | false |
+### LMDeployment.spec.tabby.affinity
+
+Affinity defines pod affinity and anti-affinity rules for Tabby pods
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [nodeAffinity](#lmdeploymentspectabbyaffinitynodeaffinity) | object | Describes node affinity scheduling rules for the pod. | false |
+| [podAffinity](#lmdeploymentspectabbyaffinitypodaffinity) | object | Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)). | false |
+| [podAntiAffinity](#lmdeploymentspectabbyaffinitypodantiaffinity) | object | Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)). | false |
+### LMDeployment.spec.tabby.affinity.nodeAffinity
+
+Describes node affinity scheduling rules for the pod.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [preferredDuringSchedulingIgnoredDuringExecution](#lmdeploymentspectabbyaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindex) | []object | The scheduler will prefer to schedule pods to nodes that satisfy<br/>the affinity expressions specified by this field, but it may choose<br/>a node that violates one or more of the expressions. The node that is<br/>most preferred is the one with the greatest sum of weights, i.e.<br/>for each node that meets all of the scheduling requirements (resource<br/>request, requiredDuringScheduling affinity expressions, etc.),<br/>compute a sum by iterating through the elements of this field and adding<br/>"weight" to the sum if the node matches the corresponding matchExpressions; the<br/>node(s) with the highest sum are the most preferred. | false |
+| [requiredDuringSchedulingIgnoredDuringExecution](#lmdeploymentspectabbyaffinitynodeaffinityrequiredduringschedulingignoredduringexecution) | object | If the affinity requirements specified by this field are not met at<br/>scheduling time, the pod will not be scheduled onto the node.<br/>If the affinity requirements specified by this field cease to be met<br/>at some point during pod execution (e.g. due to an update), the system<br/>may or may not try to eventually evict the pod from its node. | false |
+### LMDeployment.spec.tabby.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+
+An empty preferred scheduling term matches all objects with implicit weight 0<br/>(i.e. it's a no-op). A null preferred scheduling term matches no objects (i.e. is also a no-op).
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [preference](#lmdeploymentspectabbyaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreference) | object | A node selector term, associated with the corresponding weight. | true |
+| weight | integer | Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.<br/>*Format*: int32<br/> | true |
+### LMDeployment.spec.tabby.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference
+
+A node selector term, associated with the corresponding weight.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspectabbyaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchexpressionsindex) | []object | A list of node selector requirements by node's labels. | false |
+| [matchFields](#lmdeploymentspectabbyaffinitynodeaffinitypreferredduringschedulingignoredduringexecutionindexpreferencematchfieldsindex) | []object | A list of node selector requirements by node's fields. | false |
+### LMDeployment.spec.tabby.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference.matchExpressions[index]
+
+A node selector requirement is a selector that contains values, a key, and an operator<br/>that relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | The label key that the selector applies to. | true |
+| operator | string | Represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt. | true |
+| values | []string | An array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. If the operator is Gt or Lt, the values<br/>array must have a single element, which will be interpreted as an integer.<br/>This array is replaced during a strategic merge patch. | false |
+### LMDeployment.spec.tabby.affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].preference.matchFields[index]
+
+A node selector requirement is a selector that contains values, a key, and an operator<br/>that relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | The label key that the selector applies to. | true |
+| operator | string | Represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt. | true |
+| values | []string | An array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. If the operator is Gt or Lt, the values<br/>array must have a single element, which will be interpreted as an integer.<br/>This array is replaced during a strategic merge patch. | false |
+### LMDeployment.spec.tabby.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution
+
+If the affinity requirements specified by this field are not met at<br/>scheduling time, the pod will not be scheduled onto the node.<br/>If the affinity requirements specified by this field cease to be met<br/>at some point during pod execution (e.g. due to an update), the system<br/>may or may not try to eventually evict the pod from its node.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [nodeSelectorTerms](#lmdeploymentspectabbyaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindex) | []object | Required. A list of node selector terms. The terms are ORed. | true |
+### LMDeployment.spec.tabby.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index]
+
+A null or empty node selector term matches no objects. The requirements of<br/>them are ANDed.<br/>The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspectabbyaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchexpressionsindex) | []object | A list of node selector requirements by node's labels. | false |
+| [matchFields](#lmdeploymentspectabbyaffinitynodeaffinityrequiredduringschedulingignoredduringexecutionnodeselectortermsindexmatchfieldsindex) | []object | A list of node selector requirements by node's fields. | false |
+### LMDeployment.spec.tabby.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index].matchExpressions[index]
+
+A node selector requirement is a selector that contains values, a key, and an operator<br/>that relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | The label key that the selector applies to. | true |
+| operator | string | Represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt. | true |
+| values | []string | An array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. If the operator is Gt or Lt, the values<br/>array must have a single element, which will be interpreted as an integer.<br/>This array is replaced during a strategic merge patch. | false |
+### LMDeployment.spec.tabby.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[index].matchFields[index]
+
+A node selector requirement is a selector that contains values, a key, and an operator<br/>that relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | The label key that the selector applies to. | true |
+| operator | string | Represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt. | true |
+| values | []string | An array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. If the operator is Gt or Lt, the values<br/>array must have a single element, which will be interpreted as an integer.<br/>This array is replaced during a strategic merge patch. | false |
+### LMDeployment.spec.tabby.affinity.podAffinity
+
+Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)).
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [preferredDuringSchedulingIgnoredDuringExecution](#lmdeploymentspectabbyaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindex) | []object | The scheduler will prefer to schedule pods to nodes that satisfy<br/>the affinity expressions specified by this field, but it may choose<br/>a node that violates one or more of the expressions. The node that is<br/>most preferred is the one with the greatest sum of weights, i.e.<br/>for each node that meets all of the scheduling requirements (resource<br/>request, requiredDuringScheduling affinity expressions, etc.),<br/>compute a sum by iterating through the elements of this field and adding<br/>"weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the<br/>node(s) with the highest sum are the most preferred. | false |
+| [requiredDuringSchedulingIgnoredDuringExecution](#lmdeploymentspectabbyaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindex) | []object | If the affinity requirements specified by this field are not met at<br/>scheduling time, the pod will not be scheduled onto the node.<br/>If the affinity requirements specified by this field cease to be met<br/>at some point during pod execution (e.g. due to a pod label update), the<br/>system may or may not try to eventually evict the pod from its node.<br/>When there are multiple elements, the lists of nodes corresponding to each<br/>podAffinityTerm are intersected, i.e. all terms must be satisfied. | false |
+### LMDeployment.spec.tabby.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+
+The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [podAffinityTerm](#lmdeploymentspectabbyaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm) | object | Required. A pod affinity term, associated with the corresponding weight. | true |
+| weight | integer | weight associated with matching the corresponding podAffinityTerm,<br/>in the range 1-100.<br/>*Format*: int32<br/> | true |
+### LMDeployment.spec.tabby.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm
+
+Required. A pod affinity term, associated with the corresponding weight.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| topologyKey | string | This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching<br/>the labelSelector in the specified namespaces, where co-located is defined as running on a node<br/>whose value of the label with key topologyKey matches that of any node on which any of the<br/>selected pods is running.<br/>Empty topologyKey is not allowed. | true |
+| [labelSelector](#lmdeploymentspectabbyaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector) | object | A label query over a set of resources, in this case pods.<br/>If it's null, this PodAffinityTerm matches with no Pods. | false |
+| matchLabelKeys | []string | MatchLabelKeys is a set of pod label keys to select which pods will<br/>be taken into consideration. The keys are used to lookup values from the<br/>incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`<br/>to select the group of existing pods which pods will be taken into consideration<br/>for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming<br/>pod labels will be ignored. The default value is empty.<br/>The same key is forbidden to exist in both matchLabelKeys and labelSelector.<br/>Also, matchLabelKeys cannot be set when labelSelector isn't set. | false |
+| mismatchLabelKeys | []string | MismatchLabelKeys is a set of pod label keys to select which pods will<br/>be taken into consideration. The keys are used to lookup values from the<br/>incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`<br/>to select the group of existing pods which pods will be taken into consideration<br/>for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming<br/>pod labels will be ignored. The default value is empty.<br/>The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.<br/>Also, mismatchLabelKeys cannot be set when labelSelector isn't set. | false |
+| [namespaceSelector](#lmdeploymentspectabbyaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector) | object | A label query over the set of namespaces that the term applies to.<br/>The term is applied to the union of the namespaces selected by this field<br/>and the ones listed in the namespaces field.<br/>null selector and null or empty namespaces list means "this pod's namespace".<br/>An empty selector (&#123;&#125;) matches all namespaces. | false |
+| namespaces | []string | namespaces specifies a static list of namespace names that the term applies to.<br/>The term is applied to the union of the namespaces listed in this field<br/>and the ones selected by namespaceSelector.<br/>null or empty namespaces list and null namespaceSelector means "this pod's namespace". | false |
+### LMDeployment.spec.tabby.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector
+
+A label query over a set of resources, in this case pods.<br/>If it's null, this PodAffinityTerm matches with no Pods.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspectabbyaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex) | []object | matchExpressions is a list of label selector requirements. The requirements are ANDed. | false |
+| matchLabels | map[string]string | matchLabels is a map of &#123;key,value&#125; pairs. A single &#123;key,value&#125; in the matchLabels<br/>map is equivalent to an element of matchExpressions, whose key field is "key", the<br/>operator is "In", and the values array contains only "value". The requirements are ANDed. | false |
+### LMDeployment.spec.tabby.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector.matchExpressions[index]
+
+A label selector requirement is a selector that contains values, a key, and an operator that<br/>relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | key is the label key that the selector applies to. | true |
+| operator | string | operator represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists and DoesNotExist. | true |
+| values | []string | values is an array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. This array is replaced during a strategic<br/>merge patch. | false |
+### LMDeployment.spec.tabby.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector
+
+A label query over the set of namespaces that the term applies to.<br/>The term is applied to the union of the namespaces selected by this field<br/>and the ones listed in the namespaces field.<br/>null selector and null or empty namespaces list means "this pod's namespace".<br/>An empty selector (&#123;&#125;) matches all namespaces.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspectabbyaffinitypodaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex) | []object | matchExpressions is a list of label selector requirements. The requirements are ANDed. | false |
+| matchLabels | map[string]string | matchLabels is a map of &#123;key,value&#125; pairs. A single &#123;key,value&#125; in the matchLabels<br/>map is equivalent to an element of matchExpressions, whose key field is "key", the<br/>operator is "In", and the values array contains only "value". The requirements are ANDed. | false |
+### LMDeployment.spec.tabby.affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector.matchExpressions[index]
+
+A label selector requirement is a selector that contains values, a key, and an operator that<br/>relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | key is the label key that the selector applies to. | true |
+| operator | string | operator represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists and DoesNotExist. | true |
+| values | []string | values is an array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. This array is replaced during a strategic<br/>merge patch. | false |
+### LMDeployment.spec.tabby.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index]
+
+Defines a set of pods (namely those matching the labelSelector<br/>relative to the given namespace(s)) that this pod should be<br/>co-located (affinity) or not co-located (anti-affinity) with,<br/>where co-located is defined as running on a node whose value of<br/>the label with key &lt;topologyKey&gt; matches that of any node on which<br/>a pod of the set of pods is running
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| topologyKey | string | This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching<br/>the labelSelector in the specified namespaces, where co-located is defined as running on a node<br/>whose value of the label with key topologyKey matches that of any node on which any of the<br/>selected pods is running.<br/>Empty topologyKey is not allowed. | true |
+| [labelSelector](#lmdeploymentspectabbyaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector) | object | A label query over a set of resources, in this case pods.<br/>If it's null, this PodAffinityTerm matches with no Pods. | false |
+| matchLabelKeys | []string | MatchLabelKeys is a set of pod label keys to select which pods will<br/>be taken into consideration. The keys are used to lookup values from the<br/>incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`<br/>to select the group of existing pods which pods will be taken into consideration<br/>for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming<br/>pod labels will be ignored. The default value is empty.<br/>The same key is forbidden to exist in both matchLabelKeys and labelSelector.<br/>Also, matchLabelKeys cannot be set when labelSelector isn't set. | false |
+| mismatchLabelKeys | []string | MismatchLabelKeys is a set of pod label keys to select which pods will<br/>be taken into consideration. The keys are used to lookup values from the<br/>incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`<br/>to select the group of existing pods which pods will be taken into consideration<br/>for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming<br/>pod labels will be ignored. The default value is empty.<br/>The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.<br/>Also, mismatchLabelKeys cannot be set when labelSelector isn't set. | false |
+| [namespaceSelector](#lmdeploymentspectabbyaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector) | object | A label query over the set of namespaces that the term applies to.<br/>The term is applied to the union of the namespaces selected by this field<br/>and the ones listed in the namespaces field.<br/>null selector and null or empty namespaces list means "this pod's namespace".<br/>An empty selector (&#123;&#125;) matches all namespaces. | false |
+| namespaces | []string | namespaces specifies a static list of namespace names that the term applies to.<br/>The term is applied to the union of the namespaces listed in this field<br/>and the ones selected by namespaceSelector.<br/>null or empty namespaces list and null namespaceSelector means "this pod's namespace". | false |
+### LMDeployment.spec.tabby.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector
+
+A label query over a set of resources, in this case pods.<br/>If it's null, this PodAffinityTerm matches with no Pods.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspectabbyaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex) | []object | matchExpressions is a list of label selector requirements. The requirements are ANDed. | false |
+| matchLabels | map[string]string | matchLabels is a map of &#123;key,value&#125; pairs. A single &#123;key,value&#125; in the matchLabels<br/>map is equivalent to an element of matchExpressions, whose key field is "key", the<br/>operator is "In", and the values array contains only "value". The requirements are ANDed. | false |
+### LMDeployment.spec.tabby.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector.matchExpressions[index]
+
+A label selector requirement is a selector that contains values, a key, and an operator that<br/>relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | key is the label key that the selector applies to. | true |
+| operator | string | operator represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists and DoesNotExist. | true |
+| values | []string | values is an array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. This array is replaced during a strategic<br/>merge patch. | false |
+### LMDeployment.spec.tabby.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector
+
+A label query over the set of namespaces that the term applies to.<br/>The term is applied to the union of the namespaces selected by this field<br/>and the ones listed in the namespaces field.<br/>null selector and null or empty namespaces list means "this pod's namespace".<br/>An empty selector (&#123;&#125;) matches all namespaces.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspectabbyaffinitypodaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex) | []object | matchExpressions is a list of label selector requirements. The requirements are ANDed. | false |
+| matchLabels | map[string]string | matchLabels is a map of &#123;key,value&#125; pairs. A single &#123;key,value&#125; in the matchLabels<br/>map is equivalent to an element of matchExpressions, whose key field is "key", the<br/>operator is "In", and the values array contains only "value". The requirements are ANDed. | false |
+### LMDeployment.spec.tabby.affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector.matchExpressions[index]
+
+A label selector requirement is a selector that contains values, a key, and an operator that<br/>relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | key is the label key that the selector applies to. | true |
+| operator | string | operator represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists and DoesNotExist. | true |
+| values | []string | values is an array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. This array is replaced during a strategic<br/>merge patch. | false |
+### LMDeployment.spec.tabby.affinity.podAntiAffinity
+
+Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)).
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [preferredDuringSchedulingIgnoredDuringExecution](#lmdeploymentspectabbyaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindex) | []object | The scheduler will prefer to schedule pods to nodes that satisfy<br/>the anti-affinity expressions specified by this field, but it may choose<br/>a node that violates one or more of the expressions. The node that is<br/>most preferred is the one with the greatest sum of weights, i.e.<br/>for each node that meets all of the scheduling requirements (resource<br/>request, requiredDuringScheduling anti-affinity expressions, etc.),<br/>compute a sum by iterating through the elements of this field and adding<br/>"weight" to the sum if the node has pods which matches the corresponding podAffinityTerm; the<br/>node(s) with the highest sum are the most preferred. | false |
+| [requiredDuringSchedulingIgnoredDuringExecution](#lmdeploymentspectabbyaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindex) | []object | If the anti-affinity requirements specified by this field are not met at<br/>scheduling time, the pod will not be scheduled onto the node.<br/>If the anti-affinity requirements specified by this field cease to be met<br/>at some point during pod execution (e.g. due to a pod label update), the<br/>system may or may not try to eventually evict the pod from its node.<br/>When there are multiple elements, the lists of nodes corresponding to each<br/>podAffinityTerm are intersected, i.e. all terms must be satisfied. | false |
+### LMDeployment.spec.tabby.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index]
+
+The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [podAffinityTerm](#lmdeploymentspectabbyaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinityterm) | object | Required. A pod affinity term, associated with the corresponding weight. | true |
+| weight | integer | weight associated with matching the corresponding podAffinityTerm,<br/>in the range 1-100.<br/>*Format*: int32<br/> | true |
+### LMDeployment.spec.tabby.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm
+
+Required. A pod affinity term, associated with the corresponding weight.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| topologyKey | string | This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching<br/>the labelSelector in the specified namespaces, where co-located is defined as running on a node<br/>whose value of the label with key topologyKey matches that of any node on which any of the<br/>selected pods is running.<br/>Empty topologyKey is not allowed. | true |
+| [labelSelector](#lmdeploymentspectabbyaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselector) | object | A label query over a set of resources, in this case pods.<br/>If it's null, this PodAffinityTerm matches with no Pods. | false |
+| matchLabelKeys | []string | MatchLabelKeys is a set of pod label keys to select which pods will<br/>be taken into consideration. The keys are used to lookup values from the<br/>incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`<br/>to select the group of existing pods which pods will be taken into consideration<br/>for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming<br/>pod labels will be ignored. The default value is empty.<br/>The same key is forbidden to exist in both matchLabelKeys and labelSelector.<br/>Also, matchLabelKeys cannot be set when labelSelector isn't set. | false |
+| mismatchLabelKeys | []string | MismatchLabelKeys is a set of pod label keys to select which pods will<br/>be taken into consideration. The keys are used to lookup values from the<br/>incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`<br/>to select the group of existing pods which pods will be taken into consideration<br/>for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming<br/>pod labels will be ignored. The default value is empty.<br/>The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.<br/>Also, mismatchLabelKeys cannot be set when labelSelector isn't set. | false |
+| [namespaceSelector](#lmdeploymentspectabbyaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselector) | object | A label query over the set of namespaces that the term applies to.<br/>The term is applied to the union of the namespaces selected by this field<br/>and the ones listed in the namespaces field.<br/>null selector and null or empty namespaces list means "this pod's namespace".<br/>An empty selector (&#123;&#125;) matches all namespaces. | false |
+| namespaces | []string | namespaces specifies a static list of namespace names that the term applies to.<br/>The term is applied to the union of the namespaces listed in this field<br/>and the ones selected by namespaceSelector.<br/>null or empty namespaces list and null namespaceSelector means "this pod's namespace". | false |
+### LMDeployment.spec.tabby.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector
+
+A label query over a set of resources, in this case pods.<br/>If it's null, this PodAffinityTerm matches with no Pods.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspectabbyaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermlabelselectormatchexpressionsindex) | []object | matchExpressions is a list of label selector requirements. The requirements are ANDed. | false |
+| matchLabels | map[string]string | matchLabels is a map of &#123;key,value&#125; pairs. A single &#123;key,value&#125; in the matchLabels<br/>map is equivalent to an element of matchExpressions, whose key field is "key", the<br/>operator is "In", and the values array contains only "value". The requirements are ANDed. | false |
+### LMDeployment.spec.tabby.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.labelSelector.matchExpressions[index]
+
+A label selector requirement is a selector that contains values, a key, and an operator that<br/>relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | key is the label key that the selector applies to. | true |
+| operator | string | operator represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists and DoesNotExist. | true |
+| values | []string | values is an array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. This array is replaced during a strategic<br/>merge patch. | false |
+### LMDeployment.spec.tabby.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector
+
+A label query over the set of namespaces that the term applies to.<br/>The term is applied to the union of the namespaces selected by this field<br/>and the ones listed in the namespaces field.<br/>null selector and null or empty namespaces list means "this pod's namespace".<br/>An empty selector (&#123;&#125;) matches all namespaces.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspectabbyaffinitypodantiaffinitypreferredduringschedulingignoredduringexecutionindexpodaffinitytermnamespaceselectormatchexpressionsindex) | []object | matchExpressions is a list of label selector requirements. The requirements are ANDed. | false |
+| matchLabels | map[string]string | matchLabels is a map of &#123;key,value&#125; pairs. A single &#123;key,value&#125; in the matchLabels<br/>map is equivalent to an element of matchExpressions, whose key field is "key", the<br/>operator is "In", and the values array contains only "value". The requirements are ANDed. | false |
+### LMDeployment.spec.tabby.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[index].podAffinityTerm.namespaceSelector.matchExpressions[index]
+
+A label selector requirement is a selector that contains values, a key, and an operator that<br/>relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | key is the label key that the selector applies to. | true |
+| operator | string | operator represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists and DoesNotExist. | true |
+| values | []string | values is an array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. This array is replaced during a strategic<br/>merge patch. | false |
+### LMDeployment.spec.tabby.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index]
+
+Defines a set of pods (namely those matching the labelSelector<br/>relative to the given namespace(s)) that this pod should be<br/>co-located (affinity) or not co-located (anti-affinity) with,<br/>where co-located is defined as running on a node whose value of<br/>the label with key &lt;topologyKey&gt; matches that of any node on which<br/>a pod of the set of pods is running
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| topologyKey | string | This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching<br/>the labelSelector in the specified namespaces, where co-located is defined as running on a node<br/>whose value of the label with key topologyKey matches that of any node on which any of the<br/>selected pods is running.<br/>Empty topologyKey is not allowed. | true |
+| [labelSelector](#lmdeploymentspectabbyaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselector) | object | A label query over a set of resources, in this case pods.<br/>If it's null, this PodAffinityTerm matches with no Pods. | false |
+| matchLabelKeys | []string | MatchLabelKeys is a set of pod label keys to select which pods will<br/>be taken into consideration. The keys are used to lookup values from the<br/>incoming pod labels, those key-value labels are merged with `labelSelector` as `key in (value)`<br/>to select the group of existing pods which pods will be taken into consideration<br/>for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming<br/>pod labels will be ignored. The default value is empty.<br/>The same key is forbidden to exist in both matchLabelKeys and labelSelector.<br/>Also, matchLabelKeys cannot be set when labelSelector isn't set. | false |
+| mismatchLabelKeys | []string | MismatchLabelKeys is a set of pod label keys to select which pods will<br/>be taken into consideration. The keys are used to lookup values from the<br/>incoming pod labels, those key-value labels are merged with `labelSelector` as `key notin (value)`<br/>to select the group of existing pods which pods will be taken into consideration<br/>for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming<br/>pod labels will be ignored. The default value is empty.<br/>The same key is forbidden to exist in both mismatchLabelKeys and labelSelector.<br/>Also, mismatchLabelKeys cannot be set when labelSelector isn't set. | false |
+| [namespaceSelector](#lmdeploymentspectabbyaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselector) | object | A label query over the set of namespaces that the term applies to.<br/>The term is applied to the union of the namespaces selected by this field<br/>and the ones listed in the namespaces field.<br/>null selector and null or empty namespaces list means "this pod's namespace".<br/>An empty selector (&#123;&#125;) matches all namespaces. | false |
+| namespaces | []string | namespaces specifies a static list of namespace names that the term applies to.<br/>The term is applied to the union of the namespaces listed in this field<br/>and the ones selected by namespaceSelector.<br/>null or empty namespaces list and null namespaceSelector means "this pod's namespace". | false |
+### LMDeployment.spec.tabby.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector
+
+A label query over a set of resources, in this case pods.<br/>If it's null, this PodAffinityTerm matches with no Pods.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspectabbyaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexlabelselectormatchexpressionsindex) | []object | matchExpressions is a list of label selector requirements. The requirements are ANDed. | false |
+| matchLabels | map[string]string | matchLabels is a map of &#123;key,value&#125; pairs. A single &#123;key,value&#125; in the matchLabels<br/>map is equivalent to an element of matchExpressions, whose key field is "key", the<br/>operator is "In", and the values array contains only "value". The requirements are ANDed. | false |
+### LMDeployment.spec.tabby.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].labelSelector.matchExpressions[index]
+
+A label selector requirement is a selector that contains values, a key, and an operator that<br/>relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | key is the label key that the selector applies to. | true |
+| operator | string | operator represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists and DoesNotExist. | true |
+| values | []string | values is an array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. This array is replaced during a strategic<br/>merge patch. | false |
+### LMDeployment.spec.tabby.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector
+
+A label query over the set of namespaces that the term applies to.<br/>The term is applied to the union of the namespaces selected by this field<br/>and the ones listed in the namespaces field.<br/>null selector and null or empty namespaces list means "this pod's namespace".<br/>An empty selector (&#123;&#125;) matches all namespaces.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| [matchExpressions](#lmdeploymentspectabbyaffinitypodantiaffinityrequiredduringschedulingignoredduringexecutionindexnamespaceselectormatchexpressionsindex) | []object | matchExpressions is a list of label selector requirements. The requirements are ANDed. | false |
+| matchLabels | map[string]string | matchLabels is a map of &#123;key,value&#125; pairs. A single &#123;key,value&#125; in the matchLabels<br/>map is equivalent to an element of matchExpressions, whose key field is "key", the<br/>operator is "In", and the values array contains only "value". The requirements are ANDed. | false |
+### LMDeployment.spec.tabby.affinity.podAntiAffinity.requiredDuringSchedulingIgnoredDuringExecution[index].namespaceSelector.matchExpressions[index]
+
+A label selector requirement is a selector that contains values, a key, and an operator that<br/>relates the key and values.
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | key is the label key that the selector applies to. | true |
+| operator | string | operator represents a key's relationship to a set of values.<br/>Valid operators are In, NotIn, Exists and DoesNotExist. | true |
+| values | []string | values is an array of string values. If the operator is In or NotIn,<br/>the values array must be non-empty. If the operator is Exists or DoesNotExist,<br/>the values array must be empty. This array is replaced during a strategic<br/>merge patch. | false |
 ### LMDeployment.spec.tabby.envVars[index]
 
 EnvVar represents an environment variable present in a Container.
@@ -1121,26 +1952,8 @@ Resources defines the resource requirements for Tabby pods
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| [limits](#lmdeploymentspectabbyresourceslimits) | object | Limits describes the maximum amount of compute resources allowed | false |
-| [requests](#lmdeploymentspectabbyresourcesrequests) | object | Requests describes the minimum amount of compute resources required | false |
-### LMDeployment.spec.tabby.resources.limits
-
-Limits describes the maximum amount of compute resources allowed
-
-| Name | Type | Description | Required |
-|------|------|-------------|----------|
-| cpu | string | CPU is the CPU resource (e.g., "100m", "2") | false |
-| memory | string | Memory is the memory resource (e.g., "128Mi", "2Gi") | false |
-| storage | string | Storage is the storage resource (e.g., "1Gi", "100Gi") | false |
-### LMDeployment.spec.tabby.resources.requests
-
-Requests describes the minimum amount of compute resources required
-
-| Name | Type | Description | Required |
-|------|------|-------------|----------|
-| cpu | string | CPU is the CPU resource (e.g., "100m", "2") | false |
-| memory | string | Memory is the memory resource (e.g., "128Mi", "2Gi") | false |
-| storage | string | Storage is the storage resource (e.g., "1Gi", "100Gi") | false |
+| limits | map[string]int or string | Limits describes the maximum amount of compute resources allowed | false |
+| requests | map[string]int or string | Requests describes the minimum amount of compute resources required | false |
 ### LMDeployment.spec.tabby.service
 
 Service defines the service configuration for Tabby

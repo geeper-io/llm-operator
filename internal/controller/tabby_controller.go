@@ -165,6 +165,7 @@ func (r *LMDeploymentReconciler) buildTabbyDeployment(deployment *llmgeeperiov1a
 					Labels: labels,
 				},
 				Spec: corev1.PodSpec{
+					Affinity: deployment.Spec.Tabby.Affinity,
 					InitContainers: []corev1.Container{
 						{
 							Name:    "tabby-config-init",
