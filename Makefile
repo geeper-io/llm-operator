@@ -1,5 +1,5 @@
 # Image URL to use all building/pushing image targets
-IMG ?= geeper-io/llm-operator:latest
+IMG ?= ghcr.io/geeper-io/llm-operator:latest
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -142,6 +142,13 @@ docker-buildx: ## Build and push docker image for the manager for cross-platform
 build-installer: manifests generate kustomize ## Generate a consolidated YAML with CRDs and deployment.
 	mkdir -p dist
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	$(KUSTOMIZE) build config/default > dist/install.yaml
+
+.PHONY: build-helm-chart
+build-helm-chart: manifests generate kustomize ## Generate a consolidated YAML with CRDs and deployment.
+	mkdir -p dist
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	kubebuilder edit --plugins=helm/v1-alpha
 	$(KUSTOMIZE) build config/default > dist/install.yaml
 
 ##@ Deployment

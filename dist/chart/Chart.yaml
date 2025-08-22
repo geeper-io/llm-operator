@@ -2,6 +2,5 @@ apiVersion: v2
 name: llm-operator
 description: A Helm chart to distribute the project llm-operator
 type: application
-version: 0.1.0
-appVersion: "0.1.0"
-icon: "https://example.com/icon.png"
+version: 0.0.0
+appVersion: "0.0.0"

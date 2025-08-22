@@ -12,6 +12,9 @@ export default function KubectlInstallSnippet() {
     const fullUrl = `${url}${baseUrl}releases/${version}/install.yaml`;
 
     return (
-        <CodeBlock language="bash">{`kubectl apply -f ${fullUrl}`}</CodeBlock>
+        <CodeBlock language="bash">{`
+kubectl apply -f --server-side=true \\
+   ${fullUrl}
+`}</CodeBlock>
     );
 }

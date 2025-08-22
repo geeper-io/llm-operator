@@ -67,7 +67,7 @@ func (globalSuite *GlobalE2ESuite) SetupSuite() {
 	_, err = utils.Run(cmd)
 	globalSuite.Require().NoError(err, "Failed to build the install.yaml file")
 
-	cmd = exec.Command("kubectl", "apply", "-f", "install.yaml")
+	cmd = exec.Command("kubectl", "apply", "-f", "install.yaml", "--server-side=true")
 	_, err = utils.Run(cmd)
 	globalSuite.Require().NoError(err, "Failed to apply the install.yaml file")
 

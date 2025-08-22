@@ -1,0 +1,138 @@
+name: Build and Publish
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  helm-chart:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.event_name != 'pull_request'
+    outputs:
+      tag_name: ${{ steps.branch_name.outputs.TAG_NAME }}
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.13.0
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Update Helm chart version
+        id: get_version
+        run: |
+          # Get version from git describe if available, otherwise use commit SHA
+          if git describe --tags 2>/dev/null; then
+            VERSION=$(git describe --tags | sed 's/^v//')
+          else
+            VERSION="0.0.0-${GITHUB_SHA::7}"
+          fi
+          
+          echo "Chart version: $VERSION"
+          
+          # Update Chart.yaml with new version
+          sed -i "s/^version: .*/version: $VERSION/" dist/chart/Chart.yaml
+          sed -i "s/^appVersion: .*/appVersion: \"$VERSION\"/" dist/chart/Chart.yaml
+          
+          # Update values.yaml with correct image repository and tag
+          sed -i "s|repository: .*|repository: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}|" dist/chart/values.yaml
+          sed -i "s|tag: .*|tag: \"$VERSION\"|" dist/chart/values.yaml
+          echo VERSION="$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Package Helm chart
+        env:
+          VERSION: ${{ steps.get_version.outputs.VERSION }}
+        run: |
+          cd dist/chart
+          helm package . --version $VERSION
+
+      - name: Push Helm chart to OCI registry
+        env:
+          VERSION: ${{ steps.get_version.outputs.VERSION }}
+        run: |
+          # Login to GHCR for Helm
+          echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+          
+          # Push chart to OCI registry
+          helm push dist/chart/llm-operator-$VERSION.tgz oci://${{ env.REGISTRY }}/${{ github.repository }}-chart
+
+      - name: Branch name
+        id: branch_name
+        run: |
+          echo TAG_NAME="${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        id: create_release
+        uses: shogo82148/actions-create-release@v1.7.8
+        with:
+          release_name: ${{ steps.branch_name.outputs.TAG_NAME }}
+          draft: true # So we can manually edit before publishing
+          prerelease: ${{ contains(github.ref, '-') }}

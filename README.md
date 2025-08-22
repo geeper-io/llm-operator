@@ -52,7 +52,18 @@ Ideal for:
 
 ## 🚀 **Quick Start**
 
-### **Deploy Your First AI Stack**
+### **Option 1: Using Published Helm Chart (Recommended)**
+
+```bash
+# Install from GitHub Container Registry
+helm registry login ghcr.io
+helm install llm-operator oci://ghcr.io/geeper-io/llm-operator \
+  --version latest \
+  --namespace llm-operator \
+  --create-namespace
+```
+
+### **Option 2: Deploy Your First AI Stack**
 
 ```yaml
 apiVersion: llm.geeper.io/v1alpha1
@@ -79,6 +90,8 @@ Apply with:
 kubectl apply -f my-ai-stack.yaml
 ```
 
+**📚 [Full Deployment Guide](docs/QUICKSTART_DEPLOYMENT.md)**
+
 **That's it!** Your AI stack is now running with:
 - Ollama serving your models
 - OpenWebUI providing a web chat interface
@@ -92,6 +105,13 @@ kubectl apply -f my-ai-stack.yaml
 - Switch between models instantly
 - Mix different model types (chat, code, embedding)
 - Automatic model management and updates
+
+### **🔄 CI/CD Pipeline**
+- **Automated Builds**: Docker images on every commit and tag
+- **Helm Charts**: OCI artifacts published to GHCR
+- **Multi-Arch**: AMD64 and ARM64 support
+- **Security**: Automated vulnerability scanning
+- **Testing**: Comprehensive test suite with E2E validation
 
 ### **🚀 GPU Acceleration**
 - **NVIDIA GPU Support** - Accelerate inference with CUDA
