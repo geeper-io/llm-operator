@@ -55,7 +55,7 @@ spec:
     replicas: 1
     image: ollama/ollama:latest
     models:
-    - "gemma3:270m"
+    - "hf.co/amakhov/tiny-random-llama:F16"
     service:
       type: ClusterIP
       port: 11434
@@ -63,8 +63,8 @@ spec:
   tabby:
     enabled: true
     image: makhov/tabby:0.0.3
-    chatModel: gemma3:270m
-    completionModel: gemma3:270m`
+    chatModel: hf.co/amakhov/tiny-random-llama:F16
+    completionModel: hf.co/amakhov/tiny-random-llama:F16`
 
 	// Write YAML to temporary file
 	yamlFile := filepath.Join("/tmp", "test-tabby.yaml")

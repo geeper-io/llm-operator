@@ -55,7 +55,7 @@ spec:
     replicas: 1
     image: ollama/ollama:latest
     models:
-    - "gemma3:270m"
+    - "hf.co/amakhov/tiny-random-llama:F16"
     service:
       type: ClusterIP
       port: 11434

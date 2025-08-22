@@ -55,7 +55,7 @@ spec:
     replicas: 2
     image: ollama/ollama:latest
     models:
-    - "gemma3:270m"
+    - "hf.co/amakhov/tiny-random-llama:F16"
   
   openwebui:
     enabled: true
