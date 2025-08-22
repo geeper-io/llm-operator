@@ -8,20 +8,21 @@ description: Learn about Geeper.AI - the LLM Operator for Kubernetes
 
 # Overview
 
+
+[download this file](./install.yaml)
 Geeper.AI is a powerful Kubernetes operator that simplifies the LMDeployment and management of Large Language Models (LLMs) in Kubernetes clusters. It provides a declarative way to deploy, configure, and manage various LLM services with enterprise-grade reliability and scalability.
 
 ## What is Geeper.AI?
 
-Geeper.AI is an open-source Kubernetes operator that extends Kubernetes with custom resources for managing LLM LMDeployments. It automates the complex process of deploying and managing LLM services, making it easy for developers and DevOps teams to run AI workloads in production environments.
+Geeper.AI is an open-source Kubernetes operator that extends Kubernetes with custom resources for managing LLM deployments. It automates the complex process of deploying and managing LLM services, making it easy for developers and DevOps teams to run AI workloads in production environments.
 
 ## Key Features
 
-- **🚀 Easy LMDeployment**: Deploy LLM services with simple YAML configurations
+- **🚀 Easy deployment**: Deploy LLM services with simple YAML configurations
 - **🔧 Multi-Model Support**: Support for various LLM frameworks (Ollama, OpenWebUI, Tabby, etc.)
 - **⚡ Auto-scaling**: Automatic scaling based on demand and resource usage
 - **🔒 Security**: Built-in security features and RBAC integration
 - **📊 Monitoring**: Comprehensive metrics and observability
-- **🌐 Multi-cluster**: Support for multi-cluster LMDeployments
 - **⚡ Pipelines**: OpenWebUI Pipelines for custom workflows and integrations
 - **🔄 Redis Integration**: Automatic Redis deployment for multi-replica OpenWebUI
 
@@ -41,23 +42,13 @@ Geeper.AI is an open-source Kubernetes operator that extends Kubernetes with cus
 ### Prerequisites
 - Kubernetes cluster (v1.20+)
 - kubectl configured
-- Helm (optional, for advanced LMDeployments)
+- Helm installed (optional, for Helm installation)
 
 ### Install with kubectl
-```bash
-# Clone the repository
-git clone https://github.com/your-org/llm-operator.git
-cd llm-operator
 
-# Apply the CRDs
-kubectl apply -f config/crd/bases/
+import KubectlInstallSnippet from '@site/src/components/KubectlInstallSnippet';
 
-# Deploy the operator
-kubectl apply -f config/default/
-
-# Verify installation
-kubectl get pods -n llm-operator-system
-```
+<KubectlInstallSnippet />
 
 ### Install with Helm
 ```bash

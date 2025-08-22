@@ -20,22 +20,15 @@ Get started with LLM Operator in just 5 minutes! This guide will walk you throug
 
 ### Option A: Using Helm (Recommended)
 
-```bash
-# Add the Helm repository
-helm repo add llm-operator https://geeper-ai.github.io/llm-operator
+import HelmInstallSnippet from '@site/src/components/HelmInstallSnippet';
 
-# Install the operator
-helm install llm-operator llm-operator/llm-operator \
-  --namespace llm-operator \
-  --create-namespace
-```
+<HelmInstallSnippet />
 
 ### Option B: Using kubectl
 
-```bash
-# Apply the operator manifests
-kubectl apply -f https://raw.githubusercontent.com/geeper-io/llm-operator/main/install.yaml
-```
+import KubectlInstallSnippet from '@site/src/components/KubectlInstallSnippet';
+
+<KubectlInstallSnippet />
 
 ## 2. Deploy Your First LLM
 
