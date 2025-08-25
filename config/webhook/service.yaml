@@ -1,0 +1,14 @@
+# Service for the webhook server
+apiVersion: v1
+kind: Service
+metadata:
+  name: webhook-service
+  namespace: llm-operator-system
+spec:
+  ports:
+  - port: 443
+    targetPort: 9443
+    protocol: TCP
+    name: webhook
+  selector:
+    control-plane: controller-manager

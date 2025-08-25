@@ -94,9 +94,6 @@ func (r *LMDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, nil
 	}
 
-	// Set default values if not specified
-	r.setDefaults(deployment)
-
 	// Reconcile Ollama deployment
 	if err := r.reconcileOllama(ctx, deployment); err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to reconcile Ollama: %w", err)
@@ -122,97 +119,6 @@ func (r *LMDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	// Only requeue if there are actual changes that need monitoring
 	// If everything is stable, don't requeue unnecessarily
 	return ctrl.Result{}, nil
-}
-
-// setDefaults sets default values for the Deployment
-func (r *LMDeploymentReconciler) setDefaults(deployment *llmgeeperiov1alpha1.LMDeployment) {
-	// Set Ollama defaults
-	if deployment.Spec.Ollama.Image == "" {
-		deployment.Spec.Ollama.Image = "ollama/ollama:latest"
-	}
-	if deployment.Spec.Ollama.Replicas == 0 {
-		deployment.Spec.Ollama.Replicas = 1
-	}
-	if deployment.Spec.Ollama.Service.Type == "" {
-		deployment.Spec.Ollama.Service.Type = corev1.ServiceTypeClusterIP
-	}
-	if deployment.Spec.Ollama.Service.Port == 0 {
-		deployment.Spec.Ollama.Service.Port = 11434
-	}
-
-	// Set OpenWebUI defaults
-	if deployment.Spec.OpenWebUI.Image == "" {
-		deployment.Spec.OpenWebUI.Image = "ghcr.io/open-webui/open-webui:main"
-	}
-	if deployment.Spec.OpenWebUI.Replicas == 0 {
-		deployment.Spec.OpenWebUI.Replicas = 1
-	}
-	if deployment.Spec.OpenWebUI.Service.Type == "" {
-		deployment.Spec.OpenWebUI.Service.Type = corev1.ServiceTypeClusterIP
-	}
-	if deployment.Spec.OpenWebUI.Service.Port == 0 {
-		deployment.Spec.OpenWebUI.Service.Port = 8080
-	}
-
-	// Set OpenWebUI Redis defaults
-	if deployment.Spec.OpenWebUI.Redis.Image == "" {
-		deployment.Spec.OpenWebUI.Redis.Image = "redis:7-alpine"
-	}
-	if deployment.Spec.OpenWebUI.Redis.Service.Port == 0 {
-		deployment.Spec.OpenWebUI.Redis.Service.Port = 6379
-	}
-	if deployment.Spec.OpenWebUI.Redis.Service.Type == "" {
-		deployment.Spec.OpenWebUI.Redis.Service.Type = corev1.ServiceTypeClusterIP
-	}
-	if deployment.Spec.OpenWebUI.Redis.Persistence.Size == "" {
-		deployment.Spec.OpenWebUI.Redis.Persistence.Size = "1Gi"
-	}
-
-	// Set default Langfuse configuration if enabled
-	if deployment.Spec.OpenWebUI.Langfuse != nil && deployment.Spec.OpenWebUI.Langfuse.Enabled {
-		// Set default project name if not provided
-		if deployment.Spec.OpenWebUI.Langfuse.ProjectName == "" {
-			deployment.Spec.OpenWebUI.Langfuse.ProjectName = deployment.Name
-		}
-
-		// Set default environment if not provided
-		if deployment.Spec.OpenWebUI.Langfuse.Environment == "" {
-			deployment.Spec.OpenWebUI.Langfuse.Environment = "development"
-		}
-	}
-
-	// Set OpenWebUI Pipelines defaults (for both manual and auto-enabled)
-	if deployment.Spec.OpenWebUI.Pipelines != nil && deployment.Spec.OpenWebUI.Pipelines.Enabled {
-		if deployment.Spec.OpenWebUI.Pipelines.Image == "" {
-			deployment.Spec.OpenWebUI.Pipelines.Image = "ghcr.io/open-webui/pipelines:main"
-		}
-		if deployment.Spec.OpenWebUI.Pipelines.Replicas == 0 {
-			deployment.Spec.OpenWebUI.Pipelines.Replicas = 1
-		}
-		if deployment.Spec.OpenWebUI.Pipelines.Port == 0 {
-			deployment.Spec.OpenWebUI.Pipelines.Port = 9099
-		}
-		if deployment.Spec.OpenWebUI.Pipelines.Service.Type == "" {
-			deployment.Spec.OpenWebUI.Pipelines.Service.Type = corev1.ServiceTypeClusterIP
-		}
-		if deployment.Spec.OpenWebUI.Pipelines.PipelinesDir == "" {
-			deployment.Spec.OpenWebUI.Pipelines.PipelinesDir = "/app/pipelines"
-		}
-	}
-
-	// Set Tabby defaults
-	if deployment.Spec.Tabby.Image == "" {
-		deployment.Spec.Tabby.Image = "tabbyml/tabby:latest"
-	}
-	if deployment.Spec.Tabby.Replicas == 0 {
-		deployment.Spec.Tabby.Replicas = 1
-	}
-	if deployment.Spec.Tabby.Service.Type == "" {
-		deployment.Spec.Tabby.Service.Type = corev1.ServiceTypeClusterIP
-	}
-	if deployment.Spec.Tabby.Service.Port == 0 {
-		deployment.Spec.Tabby.Service.Port = 8080
-	}
 }
 
 // containsFinalizer checks if a slice contains a specific finalizer

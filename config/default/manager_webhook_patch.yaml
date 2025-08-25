@@ -1,0 +1,23 @@
+# This patch adds webhook configuration to the controller manager deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controller-manager
+  namespace: llm-operator-system
+spec:
+  template:
+    spec:
+      containers:
+      - name: manager
+        ports:
+        - containerPort: 9443
+          name: webhook-server
+          protocol: TCP
+        volumeMounts:
+        - name: webhook-server
+          mountPath: /tmp/k8s-webhook-server/serving-certs
+          readOnly: true
+      volumes:
+      - name: webhook-server
+        secret:
+          secretName: llm-operator-webhook-server-cert

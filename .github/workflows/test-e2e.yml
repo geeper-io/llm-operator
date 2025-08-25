@@ -17,6 +17,7 @@ jobs:
           - TestStatusLMDeploymentSuite
           - TestOpenWebUILMDeploymentSuite
           - TestTabbyLMDeploymentSuite
+          - TestWebhookLMDeploymentSuite
     steps:
       - name: Clone the code
         uses: actions/checkout@v4

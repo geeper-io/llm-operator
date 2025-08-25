@@ -1,0 +1,31 @@
+# [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix including the one in
+# crd/kustomization.yaml
+resources:
+- manifests.yaml
+- service.yaml
+
+configurations:
+- kustomizeconfig.yaml
+
+# [CERTMANAGER] To enable cert-manager, uncomment all sections with 'CERTMANAGER' prefix.
+# Uncomment 'CERTMANAGER' sections in crd/kustomization.yaml to enable the CA injection in the admission webhooks.
+# 'CERTMANAGER' needs to be enabled to use ca injection
+#- ../certmanager
+
+# [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix including the one in
+# crd/kustomization.yaml
+#- path: cert-manager-patch.yaml
+
+# [CERTMANAGER] To enable cert-manager, uncomment all sections with 'CERTMANAGER' prefix including the one in crd/kustomization.yaml
+# Uncomment 'CERTMANAGER' sections in crd/kustomization.yaml to enable the CA injection in the admission webhooks.
+# 'CERTMANAGER' needs to be enabled to use ca injection
+#- path: webhook-ca-patch.yaml
+
+# [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix including the one in
+# crd/kustomization.yaml
+#- path: webhook-patch.yaml
+
+# [CERTMANAGER] To enable cert-manager, uncomment all sections with 'CERTMANAGER' prefix including the one in crd/kustomization.yaml
+# Uncomment 'CERTMANAGER' sections in crd/kustomization.yaml to enable the CA injection in the admission webhooks.
+# 'CERTMANAGER' needs to be enabled to use ca injection
+#- path: manager-ca-patch.yaml

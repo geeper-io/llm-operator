@@ -74,7 +74,7 @@ spec:
 	basicTestSuite.waitForLMDeploymentReady(deploymentName, 5*time.Minute)
 
 	basicTestSuite.T().Log("Verifying Ollama deployment is created and running")
-	basicTestSuite.waitForDeploymentReady("test-basic-ollama-ollama", 3*time.Minute)
+	basicTestSuite.waitForDeploymentReady("test-basic-ollama-ollama", basicTestSuite.testNamespace, 3*time.Minute)
 
 	basicTestSuite.T().Log("Verifying Ollama service is created")
 	cmd = exec.Command("kubectl", "get", "service",
@@ -103,20 +103,6 @@ func (basicTestSuite *BasicLMDeploymentTestSuite) waitForLMDeploymentReady(name 
 		time.Sleep(10 * time.Second)
 	}
 	basicTestSuite.T().Fatalf("LMDeployment %s not ready within %v", name, timeout)
-}
-
-func (basicTestSuite *BasicLMDeploymentTestSuite) waitForDeploymentReady(name string, timeout time.Duration) {
-	deadline := time.Now().Add(timeout)
-	for time.Now().Before(deadline) {
-		cmd := exec.Command("kubectl", "get", "deployment", name,
-			"-n", basicTestSuite.testNamespace, "-o", "jsonpath={.status.readyReplicas}")
-		output, err := utils.Run(cmd)
-		if err == nil && output == "1" {
-			return
-		}
-		time.Sleep(10 * time.Second)
-	}
-	basicTestSuite.T().Fatalf("Deployment %s not ready within %v", name, timeout)
 }
 
 func (basicTestSuite *BasicLMDeploymentTestSuite) waitForPodRunning(labels string, timeout time.Duration) {

@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/exec"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -67,10 +68,6 @@ func (globalSuite *GlobalE2ESuite) SetupSuite() {
 	_, err = utils.Run(cmd)
 	globalSuite.Require().NoError(err, "Failed to build the install.yaml file")
 
-	cmd = exec.Command("kubectl", "apply", "-f", "install.yaml", "--server-side=true")
-	_, err = utils.Run(cmd)
-	globalSuite.Require().NoError(err, "Failed to apply the install.yaml file")
-
 	// The tests-e2e are intended to run on a temporary cluster that is created and destroyed for testing.
 	// To prevent errors when tests run in environments with CertManager already installed,
 	// we check for its presence before execution.
@@ -84,7 +81,18 @@ func (globalSuite *GlobalE2ESuite) SetupSuite() {
 		} else {
 			globalSuite.T().Log("WARNING: CertManager is already installed. Skipping installation...")
 		}
+		globalSuite.waitForDeploymentReady("cert-manager-webhook", "cert-manager", 2*time.Minute)
 	}
+	cmd = exec.Command("kubectl", "apply", "-f", "install.yaml", "--server-side=true")
+	_, err = utils.Run(cmd)
+	globalSuite.Require().NoError(err, "Failed to apply the install.yaml file")
+
+	cmd = exec.Command("kubectl", "apply", "-f", "test/utils/webhook-checker.yaml")
+	_, err = utils.Run(cmd)
+	globalSuite.Require().NoError(err, "Failed to apply the webhook-checker file")
+
+	globalSuite.T().Log("Waiting for the webhook-checker deployment to be ready")
+	globalSuite.waitForPodReady("webhook-checker", "llm-operator-system", 2*time.Minute)
 
 	globalSuite.T().Log("Creating test namespace")
 	cmd = exec.Command("kubectl", "create", "ns", globalSuite.testNamespace)
@@ -102,6 +110,34 @@ func (globalSuite *GlobalE2ESuite) TearDownSuite() {
 	globalSuite.T().Log("Cleaning up test namespace")
 	cmd := exec.Command("kubectl", "delete", "ns", globalSuite.testNamespace)
 	_, _ = utils.Run(cmd)
+}
+
+func (globalSuite *GlobalE2ESuite) waitForPodReady(name string, namespace string, timeout time.Duration) {
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		cmd := exec.Command("kubectl", "get", "pod", name,
+			"-n", namespace, "-o", "jsonpath={.status.conditions[?(@.type==\"Ready\")].status}")
+		output, err := utils.Run(cmd)
+		if err == nil && output == "True" {
+			return
+		}
+		time.Sleep(10 * time.Second)
+	}
+	globalSuite.T().Fatalf("Pod %s not ready within %v", name, timeout)
+}
+
+func (globalSuite *GlobalE2ESuite) waitForDeploymentReady(name, namespace string, timeout time.Duration) {
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		cmd := exec.Command("kubectl", "get", "deployment", name,
+			"-n", namespace, "-o", "jsonpath={.status.readyReplicas}")
+		output, err := utils.Run(cmd)
+		if err == nil && output == "1" {
+			return
+		}
+		time.Sleep(10 * time.Second)
+	}
+	globalSuite.T().Fatalf("Deployment %s not ready within %v", name, timeout)
 }
 
 // TestE2E runs the end-to-end (e2e) test suite for the project. These tests execute in an isolated,
