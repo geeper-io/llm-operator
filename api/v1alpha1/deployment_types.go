@@ -25,9 +25,10 @@ import (
 
 // OllamaSpec defines the desired state of Ollama deployment
 type OllamaSpec struct {
+	// Enabled determines if vLLM should be deployed instead of Ollama
+	// +kubebuilder:validation:Optional
+	Enabled bool `json:"enabled,omitempty"`
 	// Replicas is the number of Ollama pods to run
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=10
 	Replicas int32 `json:"replicas,omitempty"`
 
 	// Image is the Ollama container image to use (including tag)
@@ -37,7 +38,7 @@ type OllamaSpec struct {
 	Resources ResourceRequirements `json:"resources,omitempty"`
 
 	// Models is the list of models to deploy with Ollama
-	Models []string `json:"models"`
+	Models []string `json:"models,omitempty"`
 
 	// Service defines the service configuration for Ollama
 	Service ServiceSpec `json:"service,omitempty"`
@@ -136,12 +137,12 @@ type TabbySpec struct {
 	// Ingress defines the ingress configuration for Tabby
 	Ingress IngressSpec `json:"ingress,omitempty"`
 
-	// ChatModel is the name of the Ollama model to use for chat functionality
-	// Must be one of the models specified in spec.ollama.models
+	// ChatModel is the name of the model to use for chat functionality
+	// Must be one of the models specified in spec.ollama.models or spec.vllm.model
 	ChatModel string `json:"chatModel,omitempty"`
 
-	// CompletionModel is the name of the Ollama model to use for code completion
-	// Must be one of the models specified in spec.ollama.models
+	// CompletionModel is the name of the model to use for code completion
+	// Must be one of the models specified in spec.ollama.models or spec.vllm.model
 	CompletionModel string `json:"completionModel,omitempty"`
 
 	// EnvVars defines environment variables for Tabby
@@ -307,6 +308,55 @@ type LangfuseSpec struct {
 	Debug bool `json:"debug,omitempty"`
 }
 
+// VLLMSpec defines the desired state of vLLM deployment
+type VLLMSpec struct {
+	// Enabled determines if vLLM should be deployed instead of Ollama
+	Enabled bool `json:"enabled,omitempty"`
+
+	// Replicas is the number of vLLM pods to run
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=10
+	Replicas int32 `json:"replicas,omitempty"`
+
+	// Image is the vLLM container image to use (including tag)
+	Image string `json:"image,omitempty"`
+
+	// Resources defines the resource requirements for vLLM pods
+	Resources ResourceRequirements `json:"resources,omitempty"`
+
+	Model string `json:"model,omitempty"`
+
+	// Service defines the service configuration for vLLM
+	Service ServiceSpec `json:"service,omitempty"`
+
+	// Affinity defines pod affinity and anti-affinity rules for vLLM pods
+	Affinity *corev1.Affinity `json:"affinity,omitempty"`
+
+	// EnvVars defines environment variables for vLLM
+	EnvVars []corev1.EnvVar `json:"envVars,omitempty"`
+
+	// VolumeMounts defines volume mounts for vLLM
+	VolumeMounts []corev1.VolumeMount `json:"volumeMounts,omitempty"`
+
+	// Volumes defines volumes for vLLM
+	Volumes []corev1.Volume `json:"volumes,omitempty"`
+
+	// Persistence defines vLLM persistence configuration
+	Persistence *VLLMPersistenceSpec `json:"persistence,omitempty"`
+}
+
+// VLLMPersistenceSpec defines vLLM persistence configuration
+type VLLMPersistenceSpec struct {
+	// Enabled determines if vLLM data should be persisted
+	Enabled bool `json:"enabled,omitempty"`
+
+	// StorageClass is the storage class to use for persistent volumes
+	StorageClass string `json:"storageClass,omitempty"`
+
+	// Size is the size of the persistent volume
+	Size string `json:"size,omitempty"`
+}
+
 // ResourceRequirements describes the compute resource requirements
 type ResourceRequirements struct {
 	// Limits describes the maximum amount of compute resources allowed
@@ -319,7 +369,12 @@ type ResourceRequirements struct {
 // LMDeploymentSpec defines the desired state of Deployment
 type LMDeploymentSpec struct {
 	// Ollama defines the Ollama deployment configuration
-	Ollama OllamaSpec `json:"ollama"`
+	// +kubebuilder:validation:Optional
+	Ollama OllamaSpec `json:"ollama,omitempty"`
+
+	// VLLM defines the vLLM deployment configuration
+	// +kubebuilder:validation:Optional
+	VLLM VLLMSpec `json:"vllm,omitempty"`
 
 	// OpenWebUI defines the OpenWebUI deployment configuration
 	// +kubebuilder:validation:Optional
@@ -340,6 +395,9 @@ type LMDeploymentStatus struct {
 
 	// OllamaStatus represents the status of Ollama deployment
 	OllamaStatus LMDeploymentComponentStatus `json:"ollamaStatus,omitempty"`
+
+	// VLLMStatus represents the status of vLLM deployment
+	VLLMStatus LMDeploymentComponentStatus `json:"vllmStatus,omitempty"`
 
 	// OpenWebUIStatus represents the status of OpenWebUI deployment
 	OpenWebUIStatus LMDeploymentComponentStatus `json:"openwebuiStatus,omitempty"`
@@ -491,6 +549,29 @@ func (d *LMDeployment) GetPipelinesServiceName() string {
 // GetPipelinesDeploymentName returns the name of the Pipelines deployment for this deployment
 func (d *LMDeployment) GetPipelinesDeploymentName() string {
 	return fmt.Sprintf("%s-pipelines", d.Name)
+}
+
+// GetVLLMServiceName returns the name of the vLLM service for this deployment
+func (d *LMDeployment) GetVLLMServiceName() string {
+	return fmt.Sprintf("%s-vllm", d.Name)
+}
+
+// GetVLLMServicePort returns the port of the vLLM service for this deployment
+func (d *LMDeployment) GetVLLMServicePort() int32 {
+	if d.Spec.VLLM.Service.Port == 0 {
+		return 8000 // Default vLLM port
+	}
+	return d.Spec.VLLM.Service.Port
+}
+
+// GetVLLMDeploymentName returns the name of the vLLM deployment for this deployment
+func (d *LMDeployment) GetVLLMDeploymentName() string {
+	return fmt.Sprintf("%s-vllm", d.Name)
+}
+
+// GetVLLMPVCName returns the name of the vLLM PVC for this deployment
+func (d *LMDeployment) GetVLLMPVCName() string {
+	return fmt.Sprintf("%s-vllm", d.Name)
 }
 
 func init() {

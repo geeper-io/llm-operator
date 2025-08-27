@@ -80,6 +80,20 @@ func (webhookTestSuite *WebhookTestSuite) TestWebhookValidation() {
 	webhookTestSuite.T().Log("Testing webhook validation with invalid configurations")
 
 	webhookTestSuite.testInvalidConfiguration(
+		"test-webhook-validation-no-ollama-no-vllm",
+		`apiVersion: llm.geeper.io/v1alpha1
+kind: LMDeployment
+metadata:
+  name: test-webhook-validation-invalid-tabby-model
+  namespace: lmdeployment-webhook-test
+spec:
+  tabby:
+    enabled: true
+    chatModel: "non-existent-model"`,
+		"at least one of Ollama or vLLM must be enabled",
+	)
+
+	webhookTestSuite.testInvalidConfiguration(
 		"test-webhook-validation-invalid-tabby-model",
 		`apiVersion: llm.geeper.io/v1alpha1
 kind: LMDeployment

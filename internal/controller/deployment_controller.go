@@ -94,9 +94,19 @@ func (r *LMDeploymentReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, nil
 	}
 
-	// Reconcile Ollama deployment
-	if err := r.reconcileOllama(ctx, deployment); err != nil {
-		return ctrl.Result{}, fmt.Errorf("failed to reconcile Ollama: %w", err)
+	// Reconcile model serving deployment (Ollama or vLLM)
+	if deployment.Spec.VLLM.Enabled {
+		// Reconcile vLLM deployment
+		if err := r.reconcileVLLM(ctx, deployment); err != nil {
+			return ctrl.Result{}, fmt.Errorf("failed to reconcile vLLM: %w", err)
+		}
+	}
+
+	if deployment.Spec.Ollama.Enabled {
+		// Reconcile Ollama deployment (default)
+		if err := r.reconcileOllama(ctx, deployment); err != nil {
+			return ctrl.Result{}, fmt.Errorf("failed to reconcile Ollama: %w", err)
+		}
 	}
 
 	if deployment.Spec.OpenWebUI.Enabled {
@@ -284,17 +294,33 @@ func (r *LMDeploymentReconciler) updateStatus(ctx context.Context, deployment *l
 	if err != nil {
 		return fmt.Errorf("failed to create patch helper: %w", err)
 	}
-	// Get Ollama deployment status
-	ollamaDeployment := &appsv1.Deployment{}
-	err = r.Get(ctx, types.NamespacedName{
-		Name:      deployment.GetOllamaDeploymentName(),
-		Namespace: deployment.Namespace,
-	}, ollamaDeployment)
+	// Get model serving deployment status (Ollama or vLLM)
+	if deployment.Spec.VLLM.Enabled {
+		// Get vLLM deployment status
+		vllmDeployment := &appsv1.Deployment{}
+		err = r.Get(ctx, types.NamespacedName{
+			Name:      deployment.GetVLLMDeploymentName(),
+			Namespace: deployment.Namespace,
+		}, vllmDeployment)
 
-	if err == nil {
-		deployment.Status.OllamaStatus.AvailableReplicas = ollamaDeployment.Status.AvailableReplicas
-		deployment.Status.OllamaStatus.ReadyReplicas = ollamaDeployment.Status.ReadyReplicas
-		deployment.Status.OllamaStatus.UpdatedReplicas = ollamaDeployment.Status.UpdatedReplicas
+		if err == nil {
+			deployment.Status.VLLMStatus.AvailableReplicas = vllmDeployment.Status.AvailableReplicas
+			deployment.Status.VLLMStatus.ReadyReplicas = vllmDeployment.Status.ReadyReplicas
+			deployment.Status.VLLMStatus.UpdatedReplicas = vllmDeployment.Status.UpdatedReplicas
+		}
+	} else {
+		// Get Ollama deployment status
+		ollamaDeployment := &appsv1.Deployment{}
+		err = r.Get(ctx, types.NamespacedName{
+			Name:      deployment.GetOllamaDeploymentName(),
+			Namespace: deployment.Namespace,
+		}, ollamaDeployment)
+
+		if err == nil {
+			deployment.Status.OllamaStatus.AvailableReplicas = ollamaDeployment.Status.AvailableReplicas
+			deployment.Status.OllamaStatus.ReadyReplicas = ollamaDeployment.Status.ReadyReplicas
+			deployment.Status.OllamaStatus.UpdatedReplicas = ollamaDeployment.Status.UpdatedReplicas
+		}
 	}
 
 	// Get OpenWebUI deployment status if enabled
@@ -328,23 +354,22 @@ func (r *LMDeploymentReconciler) updateStatus(ctx context.Context, deployment *l
 	}
 
 	// Calculate overall status
-	deployment.Status.TotalReplicas = deployment.Spec.Ollama.Replicas
+	if deployment.Spec.VLLM.Enabled {
+		deployment.Status.TotalReplicas = deployment.Spec.VLLM.Replicas
+		deployment.Status.ReadyReplicas = deployment.Status.VLLMStatus.ReadyReplicas
+	} else {
+		deployment.Status.TotalReplicas = deployment.Spec.Ollama.Replicas
+		deployment.Status.ReadyReplicas = deployment.Status.OllamaStatus.ReadyReplicas
+	}
+
 	if deployment.Spec.OpenWebUI.Enabled {
 		deployment.Status.TotalReplicas += deployment.Spec.OpenWebUI.Replicas
+		deployment.Status.ReadyReplicas += deployment.Status.OpenWebUIStatus.ReadyReplicas
 	}
 
 	// Add Tabby replicas
 	if deployment.Spec.Tabby.Enabled {
 		deployment.Status.TotalReplicas += deployment.Spec.Tabby.Replicas
-	}
-
-	deployment.Status.ReadyReplicas = deployment.Status.OllamaStatus.ReadyReplicas
-	if deployment.Spec.OpenWebUI.Enabled {
-		deployment.Status.ReadyReplicas += deployment.Status.OpenWebUIStatus.ReadyReplicas
-	}
-
-	// Add Tabby ready replicas
-	if deployment.Spec.Tabby.Enabled {
 		deployment.Status.ReadyReplicas += deployment.Status.TabbyStatus.ReadyReplicas
 	}
 

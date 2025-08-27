@@ -19,12 +19,12 @@ package v1alpha1
 import (
 	"context"
 	"fmt"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/util/validation"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 	"strings"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/validation"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -63,6 +63,9 @@ func (d *LMDeploymentCustomDefaulter) Default(_ context.Context, obj runtime.Obj
 		return fmt.Errorf("expected a LMDeployment but got a %T", obj)
 	}
 
+	if len(lmDeployment.Spec.Ollama.Models) > 0 {
+		lmDeployment.Spec.Ollama.Enabled = true
+	}
 	// Set Ollama defaults
 	if lmDeployment.Spec.Ollama.Image == "" {
 		lmDeployment.Spec.Ollama.Image = "ollama/ollama:latest"
@@ -75,6 +78,27 @@ func (d *LMDeploymentCustomDefaulter) Default(_ context.Context, obj runtime.Obj
 	}
 	if lmDeployment.Spec.Ollama.Service.Port == 0 {
 		lmDeployment.Spec.Ollama.Service.Port = 11434
+	}
+
+	// Set vLLM defaults only if vLLM is enabled
+	if lmDeployment.Spec.VLLM.Enabled {
+		if lmDeployment.Spec.VLLM.Image == "" {
+			lmDeployment.Spec.VLLM.Image = "vllm/vllm-openai:latest"
+		}
+		if lmDeployment.Spec.VLLM.Replicas == 0 {
+			lmDeployment.Spec.VLLM.Replicas = 1
+		}
+		if lmDeployment.Spec.VLLM.Service.Type == "" {
+			lmDeployment.Spec.VLLM.Service.Type = corev1.ServiceTypeClusterIP
+		}
+		if lmDeployment.Spec.VLLM.Service.Port == 0 {
+			lmDeployment.Spec.VLLM.Service.Port = 8000
+		}
+		if lmDeployment.Spec.VLLM.Persistence != nil && lmDeployment.Spec.VLLM.Persistence.Enabled {
+			if lmDeployment.Spec.VLLM.Persistence.Size == "" {
+				lmDeployment.Spec.VLLM.Persistence.Size = "10Gi"
+			}
+		}
 	}
 
 	// Set OpenWebUI defaults
@@ -198,9 +222,20 @@ func (v *LMDeploymentCustomValidator) ValidateDelete(ctx context.Context, obj ru
 func (l *LMDeploymentCustomValidator) validate(lmDeployment *llmgeeperiov1alpha1.LMDeployment) (admission.Warnings, error) {
 	var allErrs field.ErrorList
 
-	// Validate Ollama configuration
-	if err := l.validateOllama(lmDeployment); err != nil {
-		allErrs = append(allErrs, err...)
+	if !lmDeployment.Spec.Ollama.Enabled && !lmDeployment.Spec.VLLM.Enabled {
+		allErrs = append(allErrs, field.Required(field.NewPath("spec"), "at least one of Ollama or vLLM must be enabled"))
+	}
+
+	if lmDeployment.Spec.VLLM.Enabled {
+		if err := l.validateVLLM(lmDeployment); err != nil {
+			allErrs = append(allErrs, err...)
+		}
+	}
+	if lmDeployment.Spec.Ollama.Enabled {
+		// Default to Ollama if neither is explicitly enabled
+		if err := l.validateOllama(lmDeployment); err != nil {
+			allErrs = append(allErrs, err...)
+		}
 	}
 
 	// Validate OpenWebUI configuration if enabled
@@ -232,6 +267,26 @@ func (l *LMDeploymentCustomValidator) validateOllama(lmDeployment *llmgeeperiov1
 	// Validate models
 	if len(lmDeployment.Spec.Ollama.Models) == 0 {
 		allErrs = append(allErrs, field.Required(ollamaPath.Child("models"), "at least one model must be specified"))
+	}
+
+	return allErrs
+}
+
+// validateVLLM validates vLLM configuration
+func (l *LMDeploymentCustomValidator) validateVLLM(lmDeployment *llmgeeperiov1alpha1.LMDeployment) field.ErrorList {
+	var allErrs field.ErrorList
+	vllmPath := field.NewPath("spec", "vllm")
+
+	// Validate models
+	if lmDeployment.Spec.VLLM.Model == "" {
+		allErrs = append(allErrs, field.Required(vllmPath.Child("model"), "model must be specified"))
+	}
+
+	// Validate persistence configuration if enabled
+	if lmDeployment.Spec.VLLM.Persistence != nil && lmDeployment.Spec.VLLM.Persistence.Enabled {
+		if lmDeployment.Spec.VLLM.Persistence.Size == "" {
+			allErrs = append(allErrs, field.Required(vllmPath.Child("persistence", "size"), "vLLM persistence size must be specified when persistence is enabled"))
+		}
 	}
 
 	return allErrs
@@ -311,31 +366,53 @@ func (l *LMDeploymentCustomValidator) validateTabby(lmDeployment *llmgeeperiov1a
 
 	// Validate chat model if specified
 	if lmDeployment.Spec.Tabby.ChatModel != "" {
-		// Check if the chat model exists in Ollama models
+		// Check if the chat model exists in Ollama or vLLM models
 		found := false
-		for _, model := range lmDeployment.Spec.Ollama.Models {
-			if model == lmDeployment.Spec.Tabby.ChatModel {
+		if lmDeployment.Spec.VLLM.Enabled {
+			if lmDeployment.Spec.VLLM.Model == lmDeployment.Spec.Tabby.ChatModel {
 				found = true
-				break
+			}
+		}
+		if lmDeployment.Spec.Ollama.Enabled {
+			for _, model := range lmDeployment.Spec.Ollama.Models {
+				if model == lmDeployment.Spec.Tabby.ChatModel {
+					found = true
+					break
+				}
 			}
 		}
 		if !found {
-			allErrs = append(allErrs, field.Invalid(tabbyPath.Child("chatModel"), lmDeployment.Spec.Tabby.ChatModel, "chat model must be one of the models specified in spec.ollama.models"))
+			modelSource := "spec.vllm.models"
+			if !lmDeployment.Spec.VLLM.Enabled {
+				modelSource = "spec.ollama.models"
+			}
+			allErrs = append(allErrs, field.Invalid(tabbyPath.Child("chatModel"), lmDeployment.Spec.Tabby.ChatModel, fmt.Sprintf("chat model must be one of the models specified in %s", modelSource)))
 		}
 	}
 
 	// Validate completion model if specified
 	if lmDeployment.Spec.Tabby.CompletionModel != "" {
-		// Check if the completion model exists in Ollama models
+		// Check if the completion model exists in Ollama or vLLM models
 		found := false
-		for _, model := range lmDeployment.Spec.Ollama.Models {
-			if model == lmDeployment.Spec.Tabby.CompletionModel {
+		if lmDeployment.Spec.VLLM.Enabled {
+			if lmDeployment.Spec.VLLM.Model == lmDeployment.Spec.Tabby.CompletionModel {
 				found = true
-				break
+			}
+		}
+		if lmDeployment.Spec.Ollama.Enabled {
+			for _, model := range lmDeployment.Spec.Ollama.Models {
+				if model == lmDeployment.Spec.Tabby.CompletionModel {
+					found = true
+					break
+				}
 			}
 		}
 		if !found {
-			allErrs = append(allErrs, field.Invalid(tabbyPath.Child("completionModel"), lmDeployment.Spec.Tabby.CompletionModel, "completion model must be one of the models specified in spec.ollama.models"))
+			modelSource := "spec.vllm.models"
+			if !lmDeployment.Spec.VLLM.Enabled {
+				modelSource = "spec.ollama.models"
+			}
+			allErrs = append(allErrs, field.Invalid(tabbyPath.Child("completionModel"), lmDeployment.Spec.Tabby.CompletionModel, fmt.Sprintf("completion model must be one of the models specified in %s", modelSource)))
 		}
 	}
 

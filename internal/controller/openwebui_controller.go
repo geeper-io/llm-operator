@@ -233,11 +233,8 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 		"llm-deployment": deployment.Name,
 	}
 
-	ollamaServiceName := deployment.GetOllamaServiceName()
-
 	// Build environment variables
 	envVars := []corev1.EnvVar{
-		{Name: "OLLAMA_BASE_URL", Value: fmt.Sprintf("http://%s:%d", ollamaServiceName, deployment.GetOllamaServicePort())},
 		{Name: "ENABLE_VERSION_UPDATE_CHECK", Value: "False"},
 		{
 			Name: "WEBUI_SECRET_KEY",
@@ -251,10 +248,27 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 			},
 		},
 	}
+
+	if deployment.Spec.Ollama.Enabled {
+		envVars = append(envVars, corev1.EnvVar{
+			Name: "OLLAMA_BASE_URL", Value: fmt.Sprintf("http://%s:%d", deployment.GetOllamaServiceName(), deployment.GetOllamaServicePort()),
+		})
+	}
+	if deployment.Spec.VLLM.Enabled {
+		envVars = append(envVars,
+			corev1.EnvVar{Name: "ENABLE_OPENAI_API", Value: "True"},
+			corev1.EnvVar{Name: "OPENAI_API_BASE_URL", Value: fmt.Sprintf("http://%s:%d", deployment.GetVLLMServiceName(), deployment.GetVLLMServicePort())},
+		)
+	} else {
+		envVars = append(envVars, corev1.EnvVar{
+			Name: "ENABLE_OPENAI_API", Value: "False",
+		})
+	}
+
 	if deployment.Spec.OpenWebUI.Ingress.Host != "" {
 		envVars = append(envVars, []corev1.EnvVar{
 			// TODO: Use the correct protocol based on deployment type
-			{Name: "WEBUI_HOST", Value: fmt.Sprintf("http://%s", deployment.Spec.OpenWebUI.Ingress.Host)},
+			{Name: "WEBUI_HOST", Value: fmt.Sprintf("https://%s", deployment.Spec.OpenWebUI.Ingress.Host)},
 			{Name: "CORS_ALLOW_ORIGIN", Value: fmt.Sprintf("http://%s;https://%s", deployment.Spec.OpenWebUI.Ingress.Host, deployment.Spec.OpenWebUI.Ingress.Host)},
 		}...)
 	}

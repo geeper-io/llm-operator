@@ -9,6 +9,7 @@ The LLM Operator transforms Kubernetes into a powerful AI platform, letting you 
 ### 🎯 **One-Click AI Deployments**
 Deploy complete AI stacks with a single YAML file:
 - **Ollama** - Run any open-source LLM locally
+- **vLLM** - High-performance model serving with GPU acceleration
 - **OpenWebUI** - Beautiful web interface for your models
 - **Tabby** - AI-powered code completion for your IDE
 - **Langfuse** - Monitor and analyze AI performance
@@ -65,6 +66,7 @@ helm install llm-operator oci://ghcr.io/geeper-io/llm-operator \
 
 ### **Option 2: Deploy Your First AI Stack**
 
+#### **Using Ollama (Default)**
 ```yaml
 apiVersion: llm.geeper.io/v1alpha1
 kind: LMDeployment
@@ -85,6 +87,28 @@ spec:
     completionModel: "codellama:7b"
 ```
 
+#### **Using vLLM (High Performance)**
+```yaml
+apiVersion: llm.geeper.io/v1alpha1
+kind: LMDeployment
+metadata:
+  name: my-vllm-stack
+spec:
+  vllm:
+    enabled: true
+    models:
+      - "meta-llama/Llama-2-7b-chat-hf"
+      - "codellama/CodeLlama-7b-Instruct-hf"
+  
+  openwebui:
+    enabled: true
+  
+  tabby:
+    enabled: true
+    chatModel: "meta-llama/Llama-2-7b-chat-hf"
+    completionModel: "codellama/CodeLlama-7b-Instruct-hf"
+```
+
 Apply with:
 ```bash
 kubectl apply -f my-ai-stack.yaml
@@ -93,7 +117,7 @@ kubectl apply -f my-ai-stack.yaml
 **📚 [Full Deployment Guide](docs/QUICKSTART_DEPLOYMENT.md)**
 
 **That's it!** Your AI stack is now running with:
-- Ollama serving your models
+- Ollama or vLLM serving your models
 - OpenWebUI providing a web chat interface
 - Tabby offering AI code completion
 - Automatic networking and monitoring
@@ -101,6 +125,8 @@ kubectl apply -f my-ai-stack.yaml
 ## 🌟 **Key Features**
 
 ### **🧠 Multi-Model Support**
+- **Ollama**: Run any open-source LLM locally with easy model management
+- **vLLM**: High-performance model serving with GPU acceleration and optimized inference
 - Run multiple LLM models simultaneously
 - Switch between models instantly
 - Mix different model types (chat, code, embedding)

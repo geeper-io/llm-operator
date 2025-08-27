@@ -1,0 +1,8 @@
+{
+  "label": "Model Deployment",
+  "position": 2,
+  "link": {
+    "type": "generated-index",
+    "description": "Learn how to deploy and configure different model serving backends with Geeper.AI"
+  }
+}
