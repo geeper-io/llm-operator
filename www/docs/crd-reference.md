@@ -36,6 +36,7 @@ Ollama defines the Ollama deployment configuration
 |------|------|-------------|----------|
 | [affinity](#lmdeploymentspecollamaaffinity) | object | Affinity defines pod affinity and anti-affinity rules for Ollama pods | false |
 | enabled | boolean | Enabled determines if vLLM should be deployed instead of Ollama | false |
+| flavor | enum | <br/>*Enum*: nvidia, amd<br/> | false |
 | image | string | Image is the Ollama container image to use (including tag) | false |
 | models | []string | Models is the list of models to deploy with Ollama | false |
 | replicas | integer | Replicas is the number of Ollama pods to run<br/>*Format*: int32<br/> | false |
@@ -355,7 +356,7 @@ Service defines the service configuration for Ollama
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| port | integer | Port is the port to expose the service<br/>*Format*: int32<br/>*Minimum*: 1<br/>*Maximum*: 65535<br/> | false |
+| port | integer | Port is the port to expose the service<br/>*Format*: int32<br/> | false |
 | type | enum | Type is the type of service to expose<br/>*Enum*: ClusterIP, NodePort, LoadBalancer<br/> | false |
 ### LMDeployment.spec.openwebui
 
@@ -372,7 +373,7 @@ OpenWebUI defines the OpenWebUI deployment configuration
 | [persistence](#lmdeploymentspecopenwebuipersistence) | object | Persistence defines OpenWebUI persistence configuration | false |
 | [pipelines](#lmdeploymentspecopenwebuipipelines) | object | Pipelines defines the OpenWebUI Pipelines configuration | false |
 | [redis](#lmdeploymentspecopenwebuiredis) | object | Redis defines the Redis configuration for OpenWebUI | false |
-| replicas | integer | Replicas is the number of OpenWebUI pods to run<br/>*Format*: int32<br/>*Minimum*: 1<br/>*Maximum*: 5<br/> | false |
+| replicas | integer | Replicas is the number of OpenWebUI pods to run<br/>*Format*: int32<br/> | false |
 | [resources](#lmdeploymentspecopenwebuiresources) | object | Resources defines the resource requirements for OpenWebUI pods | false |
 | [service](#lmdeploymentspecopenwebuiservice) | object | Service defines the service configuration for OpenWebUI | false |
 ### LMDeployment.spec.openwebui.affinity
@@ -778,8 +779,8 @@ Pipelines defines the OpenWebUI Pipelines configuration
 | [persistence](#lmdeploymentspecopenwebuipipelinespersistence) | object | Persistence defines Pipelines persistence configuration | false |
 | pipelineUrls | []string | PipelineURLs is a list of URLs to fetch pipeline definitions from<br/>Format: https://github.com/open-webui/pipelines/blob/main/examples/filters/example.py | false |
 | pipelinesDir | string | PipelinesDir is the directory containing pipeline definitions<br/>Default: /app/pipelines | false |
-| port | integer | Port is the port the Pipelines service exposes<br/>*Format*: int32<br/>*Minimum*: 1<br/>*Maximum*: 65535<br/> | false |
-| replicas | integer | Replicas is the number of Pipelines pods to run<br/>*Format*: int32<br/>*Minimum*: 1<br/>*Maximum*: 3<br/> | false |
+| port | integer | Port is the port the Pipelines service exposes<br/>*Format*: int32<br/> | false |
+| replicas | integer | Replicas is the number of Pipelines pods to run<br/>*Format*: int32<br/> | false |
 | [resources](#lmdeploymentspecopenwebuipipelinesresources) | object | Resources defines the resource requirements for Pipelines pods | false |
 | [service](#lmdeploymentspecopenwebuipipelinesservice) | object | Service describes service to expose the Pipelines | false |
 | [volumeMounts](#lmdeploymentspecopenwebuipipelinesvolumemountsindex) | []object | VolumeMounts defines volume mounts for the Pipelines | false |
@@ -861,7 +862,7 @@ Service describes service to expose the Pipelines
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| port | integer | Port is the port to expose the service<br/>*Format*: int32<br/>*Minimum*: 1<br/>*Maximum*: 65535<br/> | false |
+| port | integer | Port is the port to expose the service<br/>*Format*: int32<br/> | false |
 | type | enum | Type is the type of service to expose<br/>*Enum*: ClusterIP, NodePort, LoadBalancer<br/> | false |
 ### LMDeployment.spec.openwebui.pipelines.volumeMounts[index]
 
@@ -1538,7 +1539,7 @@ Service defines the service configuration for Redis
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| port | integer | Port is the port to expose the service<br/>*Format*: int32<br/>*Minimum*: 1<br/>*Maximum*: 65535<br/> | false |
+| port | integer | Port is the port to expose the service<br/>*Format*: int32<br/> | false |
 | type | enum | Type is the type of service to expose<br/>*Enum*: ClusterIP, NodePort, LoadBalancer<br/> | false |
 ### LMDeployment.spec.openwebui.resources
 
@@ -1554,7 +1555,7 @@ Service defines the service configuration for OpenWebUI
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| port | integer | Port is the port to expose the service<br/>*Format*: int32<br/>*Minimum*: 1<br/>*Maximum*: 65535<br/> | false |
+| port | integer | Port is the port to expose the service<br/>*Format*: int32<br/> | false |
 | type | enum | Type is the type of service to expose<br/>*Enum*: ClusterIP, NodePort, LoadBalancer<br/> | false |
 ### LMDeployment.spec.tabby
 
@@ -1962,7 +1963,7 @@ Service defines the service configuration for Tabby
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| port | integer | Port is the port to expose the service<br/>*Format*: int32<br/>*Minimum*: 1<br/>*Maximum*: 65535<br/> | false |
+| port | integer | Port is the port to expose the service<br/>*Format*: int32<br/> | false |
 | type | enum | Type is the type of service to expose<br/>*Enum*: ClusterIP, NodePort, LoadBalancer<br/> | false |
 ### LMDeployment.spec.tabby.volumeMounts[index]
 
@@ -2612,10 +2613,11 @@ VLLM defines the vLLM deployment configuration
 | [affinity](#lmdeploymentspecvllmaffinity) | object | Affinity defines pod affinity and anti-affinity rules for vLLM pods | false |
 | enabled | boolean | Enabled determines if vLLM should be deployed instead of Ollama | false |
 | [envVars](#lmdeploymentspecvllmenvvarsindex) | []object | EnvVars defines environment variables for vLLM | false |
+| flavor | enum | <br/>*Enum*: nvidia, amd<br/> | false |
 | image | string | Image is the vLLM container image to use (including tag) | false |
 | model | string |  | false |
 | [persistence](#lmdeploymentspecvllmpersistence) | object | Persistence defines vLLM persistence configuration | false |
-| replicas | integer | Replicas is the number of vLLM pods to run<br/>*Format*: int32<br/>*Minimum*: 1<br/>*Maximum*: 10<br/> | false |
+| replicas | integer | Replicas is the number of vLLM pods to run<br/>*Format*: int32<br/> | false |
 | [resources](#lmdeploymentspecvllmresources) | object | Resources defines the resource requirements for vLLM pods | false |
 | [service](#lmdeploymentspecvllmservice) | object | Service defines the service configuration for vLLM | false |
 | [volumeMounts](#lmdeploymentspecvllmvolumemountsindex) | []object | VolumeMounts defines volume mounts for vLLM | false |
@@ -2997,7 +2999,7 @@ Service defines the service configuration for vLLM
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| port | integer | Port is the port to expose the service<br/>*Format*: int32<br/>*Minimum*: 1<br/>*Maximum*: 65535<br/> | false |
+| port | integer | Port is the port to expose the service<br/>*Format*: int32<br/> | false |
 | type | enum | Type is the type of service to expose<br/>*Enum*: ClusterIP, NodePort, LoadBalancer<br/> | false |
 ### LMDeployment.spec.vllm.volumeMounts[index]
 

@@ -28,11 +28,16 @@ type OllamaSpec struct {
 	// Enabled determines if vLLM should be deployed instead of Ollama
 	// +kubebuilder:validation:Optional
 	Enabled bool `json:"enabled,omitempty"`
+
 	// Replicas is the number of Ollama pods to run
 	Replicas int32 `json:"replicas,omitempty"`
 
 	// Image is the Ollama container image to use (including tag)
 	Image string `json:"image,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Enum=nvidia;amd
+	Flavor string `json:"flavor,omitempty"`
 
 	// Resources defines the resource requirements for Ollama pods
 	Resources ResourceRequirements `json:"resources,omitempty"`
@@ -54,8 +59,6 @@ type ServiceSpec struct {
 	Type corev1.ServiceType `json:"type,omitempty"`
 
 	// Port is the port to expose the service
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=65535
 	Port int32 `json:"port,omitempty"`
 }
 
@@ -74,8 +77,6 @@ type OpenWebUISpec struct {
 	Enabled bool `json:"enabled,omitempty"`
 
 	// Replicas is the number of OpenWebUI pods to run
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=5
 	Replicas int32 `json:"replicas,omitempty"`
 
 	// Image is the OpenWebUI container image to use (including tag)
@@ -212,13 +213,9 @@ type PipelinesSpec struct {
 	Image string `json:"image,omitempty"`
 
 	// Replicas is the number of Pipelines pods to run
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=3
 	Replicas int32 `json:"replicas,omitempty"`
 
 	// Port is the port the Pipelines service exposes
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=65535
 	Port int32 `json:"port,omitempty"`
 
 	// Resources defines the resource requirements for Pipelines pods
@@ -314,12 +311,14 @@ type VLLMSpec struct {
 	Enabled bool `json:"enabled,omitempty"`
 
 	// Replicas is the number of vLLM pods to run
-	// +kubebuilder:validation:Minimum=1
-	// +kubebuilder:validation:Maximum=10
 	Replicas int32 `json:"replicas,omitempty"`
 
 	// Image is the vLLM container image to use (including tag)
 	Image string `json:"image,omitempty"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Enum=nvidia;amd
+	Flavor string `json:"flavor,omitempty"`
 
 	// Resources defines the resource requirements for vLLM pods
 	Resources ResourceRequirements `json:"resources,omitempty"`

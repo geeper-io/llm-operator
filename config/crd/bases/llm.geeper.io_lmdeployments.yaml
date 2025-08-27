@@ -981,6 +981,11 @@ spec:
                     description: Enabled determines if vLLM should be deployed instead
                       of Ollama
                     type: boolean
+                  flavor:
+                    enum:
+                    - nvidia
+                    - amd
+                    type: string
                   image:
                     description: Image is the Ollama container image to use (including
                       tag)
@@ -1025,8 +1030,6 @@ spec:
                       port:
                         description: Port is the port to expose the service
                         format: int32
-                        maximum: 65535
-                        minimum: 1
                         type: integer
                       type:
                         description: Type is the type of service to expose
@@ -2317,14 +2320,10 @@ spec:
                       port:
                         description: Port is the port the Pipelines service exposes
                         format: int32
-                        maximum: 65535
-                        minimum: 1
                         type: integer
                       replicas:
                         description: Replicas is the number of Pipelines pods to run
                         format: int32
-                        maximum: 3
-                        minimum: 1
                         type: integer
                       resources:
                         description: Resources defines the resource requirements for
@@ -2357,8 +2356,6 @@ spec:
                           port:
                             description: Port is the port to expose the service
                             format: int32
-                            maximum: 65535
-                            minimum: 1
                             type: integer
                           type:
                             description: Type is the type of service to expose
@@ -4302,8 +4299,6 @@ spec:
                           port:
                             description: Port is the port to expose the service
                             format: int32
-                            maximum: 65535
-                            minimum: 1
                             type: integer
                           type:
                             description: Type is the type of service to expose
@@ -4317,8 +4312,6 @@ spec:
                   replicas:
                     description: Replicas is the number of OpenWebUI pods to run
                     format: int32
-                    maximum: 5
-                    minimum: 1
                     type: integer
                   resources:
                     description: Resources defines the resource requirements for OpenWebUI
@@ -4351,8 +4344,6 @@ spec:
                       port:
                         description: Port is the port to expose the service
                         format: int32
-                        maximum: 65535
-                        minimum: 1
                         type: integer
                       type:
                         description: Type is the type of service to expose
@@ -5500,8 +5491,6 @@ spec:
                       port:
                         description: Port is the port to expose the service
                         format: int32
-                        maximum: 65535
-                        minimum: 1
                         type: integer
                       type:
                         description: Type is the type of service to expose
@@ -8414,6 +8403,11 @@ spec:
                       - name
                       type: object
                     type: array
+                  flavor:
+                    enum:
+                    - nvidia
+                    - amd
+                    type: string
                   image:
                     description: Image is the vLLM container image to use (including
                       tag)
@@ -8437,8 +8431,6 @@ spec:
                   replicas:
                     description: Replicas is the number of vLLM pods to run
                     format: int32
-                    maximum: 10
-                    minimum: 1
                     type: integer
                   resources:
                     description: Resources defines the resource requirements for vLLM
@@ -8471,8 +8463,6 @@ spec:
                       port:
                         description: Port is the port to expose the service
                         format: int32
-                        maximum: 65535
-                        minimum: 1
                         type: integer
                       type:
                         description: Type is the type of service to expose

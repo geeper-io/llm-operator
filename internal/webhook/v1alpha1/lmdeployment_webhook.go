@@ -66,9 +66,31 @@ func (d *LMDeploymentCustomDefaulter) Default(_ context.Context, obj runtime.Obj
 	if len(lmDeployment.Spec.Ollama.Models) > 0 {
 		lmDeployment.Spec.Ollama.Enabled = true
 	}
-	// Set Ollama defaults
+
+	if lmDeployment.Spec.Ollama.Enabled {
+		d.defaultOllama(lmDeployment)
+	}
+
+	if lmDeployment.Spec.VLLM.Enabled {
+		d.defaultVLLM(lmDeployment)
+	}
+
+	d.defaultOpenWebUI(lmDeployment)
+	d.defaultTabby(lmDeployment)
+
+	return nil
+}
+
+func (d *LMDeploymentCustomDefaulter) defaultOllama(lmDeployment *llmgeeperiov1alpha1.LMDeployment) {
 	if lmDeployment.Spec.Ollama.Image == "" {
-		lmDeployment.Spec.Ollama.Image = "ollama/ollama:latest"
+		switch lmDeployment.Spec.Ollama.Flavor {
+		case "amd":
+			lmDeployment.Spec.Ollama.Image = "ollama/ollama:rocm"
+		case "nvidia":
+			fallthrough
+		default:
+			lmDeployment.Spec.Ollama.Image = "ollama/ollama:latest"
+		}
 	}
 	if lmDeployment.Spec.Ollama.Replicas == 0 {
 		lmDeployment.Spec.Ollama.Replicas = 1
@@ -79,29 +101,36 @@ func (d *LMDeploymentCustomDefaulter) Default(_ context.Context, obj runtime.Obj
 	if lmDeployment.Spec.Ollama.Service.Port == 0 {
 		lmDeployment.Spec.Ollama.Service.Port = 11434
 	}
+}
 
-	// Set vLLM defaults only if vLLM is enabled
-	if lmDeployment.Spec.VLLM.Enabled {
-		if lmDeployment.Spec.VLLM.Image == "" {
+func (d *LMDeploymentCustomDefaulter) defaultVLLM(lmDeployment *llmgeeperiov1alpha1.LMDeployment) {
+	if lmDeployment.Spec.VLLM.Image == "" {
+		switch lmDeployment.Spec.VLLM.Flavor {
+		case "amd":
+			lmDeployment.Spec.VLLM.Image = "rocm/vllm:latest"
+		case "nvidia":
+			fallthrough
+		default:
 			lmDeployment.Spec.VLLM.Image = "vllm/vllm-openai:latest"
 		}
-		if lmDeployment.Spec.VLLM.Replicas == 0 {
-			lmDeployment.Spec.VLLM.Replicas = 1
-		}
-		if lmDeployment.Spec.VLLM.Service.Type == "" {
-			lmDeployment.Spec.VLLM.Service.Type = corev1.ServiceTypeClusterIP
-		}
-		if lmDeployment.Spec.VLLM.Service.Port == 0 {
-			lmDeployment.Spec.VLLM.Service.Port = 8000
-		}
-		if lmDeployment.Spec.VLLM.Persistence != nil && lmDeployment.Spec.VLLM.Persistence.Enabled {
-			if lmDeployment.Spec.VLLM.Persistence.Size == "" {
-				lmDeployment.Spec.VLLM.Persistence.Size = "10Gi"
-			}
+	}
+	if lmDeployment.Spec.VLLM.Replicas == 0 {
+		lmDeployment.Spec.VLLM.Replicas = 1
+	}
+	if lmDeployment.Spec.VLLM.Service.Type == "" {
+		lmDeployment.Spec.VLLM.Service.Type = corev1.ServiceTypeClusterIP
+	}
+	if lmDeployment.Spec.VLLM.Service.Port == 0 {
+		lmDeployment.Spec.VLLM.Service.Port = 8000
+	}
+	if lmDeployment.Spec.VLLM.Persistence != nil && lmDeployment.Spec.VLLM.Persistence.Enabled {
+		if lmDeployment.Spec.VLLM.Persistence.Size == "" {
+			lmDeployment.Spec.VLLM.Persistence.Size = "10Gi"
 		}
 	}
+}
 
-	// Set OpenWebUI defaults
+func (d *LMDeploymentCustomDefaulter) defaultOpenWebUI(lmDeployment *llmgeeperiov1alpha1.LMDeployment) {
 	if lmDeployment.Spec.OpenWebUI.Image == "" {
 		lmDeployment.Spec.OpenWebUI.Image = "ghcr.io/open-webui/open-webui:main"
 	}
@@ -160,8 +189,9 @@ func (d *LMDeploymentCustomDefaulter) Default(_ context.Context, obj runtime.Obj
 			lmDeployment.Spec.OpenWebUI.Pipelines.PipelinesDir = "/app/pipelines"
 		}
 	}
+}
 
-	// Set Tabby defaults
+func (d *LMDeploymentCustomDefaulter) defaultTabby(lmDeployment *llmgeeperiov1alpha1.LMDeployment) {
 	if lmDeployment.Spec.Tabby.Image == "" {
 		lmDeployment.Spec.Tabby.Image = "tabbyml/tabby:latest"
 	}
@@ -174,8 +204,6 @@ func (d *LMDeploymentCustomDefaulter) Default(_ context.Context, obj runtime.Obj
 	if lmDeployment.Spec.Tabby.Service.Port == 0 {
 		lmDeployment.Spec.Tabby.Service.Port = 8080
 	}
-
-	return nil
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
