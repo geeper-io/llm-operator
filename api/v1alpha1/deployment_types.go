@@ -18,7 +18,6 @@ package v1alpha1
 
 import (
 	"fmt"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -311,7 +310,7 @@ type VLLMSpec struct {
 	Models []VLLMModelSpec `json:"models,omitempty"`
 
 	// Router defines the vLLM router configuration for model routing
-	Router *VLLMRouterSpec `json:"router,omitempty"`
+	Router VLLMRouterSpec `json:"router,omitempty"`
 
 	// Global configuration that applies to all models
 	GlobalConfig *VLLMGlobalConfig `json:"globalConfig,omitempty"`
@@ -343,6 +342,9 @@ type VLLMModelSpec struct {
 
 	// Image is the vLLM container image to use (including tag)
 	Image string `json:"image,omitempty"`
+
+	// Args are additional command-line arguments to pass to the vLLM server
+	Args []string `json:"args,omitempty"`
 
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:validation:Enum=nvidia;amd

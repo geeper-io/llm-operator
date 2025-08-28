@@ -2667,6 +2667,7 @@ DefaultService defines default service configuration for models
 | model | string | Model is the model identifier (e.g., "meta-llama/Llama-2-7b-chat-hf") | true |
 | name | string | Name is the unique name for this model deployment | true |
 | [affinity](#lmdeploymentspecvllmmodelsindexaffinity) | object | Affinity defines pod affinity and anti-affinity rules for vLLM pods | false |
+| args | []string | Args are additional command-line arguments to pass to the vLLM server | false |
 | [envVars](#lmdeploymentspecvllmmodelsindexenvvarsindex) | []object | EnvVars defines environment variables for vLLM | false |
 | flavor | enum | <br/>*Enum*: nvidia, amd<br/> | false |
 | image | string | Image is the vLLM container image to use (including tag) | false |

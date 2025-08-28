@@ -531,43 +531,6 @@ kubectl logs -f deployment/vllm-basic-vllm-router
 kubectl get svc vllm-basic-vllm-router
 ```
 
-## Migration from Ollama
-
-### **When to Use vLLM vs Ollama**
-
-| Feature | Ollama | vLLM |
-|---------|--------|------|
-| **Performance** | Good | Excellent |
-| **GPU Support** | Basic | Advanced |
-| **Memory Efficiency** | Standard | Optimized |
-| **Multi-Model** | Yes | Yes (with routing) |
-| **Model Routing** | No | Yes |
-| **Production Ready** | Limited | Yes |
-| **Resource Usage** | Higher | Lower |
-
-### **Migration Steps**
-
-1. **Update Configuration**
-   ```yaml
-   # Before (Ollama)
-   spec:
-     ollama:
-       models: ["llama2:7b"]
-   
-   # After (vLLM)
-   spec:
-     vLLM:
-       enabled: true
-       models:
-         - name: "llama2-7b"
-           model: "meta-llama/Llama-2-7b-chat-hf"
-   ```
-
-2. **Adjust Resources** (typically 20-30% less memory needed)
-3. **Update Service Ports** (11434 → 8000)
-4. **Add Router** (optional, for multi-model deployments)
-5. **Test Performance** and adjust as needed
-
 ## Examples
 
 ### **Complete Production Setup**

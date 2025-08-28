@@ -19,7 +19,6 @@ package controller
 import (
 	"context"
 	"fmt"
-
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -133,10 +132,9 @@ func (r *LMDeploymentReconciler) reconcileVLLM(ctx context.Context, deployment *
 // buildVLLMModelDeployment builds a vLLM model deployment object
 func (r *LMDeploymentReconciler) buildVLLMModelDeployment(deployment *llmgeeperiov1alpha1.LMDeployment, modelSpec llmgeeperiov1alpha1.VLLMModelSpec) *appsv1.Deployment {
 	labels := map[string]string{
-		"app":             "vllm",
-		"llm-deployment":  deployment.Name,
-		"vllm-model":      modelSpec.Name,
-		"vllm-model-name": modelSpec.Model,
+		"app":            "vllm",
+		"llm-deployment": deployment.Name,
+		"vllm-model":     modelSpec.Name,
 	}
 
 	// Use model-specific image or fall back to global default
@@ -175,6 +173,7 @@ func (r *LMDeploymentReconciler) buildVLLMModelDeployment(deployment *llmgeeperi
 			},
 		},
 		Command: []string{"vllm", "serve", modelSpec.Model},
+		Args:    modelSpec.Args,
 		SecurityContext: &corev1.SecurityContext{
 			RunAsGroup:     ptr.To(int64(44)),
 			SeccompProfile: &corev1.SeccompProfile{Type: corev1.SeccompProfileTypeUnconfined},
@@ -280,10 +279,9 @@ func (r *LMDeploymentReconciler) buildVLLMModelDeployment(deployment *llmgeeperi
 // buildVLLMModelService builds a vLLM model service object
 func (r *LMDeploymentReconciler) buildVLLMModelService(deployment *llmgeeperiov1alpha1.LMDeployment, modelSpec llmgeeperiov1alpha1.VLLMModelSpec) *corev1.Service {
 	labels := map[string]string{
-		"app":             "vllm",
-		"llm-deployment":  deployment.Name,
-		"vllm-model":      modelSpec.Name,
-		"vllm-model-name": modelSpec.Model,
+		"app":            "vllm",
+		"llm-deployment": deployment.Name,
+		"vllm-model":     modelSpec.Name,
 	}
 
 	// Use model-specific service configuration or fall back to global default
@@ -330,10 +328,9 @@ func (r *LMDeploymentReconciler) buildVLLMModelService(deployment *llmgeeperiov1
 // buildVLLMModelPVC builds a vLLM model PVC object
 func (r *LMDeploymentReconciler) buildVLLMModelPVC(deployment *llmgeeperiov1alpha1.LMDeployment, modelSpec llmgeeperiov1alpha1.VLLMModelSpec) *corev1.PersistentVolumeClaim {
 	labels := map[string]string{
-		"app":             "vllm",
-		"llm-deployment":  deployment.Name,
-		"vllm-model":      modelSpec.Name,
-		"vllm-model-name": modelSpec.Model,
+		"app":            "vllm",
+		"llm-deployment": deployment.Name,
+		"vllm-model":     modelSpec.Name,
 	}
 
 	// Use model-specific persistence configuration or fall back to global default
@@ -422,8 +419,9 @@ func (r *LMDeploymentReconciler) buildVLLMRouterDeployment(deployment *llmgeeper
 			"--host", "0.0.0.0",
 			"--port", fmt.Sprintf("%d", servicePort),
 			"--service-discovery", "k8s",
-			"--k8s-namespace", "k8s",
+			"--k8s-namespace", deployment.Namespace,
 			"--k8s-label-selector", "app=vllm,llm-deployment=" + deployment.Name,
+			"--routing-logic", "roundrobin",
 		},
 		Resources: r.buildResourceRequirements(deployment.Spec.VLLM.Router.Resources),
 		Env: []corev1.EnvVar{

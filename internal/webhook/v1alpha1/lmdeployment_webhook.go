@@ -67,6 +67,10 @@ func (d *LMDeploymentCustomDefaulter) Default(_ context.Context, obj runtime.Obj
 		lmDeployment.Spec.Ollama.Enabled = true
 	}
 
+	if len(lmDeployment.Spec.VLLM.Models) > 0 {
+		lmDeployment.Spec.VLLM.Enabled = true
+	}
+
 	if lmDeployment.Spec.Ollama.Enabled {
 		d.defaultOllama(lmDeployment)
 	}
@@ -75,8 +79,12 @@ func (d *LMDeploymentCustomDefaulter) Default(_ context.Context, obj runtime.Obj
 		d.defaultVLLM(lmDeployment)
 	}
 
-	d.defaultOpenWebUI(lmDeployment)
-	d.defaultTabby(lmDeployment)
+	if lmDeployment.Spec.OpenWebUI.Enabled {
+		d.defaultOpenWebUI(lmDeployment)
+	}
+	if lmDeployment.Spec.Tabby.Enabled {
+		d.defaultTabby(lmDeployment)
+	}
 
 	return nil
 }
@@ -397,7 +405,7 @@ func (l *LMDeploymentCustomValidator) validateVLLM(lmDeployment *llmgeeperiov1al
 	}
 
 	// Validate router configuration if enabled
-	if lmDeployment.Spec.VLLM.Router != nil && lmDeployment.Spec.VLLM.Router.Enabled {
+	if lmDeployment.Spec.VLLM.Router.Enabled {
 		routerPath := vllmPath.Child("router")
 
 		// Validate router replicas

@@ -8373,6 +8373,12 @@ spec:
                                   x-kubernetes-list-type: atomic
                               type: object
                           type: object
+                        args:
+                          description: Args are additional command-line arguments
+                            to pass to the vLLM server
+                          items:
+                            type: string
+                          type: array
                         envVars:
                           description: EnvVars defines environment variables for vLLM
                           items:
