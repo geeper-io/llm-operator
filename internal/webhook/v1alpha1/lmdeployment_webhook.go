@@ -104,29 +104,73 @@ func (d *LMDeploymentCustomDefaulter) defaultOllama(lmDeployment *llmgeeperiov1a
 }
 
 func (d *LMDeploymentCustomDefaulter) defaultVLLM(lmDeployment *llmgeeperiov1alpha1.LMDeployment) {
-	if lmDeployment.Spec.VLLM.Image == "" {
-		switch lmDeployment.Spec.VLLM.Flavor {
-		case "amd":
-			lmDeployment.Spec.VLLM.Image = "rocm/vllm:latest"
-		case "nvidia":
-			fallthrough
-		default:
-			lmDeployment.Spec.VLLM.Image = "vllm/vllm-openai:latest"
+	// Set global defaults if global config is not specified
+	if lmDeployment.Spec.VLLM.GlobalConfig == nil {
+		lmDeployment.Spec.VLLM.GlobalConfig = &llmgeeperiov1alpha1.VLLMGlobalConfig{}
+	}
+
+	// Set global image default
+	if lmDeployment.Spec.VLLM.GlobalConfig.Image == "" {
+		lmDeployment.Spec.VLLM.GlobalConfig.Image = "vllm/vllm-openai:latest"
+	}
+
+	// Set global service defaults
+	if lmDeployment.Spec.VLLM.GlobalConfig.Service.Type == "" {
+		lmDeployment.Spec.VLLM.GlobalConfig.Service.Type = corev1.ServiceTypeClusterIP
+	}
+	if lmDeployment.Spec.VLLM.GlobalConfig.Service.Port == 0 {
+		lmDeployment.Spec.VLLM.GlobalConfig.Service.Port = 8000
+	}
+
+	// Set global persistence defaults
+	if lmDeployment.Spec.VLLM.GlobalConfig.Persistence != nil && lmDeployment.Spec.VLLM.GlobalConfig.Persistence.Enabled {
+		if lmDeployment.Spec.VLLM.GlobalConfig.Persistence.Size == "" {
+			lmDeployment.Spec.VLLM.GlobalConfig.Persistence.Size = "10Gi"
 		}
 	}
-	if lmDeployment.Spec.VLLM.Replicas == 0 {
-		lmDeployment.Spec.VLLM.Replicas = 1
-	}
-	if lmDeployment.Spec.VLLM.Service.Type == "" {
-		lmDeployment.Spec.VLLM.Service.Type = corev1.ServiceTypeClusterIP
-	}
-	if lmDeployment.Spec.VLLM.Service.Port == 0 {
-		lmDeployment.Spec.VLLM.Service.Port = 8000
-	}
-	if lmDeployment.Spec.VLLM.Persistence != nil && lmDeployment.Spec.VLLM.Persistence.Enabled {
-		if lmDeployment.Spec.VLLM.Persistence.Size == "" {
-			lmDeployment.Spec.VLLM.Persistence.Size = "10Gi"
+
+	// Set defaults for each model
+	for i := range lmDeployment.Spec.VLLM.Models {
+		modelSpec := &lmDeployment.Spec.VLLM.Models[i]
+
+		// Set model image default (fall back to global)
+		if modelSpec.Image == "" {
+			modelSpec.Image = lmDeployment.Spec.VLLM.GlobalConfig.Image
 		}
+
+		// Set model replicas default
+		if modelSpec.Replicas == 0 {
+			modelSpec.Replicas = 1
+		}
+
+		// Set model service defaults (fall back to global)
+		if modelSpec.Service.Type == "" {
+			modelSpec.Service.Type = lmDeployment.Spec.VLLM.GlobalConfig.Service.Type
+		}
+		if modelSpec.Service.Port == 0 {
+			modelSpec.Service.Port = lmDeployment.Spec.VLLM.GlobalConfig.Service.Port
+		}
+
+		// Set model persistence defaults (fall back to global)
+		if modelSpec.Persistence != nil && modelSpec.Persistence.Enabled {
+			if modelSpec.Persistence.Size == "" {
+				modelSpec.Persistence.Size = lmDeployment.Spec.VLLM.GlobalConfig.Persistence.Size
+			}
+		}
+	}
+
+	// Set router defaults if enabled
+	if lmDeployment.Spec.VLLM.Router.Image == "" {
+		lmDeployment.Spec.VLLM.Router.Image = "lmcache/lmstack-router:latest"
+	}
+	if lmDeployment.Spec.VLLM.Router.Replicas == 0 {
+		lmDeployment.Spec.VLLM.Router.Replicas = 1
+	}
+	if lmDeployment.Spec.VLLM.Router.Service.Type == "" {
+		lmDeployment.Spec.VLLM.Router.Service.Type = corev1.ServiceTypeClusterIP
+	}
+	if lmDeployment.Spec.VLLM.Router.Service.Port == 0 {
+		lmDeployment.Spec.VLLM.Router.Service.Port = 8000
 	}
 }
 
@@ -306,14 +350,71 @@ func (l *LMDeploymentCustomValidator) validateVLLM(lmDeployment *llmgeeperiov1al
 	vllmPath := field.NewPath("spec", "vllm")
 
 	// Validate models
-	if lmDeployment.Spec.VLLM.Model == "" {
-		allErrs = append(allErrs, field.Required(vllmPath.Child("model"), "model must be specified"))
+	if len(lmDeployment.Spec.VLLM.Models) == 0 {
+		allErrs = append(allErrs, field.Required(vllmPath.Child("models"), "at least one model must be specified"))
+	} else {
+		// Validate each model
+		for i, modelSpec := range lmDeployment.Spec.VLLM.Models {
+			modelPath := vllmPath.Child("models").Index(i)
+
+			// Validate model name
+			if modelSpec.Name == "" {
+				allErrs = append(allErrs, field.Required(modelPath.Child("name"), "model name must be specified"))
+			}
+
+			// Validate model identifier
+			if modelSpec.Model == "" {
+				allErrs = append(allErrs, field.Required(modelPath.Child("model"), "model identifier must be specified"))
+			}
+
+			// Validate replicas
+			if modelSpec.Replicas < 0 {
+				allErrs = append(allErrs, field.Invalid(modelPath.Child("replicas"), modelSpec.Replicas, "replicas must be non-negative"))
+			}
+
+			// Validate service port
+			if modelSpec.Service.Port > 0 && (modelSpec.Service.Port < 1 || modelSpec.Service.Port > 65535) {
+				allErrs = append(allErrs, field.Invalid(modelPath.Child("service", "port"), modelSpec.Service.Port, "service port must be between 1 and 65535"))
+			}
+
+			// Validate persistence configuration if enabled
+			if modelSpec.Persistence != nil && modelSpec.Persistence.Enabled {
+				if modelSpec.Persistence.Size == "" {
+					allErrs = append(allErrs, field.Required(modelPath.Child("persistence", "size"), "persistence size must be specified when persistence is enabled"))
+				}
+			}
+		}
 	}
 
-	// Validate persistence configuration if enabled
-	if lmDeployment.Spec.VLLM.Persistence != nil && lmDeployment.Spec.VLLM.Persistence.Enabled {
-		if lmDeployment.Spec.VLLM.Persistence.Size == "" {
-			allErrs = append(allErrs, field.Required(vllmPath.Child("persistence", "size"), "vLLM persistence size must be specified when persistence is enabled"))
+	// Validate router configuration if enabled
+	if lmDeployment.Spec.VLLM.Router != nil && lmDeployment.Spec.VLLM.Router.Enabled {
+		routerPath := vllmPath.Child("router")
+
+		// Validate router replicas
+		if lmDeployment.Spec.VLLM.Router.Replicas < 0 {
+			allErrs = append(allErrs, field.Invalid(routerPath.Child("replicas"), lmDeployment.Spec.VLLM.Router.Replicas, "router replicas must be non-negative"))
+		}
+
+		// Validate router service port
+		if lmDeployment.Spec.VLLM.Router.Service.Port > 0 && (lmDeployment.Spec.VLLM.Router.Service.Port < 1 || lmDeployment.Spec.VLLM.Router.Service.Port > 65535) {
+			allErrs = append(allErrs, field.Invalid(routerPath.Child("service", "port"), lmDeployment.Spec.VLLM.Router.Service.Port, "router service port must be between 1 and 65535"))
+		}
+	}
+
+	// Validate global configuration if specified
+	if lmDeployment.Spec.VLLM.GlobalConfig != nil {
+		globalPath := vllmPath.Child("globalConfig")
+
+		// Validate global service port
+		if lmDeployment.Spec.VLLM.GlobalConfig.Service.Port > 0 && (lmDeployment.Spec.VLLM.GlobalConfig.Service.Port < 1 || lmDeployment.Spec.VLLM.GlobalConfig.Service.Port > 65535) {
+			allErrs = append(allErrs, field.Invalid(globalPath.Child("service", "port"), lmDeployment.Spec.VLLM.GlobalConfig.Service.Port, "global service port must be between 1 and 65535"))
+		}
+
+		// Validate global persistence configuration if enabled
+		if lmDeployment.Spec.VLLM.GlobalConfig.Persistence != nil && lmDeployment.Spec.VLLM.GlobalConfig.Persistence.Enabled {
+			if lmDeployment.Spec.VLLM.GlobalConfig.Persistence.Size == "" {
+				allErrs = append(allErrs, field.Required(globalPath.Child("persistence", "size"), "global persistence size must be specified when persistence is enabled"))
+			}
 		}
 	}
 
@@ -397,8 +498,13 @@ func (l *LMDeploymentCustomValidator) validateTabby(lmDeployment *llmgeeperiov1a
 		// Check if the chat model exists in Ollama or vLLM models
 		found := false
 		if lmDeployment.Spec.VLLM.Enabled {
-			if lmDeployment.Spec.VLLM.Model == lmDeployment.Spec.Tabby.ChatModel {
-				found = true
+			if lmDeployment.Spec.VLLM.Models != nil {
+				for _, modelSpec := range lmDeployment.Spec.VLLM.Models {
+					if modelSpec.Model == lmDeployment.Spec.Tabby.ChatModel {
+						found = true
+						break
+					}
+				}
 			}
 		}
 		if lmDeployment.Spec.Ollama.Enabled {
@@ -423,8 +529,13 @@ func (l *LMDeploymentCustomValidator) validateTabby(lmDeployment *llmgeeperiov1a
 		// Check if the completion model exists in Ollama or vLLM models
 		found := false
 		if lmDeployment.Spec.VLLM.Enabled {
-			if lmDeployment.Spec.VLLM.Model == lmDeployment.Spec.Tabby.CompletionModel {
-				found = true
+			if lmDeployment.Spec.VLLM.Models != nil {
+				for _, modelSpec := range lmDeployment.Spec.VLLM.Models {
+					if modelSpec.Model == lmDeployment.Spec.Tabby.CompletionModel {
+						found = true
+						break
+					}
+				}
 			}
 		}
 		if lmDeployment.Spec.Ollama.Enabled {

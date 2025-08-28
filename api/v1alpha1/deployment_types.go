@@ -310,7 +310,24 @@ type VLLMSpec struct {
 	// Enabled determines if vLLM should be deployed instead of Ollama
 	Enabled bool `json:"enabled,omitempty"`
 
-	// Replicas is the number of vLLM pods to run
+	// Models is the list of vLLM models to deploy
+	Models []VLLMModelSpec `json:"models,omitempty"`
+
+	// Router defines the vLLM router configuration for model routing
+	Router *VLLMRouterSpec `json:"router,omitempty"`
+
+	// Global configuration that applies to all models
+	GlobalConfig *VLLMGlobalConfig `json:"globalConfig,omitempty"`
+}
+
+type VLLMModelSpec struct {
+	// Name is the unique name for this model deployment
+	Name string `json:"name"`
+
+	// Model is the model identifier (e.g., "meta-llama/Llama-2-7b-chat-hf")
+	Model string `json:"model"`
+
+	// Replicas is the number of vLLM pods to run for this model
 	Replicas int32 `json:"replicas,omitempty"`
 
 	// Image is the vLLM container image to use (including tag)
@@ -323,9 +340,7 @@ type VLLMSpec struct {
 	// Resources defines the resource requirements for vLLM pods
 	Resources ResourceRequirements `json:"resources,omitempty"`
 
-	Model string `json:"model,omitempty"`
-
-	// Service defines the service configuration for vLLM
+	// Service defines the service configuration for this model
 	Service ServiceSpec `json:"service,omitempty"`
 
 	// Affinity defines pod affinity and anti-affinity rules for vLLM pods
@@ -341,6 +356,45 @@ type VLLMSpec struct {
 	Volumes []corev1.Volume `json:"volumes,omitempty"`
 
 	// Persistence defines vLLM persistence configuration
+	Persistence *VLLMPersistenceSpec `json:"persistence,omitempty"`
+}
+
+// VLLMRouterSpec defines the vLLM router configuration
+type VLLMRouterSpec struct {
+	// Enabled determines if the vLLM router should be deployed
+	Enabled bool `json:"enabled,omitempty"`
+
+	// Replicas is the number of router pods to run
+	Replicas int32 `json:"replicas,omitempty"`
+
+	// Image is the router container image to use
+	Image string `json:"image,omitempty"`
+
+	// Resources defines the resource requirements for router pods
+	Resources ResourceRequirements `json:"resources,omitempty"`
+
+	// Service defines the service configuration for the router
+	Service ServiceSpec `json:"service,omitempty"`
+
+	// Affinity defines pod affinity and anti-affinity rules for router pods
+	Affinity *corev1.Affinity `json:"affinity,omitempty"`
+
+	// EnvVars defines environment variables for the router
+	EnvVars []corev1.EnvVar `json:"envVars,omitempty"`
+}
+
+// VLLMGlobalConfig defines global configuration for all vLLM models
+type VLLMGlobalConfig struct {
+	// DefaultImage is the default container image for models that don't specify one
+	Image string `json:"image,omitempty"`
+
+	// DefaultResources defines default resource requirements for models
+	Resources ResourceRequirements `json:"resources,omitempty"`
+
+	// DefaultService defines default service configuration for models
+	Service ServiceSpec `json:"service,omitempty"`
+
+	// DefaultPersistence defines default persistence configuration for models
 	Persistence *VLLMPersistenceSpec `json:"persistence,omitempty"`
 }
 
@@ -557,10 +611,10 @@ func (d *LMDeployment) GetVLLMServiceName() string {
 
 // GetVLLMServicePort returns the port of the vLLM service for this deployment
 func (d *LMDeployment) GetVLLMServicePort() int32 {
-	if d.Spec.VLLM.Service.Port == 0 {
-		return 8000 // Default vLLM port
+	if d.Spec.VLLM.GlobalConfig != nil && d.Spec.VLLM.GlobalConfig.Service.Port != 0 {
+		return d.Spec.VLLM.GlobalConfig.Service.Port
 	}
-	return d.Spec.VLLM.Service.Port
+	return 8000 // Default vLLM port
 }
 
 // GetVLLMDeploymentName returns the name of the vLLM deployment for this deployment
@@ -571,6 +625,31 @@ func (d *LMDeployment) GetVLLMDeploymentName() string {
 // GetVLLMPVCName returns the name of the vLLM PVC for this deployment
 func (d *LMDeployment) GetVLLMPVCName() string {
 	return fmt.Sprintf("%s-vllm", d.Name)
+}
+
+// GetVLLMModelDeploymentName returns the name of a specific vLLM model deployment
+func (d *LMDeployment) GetVLLMModelDeploymentName(modelName string) string {
+	return fmt.Sprintf("%s-vllm-%s", d.Name, modelName)
+}
+
+// GetVLLMModelServiceName returns the name of a specific vLLM model service
+func (d *LMDeployment) GetVLLMModelServiceName(modelName string) string {
+	return fmt.Sprintf("%s-vllm-%s", d.Name, modelName)
+}
+
+// GetVLLMRouterServiceName returns the name of the vLLM router service
+func (d *LMDeployment) GetVLLMRouterServiceName() string {
+	return fmt.Sprintf("%s-vllm-router", d.Name)
+}
+
+// GetVLLMRouterDeploymentName returns the name of the vLLM router deployment
+func (d *LMDeployment) GetVLLMRouterDeploymentName() string {
+	return fmt.Sprintf("%s-vllm-router", d.Name)
+}
+
+// GetVLLMModelPVCName returns the name of a specific vLLM model PVC
+func (d *LMDeployment) GetVLLMModelPVCName(modelName string) string {
+	return fmt.Sprintf("%s-vllm-%s", d.Name, modelName)
 }
 
 func init() {

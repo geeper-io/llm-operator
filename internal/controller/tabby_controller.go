@@ -78,7 +78,7 @@ func (r *LMDeploymentReconciler) buildTabbyDeployment(deployment *llmgeeperiov1a
 		servicePort = 8080
 	}
 
-	// Note: Model configuration is now handled via config.toml file
+	// Note: Models configuration is now handled via config.toml file
 
 	// Build environment variables (only custom ones, no Ollama-specific ones)
 	envVars := []corev1.EnvVar{}

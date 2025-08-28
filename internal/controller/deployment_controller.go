@@ -294,20 +294,62 @@ func (r *LMDeploymentReconciler) updateStatus(ctx context.Context, deployment *l
 	if err != nil {
 		return fmt.Errorf("failed to create patch helper: %w", err)
 	}
+
 	// Get model serving deployment status (Ollama or vLLM)
 	if deployment.Spec.VLLM.Enabled {
-		// Get vLLM deployment status
-		vllmDeployment := &appsv1.Deployment{}
+		// Get vLLM model deployment statuses
+		var totalVLLMReplicas int32
+		var totalVLLMReadyReplicas int32
+		var totalVLLMAvailableReplicas int32
+		var totalVLLMUpdatedReplicas int32
+
+		for _, modelSpec := range deployment.Spec.VLLM.Models {
+			replicas := modelSpec.Replicas
+			if replicas == 0 {
+				replicas = 1
+			}
+			totalVLLMReplicas += replicas
+
+			// Get individual model deployment status
+			vllmDeployment := &appsv1.Deployment{}
+			err = r.Get(ctx, types.NamespacedName{
+				Name:      deployment.GetVLLMModelDeploymentName(modelSpec.Name),
+				Namespace: deployment.Namespace,
+			}, vllmDeployment)
+
+			if err == nil {
+				totalVLLMReadyReplicas += vllmDeployment.Status.ReadyReplicas
+				totalVLLMAvailableReplicas += vllmDeployment.Status.AvailableReplicas
+				totalVLLMUpdatedReplicas += vllmDeployment.Status.UpdatedReplicas
+			}
+		}
+
+		// Update vLLM status
+		deployment.Status.VLLMStatus.ReadyReplicas = totalVLLMReadyReplicas
+		deployment.Status.VLLMStatus.AvailableReplicas = totalVLLMAvailableReplicas
+		deployment.Status.VLLMStatus.UpdatedReplicas = totalVLLMUpdatedReplicas
+
+		routerReplicas := deployment.Spec.VLLM.Router.Replicas
+		if routerReplicas == 0 {
+			routerReplicas = 1
+		}
+		totalVLLMReplicas += routerReplicas
+
+		// Get router deployment status
+		routerDeployment := &appsv1.Deployment{}
 		err = r.Get(ctx, types.NamespacedName{
-			Name:      deployment.GetVLLMDeploymentName(),
+			Name:      deployment.GetVLLMRouterDeploymentName(),
 			Namespace: deployment.Namespace,
-		}, vllmDeployment)
+		}, routerDeployment)
 
 		if err == nil {
-			deployment.Status.VLLMStatus.AvailableReplicas = vllmDeployment.Status.AvailableReplicas
-			deployment.Status.VLLMStatus.ReadyReplicas = vllmDeployment.Status.ReadyReplicas
-			deployment.Status.VLLMStatus.UpdatedReplicas = vllmDeployment.Status.UpdatedReplicas
+			totalVLLMReadyReplicas += routerDeployment.Status.ReadyReplicas
+			totalVLLMAvailableReplicas += routerDeployment.Status.AvailableReplicas
+			totalVLLMUpdatedReplicas += routerDeployment.Status.UpdatedReplicas
 		}
+
+		deployment.Status.TotalReplicas = totalVLLMReplicas
+		deployment.Status.ReadyReplicas = totalVLLMReadyReplicas
 	} else {
 		// Get Ollama deployment status
 		ollamaDeployment := &appsv1.Deployment{}
@@ -321,6 +363,9 @@ func (r *LMDeploymentReconciler) updateStatus(ctx context.Context, deployment *l
 			deployment.Status.OllamaStatus.ReadyReplicas = ollamaDeployment.Status.ReadyReplicas
 			deployment.Status.OllamaStatus.UpdatedReplicas = ollamaDeployment.Status.UpdatedReplicas
 		}
+
+		deployment.Status.TotalReplicas = deployment.Spec.Ollama.Replicas
+		deployment.Status.ReadyReplicas = deployment.Status.OllamaStatus.ReadyReplicas
 	}
 
 	// Get OpenWebUI deployment status if enabled
@@ -336,6 +381,9 @@ func (r *LMDeploymentReconciler) updateStatus(ctx context.Context, deployment *l
 			deployment.Status.OpenWebUIStatus.ReadyReplicas = openwebuiDeployment.Status.ReadyReplicas
 			deployment.Status.OpenWebUIStatus.UpdatedReplicas = openwebuiDeployment.Status.UpdatedReplicas
 		}
+
+		deployment.Status.TotalReplicas += deployment.Spec.OpenWebUI.Replicas
+		deployment.Status.ReadyReplicas += deployment.Status.OpenWebUIStatus.ReadyReplicas
 	}
 
 	// Get Tabby deployment status if enabled
@@ -351,24 +399,7 @@ func (r *LMDeploymentReconciler) updateStatus(ctx context.Context, deployment *l
 			deployment.Status.TabbyStatus.ReadyReplicas = tabbyDeployment.Status.ReadyReplicas
 			deployment.Status.TabbyStatus.UpdatedReplicas = tabbyDeployment.Status.UpdatedReplicas
 		}
-	}
 
-	// Calculate overall status
-	if deployment.Spec.VLLM.Enabled {
-		deployment.Status.TotalReplicas = deployment.Spec.VLLM.Replicas
-		deployment.Status.ReadyReplicas = deployment.Status.VLLMStatus.ReadyReplicas
-	} else {
-		deployment.Status.TotalReplicas = deployment.Spec.Ollama.Replicas
-		deployment.Status.ReadyReplicas = deployment.Status.OllamaStatus.ReadyReplicas
-	}
-
-	if deployment.Spec.OpenWebUI.Enabled {
-		deployment.Status.TotalReplicas += deployment.Spec.OpenWebUI.Replicas
-		deployment.Status.ReadyReplicas += deployment.Status.OpenWebUIStatus.ReadyReplicas
-	}
-
-	// Add Tabby replicas
-	if deployment.Spec.Tabby.Enabled {
 		deployment.Status.TotalReplicas += deployment.Spec.Tabby.Replicas
 		deployment.Status.ReadyReplicas += deployment.Status.TabbyStatus.ReadyReplicas
 	}
