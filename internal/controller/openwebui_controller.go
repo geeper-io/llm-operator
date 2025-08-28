@@ -258,7 +258,16 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 		envVars = append(envVars,
 			corev1.EnvVar{Name: "ENABLE_OPENAI_API", Value: "True"},
 			corev1.EnvVar{Name: "OPENAI_API_BASE_URL", Value: fmt.Sprintf("http://%s:%d", deployment.GetVLLMServiceName(), deployment.GetVLLMServicePort())},
+			corev1.EnvVar{Name: "OPENAI_API_KEY", ValueFrom: &corev1.EnvVarSource{
+				SecretKeyRef: &corev1.SecretKeySelector{
+					LocalObjectReference: corev1.LocalObjectReference{
+						Name: deployment.GetVLLMApiKeySecretName(),
+					},
+					Key: deployment.Spec.VLLM.ApiKey.Key,
+				},
+			}},
 		)
+
 	} else {
 		envVars = append(envVars, corev1.EnvVar{
 			Name: "ENABLE_OPENAI_API", Value: "False",

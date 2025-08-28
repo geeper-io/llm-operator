@@ -2,6 +2,7 @@
 id: ollama-deployment
 title: Ollama Deployment
 sidebar_label: Ollama
+sidebar_position: 2
 description: Deploy and configure Ollama for local model serving with the LLM Operator
 ---
 

@@ -2,6 +2,7 @@
 id: vllm-deployment
 title: vLLM Deployment
 sidebar_label: vLLM
+sidebar_position: 1
 description: Deploy high-performance vLLM model serving with GPU acceleration and model routing
 ---
 
@@ -85,6 +86,46 @@ spec:
           limits:
             cpu: "6"
             memory: "24Gi"
+```
+
+### vLLM with API Key Authentication
+
+```yaml
+apiVersion: llm.geeper.io/v1alpha1
+kind: LMDeployment
+metadata:
+  name: vllm-secure
+  namespace: default
+spec:
+  vllm:
+    enabled: true
+    
+    # Enable API key authentication using SecretReference
+    apiKey:
+      # Optional: specify custom secret name
+      # name: "my-vllm-api-key"
+      # Optional: specify custom key name in secret (defaults to VLLM_API_KEY)
+      # key: "CUSTOM_API_KEY"
+    
+    globalConfig:
+      image: "vllm/vllm-openai:latest"
+      service:
+        type: ClusterIP
+        port: 8000
+    
+    models:
+      - name: "llama2-7b"
+        model: "meta-llama/Llama-2-7b-chat-hf"
+        replicas: 1
+      
+      - name: "codellama-7b"
+        model: "codellama/CodeLlama-7b-Instruct-hf"
+        replicas: 1
+    
+    router:
+      enabled: true
+      replicas: 1
+      image: "lmcache/lmstack-router:latest"
 ```
 
 ### GPU-Accelerated Multi-Model Deployment
@@ -236,6 +277,7 @@ spec:
 | `models` | []VLLMModelSpec | Yes | - | List of models to deploy |
 | `router` | VLLMRouterSpec | No | - | Router configuration for model routing |
 | `globalConfig` | VLLMGlobalConfig | No | - | Global configuration for all models |
+| `apiKey` | corev1.SecretReference | No | - | API key authentication configuration using SecretReference |
 
 ### VLLMModelSpec Fields
 
@@ -304,6 +346,37 @@ router:
 - **Router Endpoint**: `http://router-service:8000` (routes to appropriate model)
 - **Direct Model Access**: `http://model-service:port` (direct access to specific model)
 - **Model-Specific Endpoints**: Each model has its own service for direct access
+
+## API Key Authentication
+
+The operator automatically creates and manages API key secrets for vLLM deployments. If you don't specify an `apiKey`, a secure API key is generated automatically and injected as the `VLLM_API_KEY` environment variable.
+
+### Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `name` | string | No | Auto-generated | Name of the secret containing the API key |
+| `key` | string | No | `VLLM_API_KEY` | Key name in the secret |
+
+### Examples
+
+**Automatic (Recommended):**
+```yaml
+vllm:
+  enabled: true
+  # No apiKey specified - operator creates secret automatically
+```
+
+**Custom Secret:**
+```yaml
+vllm:
+  enabled: true
+  apiKey:
+    name: "my-custom-secret"
+    key: "CUSTOM_API_KEY"
+```
+
+The `VLLM_API_KEY` is automatically used by OpenWebUI and Tabby when connecting to vLLM.
 
 ## Environment Variables
 

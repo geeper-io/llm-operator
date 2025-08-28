@@ -5287,10 +5287,6 @@ spec:
                       CompletionModel is the name of the model to use for code completion
                       Must be one of the models specified in spec.ollama.models or spec.vllm.model
                     type: string
-                  configMapName:
-                    description: ConfigMapName is the name of the ConfigMap containing
-                      Tabby configuration
-                    type: string
                   device:
                     default: cpu
                     description: Device specifies the device type for Tabby,
@@ -7359,6 +7355,26 @@ spec:
               vllm:
                 description: VLLM defines the vLLM deployment configuration
                 properties:
+                  apiKey:
+                    description: |-
+                      ApiKey defines the vLLM API key configuration
+                      If not provided, API key authentication will be generated automatically
+                    properties:
+                      key:
+                        default: VLLM_API_KEY
+                        description: Key is the key name in the secret (defaults to
+                          "VLLM_API_KEY")
+                        type: string
+                      name:
+                        description: name is unique within a namespace to reference
+                          a secret resource.
+                        type: string
+                      namespace:
+                        description: namespace defines the space within which the
+                          secret name must be unique.
+                        type: string
+                    type: object
+                    x-kubernetes-map-type: atomic
                   enabled:
                     description: Enabled determines if vLLM should be deployed instead
                       of Ollama

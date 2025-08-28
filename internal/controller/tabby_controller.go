@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/BurntSushi/toml"
 	appsv1 "k8s.io/api/apps/v1"
@@ -27,10 +28,13 @@ func (r *LMDeploymentReconciler) reconcileTabby(ctx context.Context, deployment 
 		}
 	}
 
-	// Create or update Tabby ConfigMap
-	tabbyConfigMap := r.buildTabbyConfigMap(deployment)
-	if err := r.createOrUpdateConfigMap(ctx, tabbyConfigMap); err != nil {
-		return err
+	// Create or update Tabby Secret for configuration
+	tabbySecret, err := r.buildTabbySecret(ctx, deployment)
+	if err != nil {
+		return fmt.Errorf("failed to build Tabby secret: %w", err)
+	}
+	if err := r.createOrUpdateSecret(ctx, tabbySecret); err != nil {
+		return fmt.Errorf("failed to create or update Tabby secret: %w", err)
 	}
 
 	// Create or update Tabby deployment
@@ -108,10 +112,8 @@ func (r *LMDeploymentReconciler) buildTabbyDeployment(deployment *llmgeeperiov1a
 		{
 			Name: "tabby-config",
 			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: deployment.GetTabbyConfigMapName(),
-					},
+				Secret: &corev1.SecretVolumeSource{
+					SecretName: deployment.GetTabbySecretName(),
 					Items: []corev1.KeyToPath{
 						{
 							Key:  "config.toml",
@@ -303,13 +305,12 @@ func (r *LMDeploymentReconciler) buildTabbyIngress(deployment *llmgeeperiov1alph
 	return tabbyIngress
 }
 
-// buildTabbyConfigMap builds the Tabby configuration ConfigMap
-func (r *LMDeploymentReconciler) buildTabbyConfigMap(deployment *llmgeeperiov1alpha1.LMDeployment) *corev1.ConfigMap {
+// buildTabbySecret builds the Tabby Secret for configuration
+func (r *LMDeploymentReconciler) buildTabbySecret(ctx context.Context, deployment *llmgeeperiov1alpha1.LMDeployment) (*corev1.Secret, error) {
 	// Generate TOML configuration
-	configTOML, err := r.generateTabbyConfig(deployment)
+	configTOML, err := r.generateTabbyConfig(ctx, deployment)
 	if err != nil {
-		// Log error but continue with empty config
-		configTOML = "# Error generating configuration\n"
+		return nil, fmt.Errorf("failed to generate Tabby config: %w", err)
 	}
 
 	labels := map[string]string{
@@ -317,16 +318,16 @@ func (r *LMDeploymentReconciler) buildTabbyConfigMap(deployment *llmgeeperiov1al
 		"llm-deployment": deployment.Name,
 	}
 
-	return &corev1.ConfigMap{
+	return &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      deployment.GetTabbyConfigMapName(),
+			Name:      deployment.GetTabbySecretName(),
 			Namespace: deployment.Namespace,
 			Labels:    labels,
 		},
-		Data: map[string]string{
-			"config.toml": configTOML,
+		Data: map[string][]byte{
+			"config.toml": []byte(configTOML),
 		},
-	}
+	}, nil
 }
 
 // buildTabbyPVC builds the Tabby PVC object
@@ -367,38 +368,90 @@ func (r *LMDeploymentReconciler) buildTabbyPVC(deployment *llmgeeperiov1alpha1.L
 }
 
 // generateTabbyConfig generates the Tabby TOML configuration
-func (r *LMDeploymentReconciler) generateTabbyConfig(deployment *llmgeeperiov1alpha1.LMDeployment) (string, error) {
-	// Build Ollama service host
-	ollamaHost := fmt.Sprintf("%s.%s:%d",
-		deployment.GetOllamaServiceName(),
-		deployment.Namespace,
-		deployment.GetOllamaServicePort())
+func (r *LMDeploymentReconciler) generateTabbyConfig(ctx context.Context, deployment *llmgeeperiov1alpha1.LMDeployment) (string, error) {
+	var config TabbyConfig
 
-	// Create Tabby configuration
-	config := &TabbyConfig{
-		Model: TabbyModelConfig{
-			Completion: TabbyCompletionConfig{
-				HTTP: TabbyHTTPConfig{
-					Kind:           "ollama/completion",
-					ModelName:      deployment.Spec.Tabby.CompletionModel,
-					APIEndpoint:    fmt.Sprintf("http://%s", ollamaHost),
-					PromptTemplate: "<PRE> {prefix} <SUF>{suffix} <MID>",
+	// Check if using vLLM models
+	if deployment.Spec.VLLM.Enabled && len(deployment.Spec.VLLM.Models) > 0 {
+		// Use vLLM configuration
+		vllmHost := fmt.Sprintf("%s.%s:%d",
+			deployment.GetVLLMServiceName(),
+			deployment.Namespace,
+			deployment.GetVLLMServicePort())
+
+		secret := &corev1.Secret{}
+		err := r.Get(ctx, client.ObjectKey{
+			Name:      deployment.GetVLLMApiKeySecretName(),
+			Namespace: deployment.GetNamespace(),
+		}, secret)
+		if err != nil {
+			return "", fmt.Errorf("failed to read vLLM apiKey secret for Tabby config: %w", err)
+		}
+		keyBytes, exists := secret.Data[deployment.Spec.VLLM.ApiKey.Key]
+		if !exists {
+			return "", fmt.Errorf("vLLM apiKey key %s not found in secret %s", deployment.Spec.VLLM.ApiKey.Key, deployment.GetVLLMApiKeySecretName())
+		}
+		apiKey := string(keyBytes)
+
+		config = TabbyConfig{
+			Model: TabbyModelConfig{
+				Completion: TabbyCompletionConfig{
+					HTTP: TabbyHTTPConfig{
+						Kind:           "openai/completion",
+						ModelName:      deployment.Spec.Tabby.CompletionModel,
+						APIEndpoint:    fmt.Sprintf("http://%s/v1", vllmHost),
+						APIKey:         apiKey,
+						PromptTemplate: "<PRE> {prefix} <SUF>{suffix} <MID>",
+					},
+				},
+				Chat: TabbyChatConfig{
+					HTTP: TabbyHTTPConfig{
+						Kind:            "openai/chat",
+						ModelName:       deployment.Spec.Tabby.ChatModel,
+						SupportedModels: getVLLMModelNames(deployment.Spec.VLLM.Models),
+						APIEndpoint:     fmt.Sprintf("http://%s/v1", vllmHost),
+						APIKey:          apiKey,
+					},
+				},
+				Embedding: TabbyEmbeddingConfig{
+					Local: TabbyLocalConfig{
+						ModelID: "Nomic-Embed-Text",
+					},
 				},
 			},
-			Chat: TabbyChatConfig{
-				HTTP: TabbyHTTPConfig{
-					Kind:            "openai/chat",
-					ModelName:       deployment.Spec.Tabby.ChatModel,
-					SupportedModels: deployment.Spec.Ollama.Models,
-					APIEndpoint:     fmt.Sprintf("http://%s/v1", ollamaHost),
+		}
+	} else {
+		// Use Ollama configuration (default)
+		ollamaHost := fmt.Sprintf("%s.%s:%d",
+			deployment.GetOllamaServiceName(),
+			deployment.Namespace,
+			deployment.GetOllamaServicePort())
+
+		config = TabbyConfig{
+			Model: TabbyModelConfig{
+				Completion: TabbyCompletionConfig{
+					HTTP: TabbyHTTPConfig{
+						Kind:           "ollama/completion",
+						ModelName:      deployment.Spec.Tabby.CompletionModel,
+						APIEndpoint:    fmt.Sprintf("http://%s", ollamaHost),
+						PromptTemplate: "<PRE> {prefix} <SUF>{suffix} <MID>",
+					},
+				},
+				Chat: TabbyChatConfig{
+					HTTP: TabbyHTTPConfig{
+						Kind:            "openai/chat",
+						ModelName:       deployment.Spec.Tabby.ChatModel,
+						SupportedModels: deployment.Spec.Ollama.Models,
+						APIEndpoint:     fmt.Sprintf("http://%s/v1", ollamaHost),
+					},
+				},
+				Embedding: TabbyEmbeddingConfig{
+					Local: TabbyLocalConfig{
+						ModelID: "Nomic-Embed-Text",
+					},
 				},
 			},
-			Embedding: TabbyEmbeddingConfig{
-				Local: TabbyLocalConfig{
-					ModelID: "Nomic-Embed-Text",
-				},
-			},
-		},
+		}
 	}
 
 	// Encode to TOML
@@ -409,6 +462,15 @@ func (r *LMDeploymentReconciler) generateTabbyConfig(deployment *llmgeeperiov1al
 	}
 
 	return buf.String(), nil
+}
+
+// getVLLMModelNames extracts model names from VLLMModelSpec slice
+func getVLLMModelNames(models []llmgeeperiov1alpha1.VLLMModelSpec) []string {
+	var names []string
+	for _, model := range models {
+		names = append(names, model.Model)
+	}
+	return names
 }
 
 // TabbyConfig represents the Tabby configuration structure
@@ -438,6 +500,7 @@ type TabbyHTTPConfig struct {
 	Kind            string   `toml:"kind"`
 	ModelName       string   `toml:"model_name"`
 	APIEndpoint     string   `toml:"api_endpoint"`
+	APIKey          string   `toml:"api_key,omitempty"`
 	SupportedModels []string `toml:"supported_models,omitempty"`
 	PromptTemplate  string   `toml:"prompt_template,omitempty"`
 }

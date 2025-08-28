@@ -1566,7 +1566,6 @@ Tabby defines the Tabby deployment configuration
 | [affinity](#lmdeploymentspectabbyaffinity) | object | Affinity defines pod affinity and anti-affinity rules for Tabby pods | false |
 | chatModel | string | ChatModel is the name of the model to use for chat functionality<br/>Must be one of the models specified in spec.ollama.models or spec.vllm.model | false |
 | completionModel | string | CompletionModel is the name of the model to use for code completion<br/>Must be one of the models specified in spec.ollama.models or spec.vllm.model | false |
-| configMapName | string | ConfigMapName is the name of the ConfigMap containing Tabby configuration | false |
 | device | enum | Device specifies the device type for Tabby,<br/>*Enum*: cpu, cuda, rocm, metal, vulkan<br/>*Default*: cpu<br/> | false |
 | enabled | boolean | Enabled determines if Tabby should be deployed | false |
 | [envVars](#lmdeploymentspectabbyenvvarsindex) | []object | EnvVars defines environment variables for Tabby | false |
@@ -2610,10 +2609,20 @@ VLLM defines the vLLM deployment configuration
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
+| [apiKey](#lmdeploymentspecvllmapikey) | object | ApiKey defines the vLLM API key configuration<br/>If not provided, API key authentication will be generated automatically | false |
 | enabled | boolean | Enabled determines if vLLM should be deployed instead of Ollama | false |
 | [globalConfig](#lmdeploymentspecvllmglobalconfig) | object | Global configuration that applies to all models | false |
 | [models](#lmdeploymentspecvllmmodelsindex) | []object | Models is the list of vLLM models to deploy | false |
 | [router](#lmdeploymentspecvllmrouter) | object | Router defines the vLLM router configuration for model routing | false |
+### LMDeployment.spec.vllm.apiKey
+
+ApiKey defines the vLLM API key configuration<br/>If not provided, API key authentication will be generated automatically
+
+| Name | Type | Description | Required |
+|------|------|-------------|----------|
+| key | string | Key is the key name in the secret (defaults to "VLLM_API_KEY")<br/>*Default*: VLLM_API_KEY<br/> | false |
+| name | string | name is unique within a namespace to reference a secret resource. | false |
+| namespace | string | namespace defines the space within which the secret name must be unique. | false |
 ### LMDeployment.spec.vllm.globalConfig
 
 Global configuration that applies to all models

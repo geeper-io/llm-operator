@@ -155,9 +155,6 @@ type TabbySpec struct {
 	// Volumes defines volumes for Tabby
 	Volumes []corev1.Volume `json:"volumes,omitempty"`
 
-	// ConfigMapName is the name of the ConfigMap containing Tabby configuration
-	ConfigMapName string `json:"configMapName,omitempty"`
-
 	// Persistence defines Tabby persistence configuration
 	Persistence TabbyPersistenceSpec `json:"persistence,omitempty"`
 
@@ -318,6 +315,20 @@ type VLLMSpec struct {
 
 	// Global configuration that applies to all models
 	GlobalConfig *VLLMGlobalConfig `json:"globalConfig,omitempty"`
+
+	// ApiKey defines the vLLM API key configuration
+	// If not provided, API key authentication will be generated automatically
+	ApiKey *VLLMApiKeySpec `json:"apiKey,omitempty"`
+}
+
+// VLLMApiKeySpec defines the vLLM API key configuration
+type VLLMApiKeySpec struct {
+	// SecretReference embeds the standard Kubernetes SecretReference
+	*corev1.SecretReference `json:",inline"`
+
+	// Key is the key name in the secret (defaults to "VLLM_API_KEY")
+	// +kubebuilder:default=VLLM_API_KEY
+	Key string `json:"key,omitempty"`
 }
 
 type VLLMModelSpec struct {
@@ -584,8 +595,8 @@ func (d *LMDeployment) GetTabbyIngressName() string {
 	return fmt.Sprintf("%s-tabby-ingress", d.Name)
 }
 
-// GetTabbyConfigMapName returns the name of the Tabby ConfigMap for this deployment
-func (d *LMDeployment) GetTabbyConfigMapName() string {
+// GetTabbySecretName returns the name of the Tabby Secret for this deployment
+func (d *LMDeployment) GetTabbySecretName() string {
 	return fmt.Sprintf("%s-tabby-config", d.Name)
 }
 
@@ -650,6 +661,14 @@ func (d *LMDeployment) GetVLLMRouterDeploymentName() string {
 // GetVLLMModelPVCName returns the name of a specific vLLM model PVC
 func (d *LMDeployment) GetVLLMModelPVCName(modelName string) string {
 	return fmt.Sprintf("%s-vllm-%s", d.Name, modelName)
+}
+
+// GetVLLMApiKeySecretName returns the name of the vLLM API key secret
+func (d *LMDeployment) GetVLLMApiKeySecretName() string {
+	if d.Spec.VLLM.ApiKey != nil && d.Spec.VLLM.ApiKey.Name != "" {
+		return d.Spec.VLLM.ApiKey.Name
+	}
+	return fmt.Sprintf("%s-vllm-api-key", d.Name)
 }
 
 func init() {

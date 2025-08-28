@@ -22,17 +22,77 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	llmgeeperiov1alpha1 "github.com/geeper-io/llm-operator/api/v1alpha1"
 )
 
+// ensureVLLMApiKeySecret ensures the vLLM API key secret exists and returns the API key
+func (r *LMDeploymentReconciler) ensureVLLMApiKeySecret(ctx context.Context, deployment *llmgeeperiov1alpha1.LMDeployment) (string, error) {
+	secretName := deployment.GetVLLMApiKeySecretName()
+	existingSecret := &corev1.Secret{}
+	err := r.Get(ctx, client.ObjectKey{
+		Name:      secretName,
+		Namespace: deployment.Namespace,
+	}, existingSecret)
+
+	key := deployment.Spec.VLLM.ApiKey.Key
+	if err == nil {
+		if apiKeyBytes, exists := existingSecret.Data[key]; exists {
+			apiKey := string(apiKeyBytes)
+			if apiKey != "" {
+				return apiKey, nil
+			}
+		}
+	} else if !errors.IsNotFound(err) {
+		// Error other than not found
+		return "", fmt.Errorf("failed to get vLLM API key secret: %w", err)
+	}
+
+	// Generate new API key and create secret
+	apiKey, err := generateSecureSecret(32)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate vLLM API key: %w", err)
+	}
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: deployment.Namespace,
+			Labels: map[string]string{
+				"app":            "vllm",
+				"llm-deployment": deployment.Name,
+			},
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			key: []byte(apiKey),
+		},
+	}
+
+	_ = controllerutil.SetControllerReference(deployment, secret, r.Scheme)
+
+	if err := r.createOrUpdateSecret(ctx, secret); err != nil {
+		return "", fmt.Errorf("failed to create vLLM API key secret: %w", err)
+	}
+
+	return apiKey, nil
+}
+
 // reconcileVLLM reconciles the vLLM deployment
 func (r *LMDeploymentReconciler) reconcileVLLM(ctx context.Context, deployment *llmgeeperiov1alpha1.LMDeployment) error {
+	// Ensure vLLM API key secret exists if enabled
+	_, err := r.ensureVLLMApiKeySecret(ctx, deployment)
+	if err != nil {
+		return fmt.Errorf("failed to ensure vLLM API key secret: %w", err)
+	}
+
 	// Create or update vLLM model deployments
 	for _, modelSpec := range deployment.Spec.VLLM.Models {
 		// Create or update model deployment
@@ -56,7 +116,7 @@ func (r *LMDeploymentReconciler) reconcileVLLM(ctx context.Context, deployment *
 		}
 	}
 
-	// Create or update vLLM router if enabled
+	// Create or update vLLM router
 	routerDeployment := r.buildVLLMRouterDeployment(deployment)
 	if err := r.createOrUpdateDeployment(ctx, routerDeployment); err != nil {
 		return err
@@ -138,6 +198,18 @@ func (r *LMDeploymentReconciler) buildVLLMModelDeployment(deployment *llmgeeperi
 			},
 		},
 	}
+
+	container.Env = append(container.Env, corev1.EnvVar{
+		Name: "VLLM_API_KEY",
+		ValueFrom: &corev1.EnvVarSource{
+			SecretKeyRef: &corev1.SecretKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: deployment.GetVLLMApiKeySecretName(),
+				},
+				Key: deployment.Spec.VLLM.ApiKey.Key,
+			},
+		},
+	})
 
 	// Add custom environment variables
 	if len(modelSpec.EnvVars) > 0 {
@@ -369,6 +441,18 @@ func (r *LMDeploymentReconciler) buildVLLMRouterDeployment(deployment *llmgeeper
 			},
 		},
 	}
+
+	container.Env = append(container.Env, corev1.EnvVar{
+		Name: "VLLM_API_KEY",
+		ValueFrom: &corev1.EnvVarSource{
+			SecretKeyRef: &corev1.SecretKeySelector{
+				LocalObjectReference: corev1.LocalObjectReference{
+					Name: deployment.GetVLLMApiKeySecretName(),
+				},
+				Key: deployment.Spec.VLLM.ApiKey.Key,
+			},
+		},
+	})
 
 	// Add custom environment variables
 	if len(deployment.Spec.VLLM.Router.EnvVars) > 0 {
