@@ -466,7 +466,7 @@ func (r *LMDeploymentReconciler) generateTabbyConfig(ctx context.Context, deploy
 
 // getVLLMModelNames extracts model names from VLLMModelSpec slice
 func getVLLMModelNames(models []llmgeeperiov1alpha1.VLLMModelSpec) []string {
-	var names []string
+	names := make([]string, 0, len(models))
 	for _, model := range models {
 		names = append(names, model.Model)
 	}

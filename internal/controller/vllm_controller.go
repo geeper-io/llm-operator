@@ -402,7 +402,7 @@ func (r *LMDeploymentReconciler) buildVLLMRouterDeployment(deployment *llmgeeper
 	}
 
 	// Build model endpoints for router configuration
-	var modelEndpoints []string
+	modelEndpoints := make([]string, 0, len(deployment.Spec.VLLM.Models))
 	for _, modelSpec := range deployment.Spec.VLLM.Models {
 		modelEndpoints = append(modelEndpoints, fmt.Sprintf("%s:%d", deployment.GetVLLMModelServiceName(modelSpec.Name), servicePort))
 	}

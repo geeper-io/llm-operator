@@ -259,34 +259,6 @@ func (r *LMDeploymentReconciler) createOrUpdateIngress(ctx context.Context, ingr
 	return nil
 }
 
-// createOrUpdateConfigMap creates or updates a ConfigMap using patch helper to avoid unnecessary reconciliations
-func (r *LMDeploymentReconciler) createOrUpdateConfigMap(ctx context.Context, configMap *corev1.ConfigMap) error {
-	existing := &corev1.ConfigMap{}
-	err := r.Get(ctx, types.NamespacedName{Name: configMap.Name, Namespace: configMap.Namespace}, existing)
-	if err != nil && errors.IsNotFound(err) {
-		// Create new ConfigMap
-		if err := r.Create(ctx, configMap); err != nil {
-			return err
-		}
-	} else if err == nil {
-		// Update existing ConfigMap using patch helper
-		if !reflect.DeepEqual(existing.Data, configMap.Data) {
-			patchHelper, err := patch.NewHelper(existing, r.Client)
-			if err != nil {
-				return fmt.Errorf("failed to create patch helper for ConfigMap %s: %w", configMap.Name, err)
-			}
-
-			existing.Data = configMap.Data
-			if err := patchHelper.Patch(ctx, existing); err != nil {
-				return fmt.Errorf("failed to patch ConfigMap %s: %w", configMap.Name, err)
-			}
-		}
-	} else {
-		return err
-	}
-	return nil
-}
-
 // updateStatus updates the status of the Deployment using patch helper to avoid unnecessary reconciliations
 func (r *LMDeploymentReconciler) updateStatus(ctx context.Context, deployment *llmgeeperiov1alpha1.LMDeployment) error {
 	// Create patch helper before making any changes
@@ -334,19 +306,6 @@ func (r *LMDeploymentReconciler) updateStatus(ctx context.Context, deployment *l
 			routerReplicas = 1
 		}
 		totalVLLMReplicas += routerReplicas
-
-		// Get router deployment status
-		routerDeployment := &appsv1.Deployment{}
-		err = r.Get(ctx, types.NamespacedName{
-			Name:      deployment.GetVLLMRouterDeploymentName(),
-			Namespace: deployment.Namespace,
-		}, routerDeployment)
-
-		if err == nil {
-			totalVLLMReadyReplicas += routerDeployment.Status.ReadyReplicas
-			totalVLLMAvailableReplicas += routerDeployment.Status.AvailableReplicas
-			totalVLLMUpdatedReplicas += routerDeployment.Status.UpdatedReplicas
-		}
 
 		deployment.Status.TotalReplicas = totalVLLMReplicas
 		deployment.Status.ReadyReplicas = totalVLLMReadyReplicas
