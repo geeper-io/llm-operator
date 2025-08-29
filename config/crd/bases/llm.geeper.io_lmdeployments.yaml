@@ -7355,16 +7355,11 @@ spec:
               vllm:
                 description: VLLM defines the vLLM deployment configuration
                 properties:
-                  apiKey:
+                  apiKeyRef:
                     description: |-
-                      ApiKey defines the vLLM API key configuration
+                      ApiKey defines the vLLM API key configuration. The secret key must be called "VLLM_API_KEY".
                       If not provided, API key authentication will be generated automatically
                     properties:
-                      key:
-                        default: VLLM_API_KEY
-                        description: Key is the key name in the secret (defaults to
-                          "VLLM_API_KEY")
-                        type: string
                       name:
                         description: name is unique within a namespace to reference
                           a secret resource.

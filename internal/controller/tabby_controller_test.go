@@ -251,11 +251,8 @@ func TestTabbyController_ConfigGeneration(t *testing.T) {
 								Model: "codellama/CodeLlama-7b-Instruct-hf",
 							},
 						},
-						ApiKey: &llmgeeperiov1alpha1.VLLMApiKeySpec{
-							SecretReference: &corev1.SecretReference{
-								Name: "my-app-vllm-api-key",
-							},
-							Key: "VLLM_API_KEY",
+						ApiKey: &corev1.SecretReference{
+							Name: "my-app-vllm-api-key",
 						},
 					},
 					Tabby: llmgeeperiov1alpha1.TabbySpec{

@@ -9,7 +9,7 @@ description: Complete reference for Geeper.AI Custom Resource Definitions
 
 ## Overview
 
-The LLM Operator provides a Custom Resource Definition (CRD) called `LMDeployment` that allows you to declaratively deploy Ollama or vLLM instances with specified models and optionally connect them to OpenWebUI for a web-based interface, Tabby for code completion, and custom components. The operator automatically manages the underlying Kubernetes resources including Deployments, Services, and Ingresses.
+The LLM Operator provides a Custom Resource Definition (CRD) called `LMDeployment` that allows you to declaratively deploy Ollama instances with specified models and optionally connect them to OpenWebUI for a web-based interface, Tabby for code completion, and custom components. The operator automatically manages the underlying Kubernetes resources including Deployments, Services, and Ingresses.
 
 ## LMDeployment
 
@@ -50,7 +50,6 @@ The `LMDeploymentSpec` defines the desired state of the LMDeployment.
 | Field | Type | Description | Required |
 |-------|------|-------------|----------|
 | `ollama` | [OllamaSpec](#ollamaspec) | Yes | Ollama LMDeployment configuration |
-| `vllm` | [VLLMSpec](#vllmspec) | No | vLLM deployment configuration (alternative to Ollama) |
 | `openwebui` | [OpenWebUISpec](#openwebuispec) | No | OpenWebUI LMDeployment configuration |
 | `tabby` | [TabbySpec](#tabbyspec) | No | Tabby LMDeployment configuration |
 
@@ -64,69 +63,6 @@ The `LMDeploymentSpec` defines the desired state of the LMDeployment.
 | `resources` | [ResourceRequirements](#resourcerequirements) | No | None | Resource limits and requests |
 | `models` | [OllamaModel](#ollamamodel)[] | Yes | - | List of models to deploy |
 | `service` | [ServiceSpec](#servicespec) | No | Default service config | Service configuration |
-
-### VLLMSpec
-
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `enabled` | bool | No | false | Enable vLLM deployment instead of Ollama |
-| `apiKey` | [VLLMApiKeySpec](#vllmapikeyspec) | No | Auto-generated | API key configuration (operator creates secret automatically) |
-| `globalConfig` | [VLLMGlobalConfig](#vllmglobalconfig) | No | Default config | Global configuration for all models |
-| `models` | [VLLMModelSpec](#vllmmodelspec)[] | No | - | List of vLLM models to deploy |
-| `router` | [VLLMRouterSpec](#vllmrouterspec) | No | Disabled | vLLM router configuration for model routing |
-
-### VLLMApiKeySpec
-
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `name` | string | No | Auto-generated | Name of the secret containing the API key |
-| `key` | string | No | `VLLM_API_KEY` | Key name in the secret |
-
-**Note**: If `apiKey` is not specified, the operator automatically creates a Kubernetes secret with a cryptographically secure API key. The `VLLM_API_KEY` environment variable is automatically set in all vLLM containers and used by OpenWebUI and Tabby for authentication.
-
-### VLLMModelSpec
-
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `name` | string | Yes | - | Unique name for this model deployment |
-| `model` | string | Yes | - | Model identifier (e.g., "meta-llama/Llama-2-7b-chat-hf") |
-| `replicas` | int32 | No | 1 | Number of vLLM pods to run for this model |
-| `image` | string | No | From globalConfig | vLLM container image to use |
-| `resources` | [ResourceRequirements](#resourcerequirements) | No | From globalConfig | Resource requirements for vLLM pods |
-| `service` | [ServiceSpec](#servicespec) | No | From globalConfig | Service configuration for this model |
-| `persistence` | [VLLMPersistenceSpec](#vllmpersistencespec) | No | From globalConfig | Persistence configuration for this model |
-| `envVars` | [EnvVar](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#envvar-v1-core)[] | No | - | Environment variables for vLLM |
-| `volumeMounts` | [VolumeMount](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#volumemount-v1-core)[] | No | - | Volume mounts for vLLM |
-| `volumes` | [Volume](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#volume-v1-core)[] | No | - | Volumes for vLLM |
-| `affinity` | [Affinity](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#affinity-v1-core) | No | - | Pod affinity and anti-affinity rules |
-
-### VLLMGlobalConfig
-
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `image` | string | No | `vllm/vllm-openai:latest` | Default container image for models |
-| `resources` | [ResourceRequirements](#resourcerequirements) | No | Default resources | Default resource requirements for models |
-| `service` | [ServiceSpec](#servicespec) | No | Default service config | Default service configuration for models |
-| `persistence` | [VLLMPersistenceSpec](#vllmpersistencespec) | No | Disabled | Default persistence configuration for models |
-
-### VLLMPersistenceSpec
-
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `enabled` | bool | No | false | Enable vLLM data persistence |
-| `storageClass` | string | No | Default | Storage class to use for persistent volumes |
-| `size` | string | No | `10Gi` | Size of the persistent volume |
-
-### VLLMRouterSpec
-
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `enabled` | bool | No | false | Enable vLLM router for model routing |
-| `replicas` | int32 | No | 1 | Number of router pods to run |
-| `image` | string | No | `lmcache/lmstack-router:latest` | Router container image |
-| `resources` | [ResourceRequirements](#resourcerequirements) | No | Default resources | Resource requirements for router pods |
-| `service` | [ServiceSpec](#servicespec) | No | Default service config | Service configuration for router |
-| `envVars` | [EnvVar](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#envvar-v1-core)[] | No | - | Environment variables for router |
 
 ### OllamaModel
 

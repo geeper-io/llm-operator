@@ -263,7 +263,7 @@ func (r *LMDeploymentReconciler) buildOpenWebUIDeployment(deployment *llmgeeperi
 					LocalObjectReference: corev1.LocalObjectReference{
 						Name: deployment.GetVLLMApiKeySecretName(),
 					},
-					Key: deployment.Spec.VLLM.ApiKey.Key,
+					Key: llmgeeperiov1alpha1.VLLMApiKeySecretKey,
 				},
 			}},
 		)

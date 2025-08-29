@@ -2,7 +2,6 @@
 id: vllm-deployment
 title: vLLM Deployment
 sidebar_label: vLLM
-sidebar_position: 1
 description: Deploy high-performance vLLM model serving with GPU acceleration and model routing
 ---
 
@@ -100,12 +99,15 @@ spec:
   vllm:
     enabled: true
     
-    # Enable API key authentication using SecretReference
+    # Enable API key authentication
     apiKey:
+      enabled: true
       # Optional: specify custom secret name
-      # name: "my-vllm-api-key"
+      # secretName: "my-vllm-api-key"
       # Optional: specify custom key name in secret (defaults to VLLM_API_KEY)
-      # key: "CUSTOM_API_KEY"
+      # keyName: "CUSTOM_API_KEY"
+      # Optional: disable auto-generation (defaults to true)
+      # generateIfNotExists: false
     
     globalConfig:
       image: "vllm/vllm-openai:latest"
@@ -277,7 +279,7 @@ spec:
 | `models` | []VLLMModelSpec | Yes | - | List of models to deploy |
 | `router` | VLLMRouterSpec | No | - | Router configuration for model routing |
 | `globalConfig` | VLLMGlobalConfig | No | - | Global configuration for all models |
-| `apiKey` | corev1.SecretReference | No | - | API key authentication configuration using SecretReference |
+| `apiKey` | VLLMApiKeySpec | No | - | API key authentication configuration |
 
 ### VLLMModelSpec Fields
 
@@ -316,6 +318,15 @@ spec:
 | `service` | ServiceSpec | No | ClusterIP:8000 | Default service configuration |
 | `persistence` | VLLMPersistenceSpec | No | - | Default persistence configuration |
 
+### VLLMApiKeySpec Fields
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `enabled` | bool | Yes | `false` | Enable API key authentication |
+| `secretName` | string | No | Auto-generated | Name of the secret containing the API key |
+| `keyName` | string | No | `VLLM_API_KEY` | Key name in the secret |
+| `generateIfNotExists` | bool | No | `true` | Generate new API key if secret doesn't exist |
+
 ## Model Routing
 
 The vLLM router provides intelligent routing between multiple models:
@@ -349,34 +360,102 @@ router:
 
 ## API Key Authentication
 
-The operator automatically creates and manages API key secrets for vLLM deployments. If you don't specify an `apiKey`, a secure API key is generated automatically and injected as the `VLLM_API_KEY` environment variable.
+vLLM supports API key authentication for secure access to your models:
 
-### Configuration
+### **Features**
+- **Automatic Secret Generation**: API keys are automatically generated and stored in Kubernetes secrets
+- **Custom Secret Names**: Use existing secrets or specify custom secret names
+- **Flexible Key Names**: Customize the key name in the secret (defaults to `VLLM_API_KEY`)
+- **Secure Storage**: API keys are stored as Kubernetes secrets with proper RBAC protection
+
+### **Configuration Options**
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `name` | string | No | Auto-generated | Name of the secret containing the API key |
-| `key` | string | No | `VLLM_API_KEY` | Key name in the secret |
+| `enabled` | bool | Yes | `false` | Enable API key authentication |
+| `secretName` | string | No | Auto-generated | Name of the secret containing the API key |
+| `keyName` | string | No | `VLLM_API_KEY` | Key name in the secret |
+| `generateIfNotExists` | bool | No | `true` | Generate new API key if secret doesn't exist |
 
-### Examples
+### **Usage Examples**
 
-**Automatic (Recommended):**
-```yaml
-vllm:
-  enabled: true
-  # No apiKey specified - operator creates secret automatically
-```
-
-**Custom Secret:**
+#### **Basic API Key Authentication**
 ```yaml
 vllm:
   enabled: true
   apiKey:
-    name: "my-custom-secret"
-    key: "CUSTOM_API_KEY"
+    enabled: true
+  models:
+    - name: "llama2-7b"
+      model: "meta-llama/Llama-2-7b-chat-hf"
 ```
 
-The `VLLM_API_KEY` is automatically used by OpenWebUI and Tabby when connecting to vLLM.
+#### **Custom Secret and Key Name**
+```yaml
+vllm:
+  enabled: true
+  apiKey:
+    enabled: true
+    secretName: "my-custom-vllm-secret"
+    keyName: "CUSTOM_API_KEY"
+    generateIfNotExists: false  # Use existing secret
+  models:
+    - name: "llama2-7b"
+      model: "meta-llama/Llama-2-7b-chat-hf"
+```
+
+### **How It Works**
+
+1. **Secret Creation**: When API key authentication is enabled, a Kubernetes secret is automatically created
+2. **Key Generation**: A cryptographically secure 32-byte API key is generated and stored in the secret
+3. **Environment Variables**: The API key is injected into vLLM containers as environment variables
+4. **Secret References**: Models and router reference the secret to access the API key
+5. **Secure Access**: Only pods with access to the secret can retrieve the API key
+
+### **Security Considerations**
+
+- **RBAC Protection**: Ensure proper RBAC rules are in place for secret access
+- **Network Policies**: Use network policies to restrict access to vLLM services
+- **Secret Rotation**: Consider implementing secret rotation for production deployments
+- **Audit Logging**: Monitor access to vLLM API key secrets
+
+### **Accessing the API Key**
+
+The API key is automatically available in your vLLM containers as an environment variable:
+
+```bash
+# Default key name
+echo $VLLM_API_KEY
+
+# Custom key name
+echo $CUSTOM_API_KEY
+```
+
+### **Client Authentication**
+
+When making requests to vLLM, include the API key in your requests:
+
+```bash
+# Using curl
+curl -H "Authorization: Bearer $VLLM_API_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{"prompt": "Hello, world!"}' \
+     http://vllm-service:8000/v1/completions
+
+# Using Python
+import requests
+
+headers = {
+    "Authorization": f"Bearer {api_key}",
+    "Content-Type": "application/json"
+}
+
+response = requests.post(
+    "http://vllm-service:8000/v1/completions",
+    headers=headers,
+    json={"prompt": "Hello, world!"}
+)
+```
 
 ## Environment Variables
 
@@ -530,6 +609,43 @@ kubectl logs -f deployment/vllm-basic-vllm-router
 # Verify router service
 kubectl get svc vllm-basic-vllm-router
 ```
+
+## Migration from Ollama
+
+### **When to Use vLLM vs Ollama**
+
+| Feature | Ollama | vLLM |
+|---------|--------|------|
+| **Performance** | Good | Excellent |
+| **GPU Support** | Basic | Advanced |
+| **Memory Efficiency** | Standard | Optimized |
+| **Multi-Model** | Yes | Yes (with routing) |
+| **Model Routing** | No | Yes |
+| **Production Ready** | Limited | Yes |
+| **Resource Usage** | Higher | Lower |
+
+### **Migration Steps**
+
+1. **Update Configuration**
+   ```yaml
+   # Before (Ollama)
+   spec:
+     ollama:
+       models: ["llama2:7b"]
+   
+   # After (vLLM)
+   spec:
+     vLLM:
+       enabled: true
+       models:
+         - name: "llama2-7b"
+           model: "meta-llama/Llama-2-7b-chat-hf"
+   ```
+
+2. **Adjust Resources** (typically 20-30% less memory needed)
+3. **Update Service Ports** (11434 → 8000)
+4. **Add Router** (optional, for multi-model deployments)
+5. **Test Performance** and adjust as needed
 
 ## Examples
 

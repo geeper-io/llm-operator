@@ -2609,18 +2609,17 @@ VLLM defines the vLLM deployment configuration
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| [apiKey](#lmdeploymentspecvllmapikey) | object | ApiKey defines the vLLM API key configuration<br/>If not provided, API key authentication will be generated automatically | false |
+| [apiKeyRef](#lmdeploymentspecvllmapikeyref) | object | ApiKey defines the vLLM API key configuration. The secret key must be called "VLLM_API_KEY".<br/>If not provided, API key authentication will be generated automatically | false |
 | enabled | boolean | Enabled determines if vLLM should be deployed instead of Ollama | false |
 | [globalConfig](#lmdeploymentspecvllmglobalconfig) | object | Global configuration that applies to all models | false |
 | [models](#lmdeploymentspecvllmmodelsindex) | []object | Models is the list of vLLM models to deploy | false |
 | [router](#lmdeploymentspecvllmrouter) | object | Router defines the vLLM router configuration for model routing | false |
-### LMDeployment.spec.vllm.apiKey
+### LMDeployment.spec.vllm.apiKeyRef
 
-ApiKey defines the vLLM API key configuration<br/>If not provided, API key authentication will be generated automatically
+ApiKey defines the vLLM API key configuration. The secret key must be called "VLLM_API_KEY".<br/>If not provided, API key authentication will be generated automatically
 
 | Name | Type | Description | Required |
 |------|------|-------------|----------|
-| key | string | Key is the key name in the secret (defaults to "VLLM_API_KEY")<br/>*Default*: VLLM_API_KEY<br/> | false |
 | name | string | name is unique within a namespace to reference a secret resource. | false |
 | namespace | string | namespace defines the space within which the secret name must be unique. | false |
 ### LMDeployment.spec.vllm.globalConfig

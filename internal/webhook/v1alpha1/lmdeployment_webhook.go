@@ -180,16 +180,6 @@ func (d *LMDeploymentCustomDefaulter) defaultVLLM(lmDeployment *llmgeeperiov1alp
 		lmDeployment.Spec.VLLM.Router.Service.Port = 8000
 	}
 
-	// Set default key name for API key if not specified
-	if lmDeployment.Spec.VLLM.ApiKey == nil {
-		lmDeployment.Spec.VLLM.ApiKey = &llmgeeperiov1alpha1.VLLMApiKeySpec{
-			SecretReference: &corev1.SecretReference{
-				Name:      lmDeployment.GetVLLMServiceName(),
-				Namespace: lmDeployment.GetNamespace(),
-			},
-		}
-	}
-	lmDeployment.Spec.VLLM.ApiKey.Key = "VLLM_API_KEY"
 }
 
 func (d *LMDeploymentCustomDefaulter) defaultOpenWebUI(lmDeployment *llmgeeperiov1alpha1.LMDeployment) {
@@ -432,18 +422,6 @@ func (l *LMDeploymentCustomValidator) validateVLLM(lmDeployment *llmgeeperiov1al
 		if lmDeployment.Spec.VLLM.GlobalConfig.Persistence != nil && lmDeployment.Spec.VLLM.GlobalConfig.Persistence.Enabled {
 			if lmDeployment.Spec.VLLM.GlobalConfig.Persistence.Size == "" {
 				allErrs = append(allErrs, field.Required(globalPath.Child("persistence", "size"), "global persistence size must be specified when persistence is enabled"))
-			}
-		}
-	}
-
-	// Validate API key configuration if specified
-	if lmDeployment.Spec.VLLM.ApiKey != nil {
-		apiKeyPath := vllmPath.Child("apiKey")
-
-		// Validate key name if specified
-		if lmDeployment.Spec.VLLM.ApiKey.Key != "" {
-			if len(lmDeployment.Spec.VLLM.ApiKey.Key) < 1 || len(lmDeployment.Spec.VLLM.ApiKey.Key) > 63 {
-				allErrs = append(allErrs, field.Invalid(apiKeyPath.Child("key"), lmDeployment.Spec.VLLM.ApiKey.Key, "key name must be between 1 and 63 characters"))
 			}
 		}
 	}

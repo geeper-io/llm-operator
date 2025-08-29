@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/BurntSushi/toml"
 	appsv1 "k8s.io/api/apps/v1"
@@ -12,6 +11,7 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	llmgeeperiov1alpha1 "github.com/geeper-io/llm-operator/api/v1alpha1"
@@ -387,9 +387,9 @@ func (r *LMDeploymentReconciler) generateTabbyConfig(ctx context.Context, deploy
 		if err != nil {
 			return "", fmt.Errorf("failed to read vLLM apiKey secret for Tabby config: %w", err)
 		}
-		keyBytes, exists := secret.Data[deployment.Spec.VLLM.ApiKey.Key]
+		keyBytes, exists := secret.Data[llmgeeperiov1alpha1.VLLMApiKeySecretKey]
 		if !exists {
-			return "", fmt.Errorf("vLLM apiKey key %s not found in secret %s", deployment.Spec.VLLM.ApiKey.Key, deployment.GetVLLMApiKeySecretName())
+			return "", fmt.Errorf("key %s not found in secret %s", llmgeeperiov1alpha1.VLLMApiKeySecretKey, deployment.GetVLLMApiKeySecretName())
 		}
 		apiKey := string(keyBytes)
 

@@ -18,8 +18,13 @@ package v1alpha1
 
 import (
 	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+const (
+	VLLMApiKeySecretKey = "VLLM_API_KEY"
 )
 
 // OllamaSpec defines the desired state of Ollama deployment
@@ -315,19 +320,23 @@ type VLLMSpec struct {
 	// Global configuration that applies to all models
 	GlobalConfig *VLLMGlobalConfig `json:"globalConfig,omitempty"`
 
-	// ApiKey defines the vLLM API key configuration
+	// ApiKey defines the vLLM API key configuration. The secret key must be called "VLLM_API_KEY".
 	// If not provided, API key authentication will be generated automatically
-	ApiKey *VLLMApiKeySpec `json:"apiKey,omitempty"`
+	ApiKey *corev1.SecretReference `json:"apiKeyRef,omitempty"`
 }
 
 // VLLMApiKeySpec defines the vLLM API key configuration
 type VLLMApiKeySpec struct {
-	// SecretReference embeds the standard Kubernetes SecretReference
-	*corev1.SecretReference `json:",inline"`
+	// Enabled determines if vLLM API key authentication should be enabled
+	Enabled bool `json:"enabled,omitempty"`
 
-	// Key is the key name in the secret (defaults to "VLLM_API_KEY")
-	// +kubebuilder:default=VLLM_API_KEY
-	Key string `json:"key,omitempty"`
+	// SecretName is the name of the secret containing the API key
+	// If not specified, a secret will be automatically generated
+	SecretName string `json:"secretName,omitempty"`
+
+	// KeyName is the key name in the secret (defaults to "value")
+	// +kubebuilder:default=value
+	KeyName string `json:"keyName,omitempty"`
 }
 
 type VLLMModelSpec struct {
